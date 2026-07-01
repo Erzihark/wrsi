@@ -1,5 +1,5 @@
 {
-  "name": "@wrsi/shared-utils",
+  "name": "@wrsi/ui",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -7,8 +7,15 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
   "devDependencies": {
+    "@types/react": "~19.2.2",
     "@wrsi/typescript-config": "workspace:*",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
     "typescript": "~6.0.3"
   }
 }
