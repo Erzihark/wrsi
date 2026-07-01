@@ -6,8 +6,15 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
   "devDependencies": {
+    "supabase": "^2.109.0",
     "turbo": "^2.10.2",
-    "typescript": "^5.9.2"
+    "typescript": "~6.0.3"
   }
 }
