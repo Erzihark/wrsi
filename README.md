@@ -71,9 +71,40 @@ yarn supabase status            # copy API URL + anon key into .env
 #   Android emulator: use http://10.0.2.2:54321
 #   Physical device: use your machine's LAN IP
 
-# 4. Run the app
-yarn workspace @wrsi/mobile start   # then press a (Android) / i (iOS)
+# 4. Run the app — start Metro (see "Running on a device" below)
+yarn workspace @wrsi/mobile start
 ```
+
+## Running on a device
+
+> **Expo Go does not work with this project.** It's pinned to SDK 56 (and uses native
+> modules), so you must install a **development build** — your own app binary with the Expo
+> dev client. You build it once; after that you just run Metro and it hot-reloads your JS.
+
+**Build the dev client (one time, per native change).** Easiest path is EAS cloud build
+(needs a free Expo account, `npx eas login` — no Apple/Google account required for an Android
+dev APK):
+
+```bash
+cd apps/mobile
+npx eas-cli build --profile development --platform android
+# → download + install the APK on your phone when it finishes
+```
+
+Local alternative (no Expo account, needs Android Studio + a USB-connected phone/emulator):
+`yarn workspace @wrsi/mobile android` (runs `expo run:android`).
+
+**Then, each dev session:**
+
+```bash
+yarn workspace @wrsi/mobile start   # Metro; the QR opens your dev build, not Expo Go
+```
+
+**Talking to local Supabase from a physical phone:** `127.0.0.1` is the phone itself, so set
+`EXPO_PUBLIC_SUPABASE_URL` in `apps/mobile/.env` to your computer's **LAN IP**
+(e.g. `http://192.168.1.20:54321`), put the phone on the same Wi-Fi, and allow the port
+through your firewall.
+
 
 ## Common commands
 

@@ -1,15 +1,18 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "WX Study",
+    "slug": "wrsi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "wrsi",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wxstudy.wrsi"
     },
     "android": {
+      "package": "com.wxstudy.wrsi",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -21,9 +24,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-secure-store",
-      "expo-localization"
-    ]
+    "plugins": ["expo-secure-store", "expo-localization"],
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    }
   }
 }
