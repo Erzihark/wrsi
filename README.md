@@ -93,17 +93,44 @@ npx eas-cli build --profile development --platform android
 
 The build runs on Expo's servers — you can `Ctrl+C` the "Waiting for build…" prompt and it
 keeps going. Check status with `npx eas-cli build:list` or the printed URL. **Free-tier
-Android builds can queue for 30 min – 2 h** behind paid jobs.
+Android builds can queue for 30 min – 2 h** behind paid jobs; you rebuild the binary only when
+native deps change, so this is an occasional cost, not a per-change one.
 
-**Local build (recommended for fast iteration — no queue).** Needs the Android SDK + JDK 17
-(install Android Studio) and a USB-connected phone with USB debugging (or an emulator):
+**EAS is the recommended path on Windows** (and the only option for iOS — see below). Its
+Linux workers have a vetted NDK/CMake toolchain, so they avoid the local-Windows native-build
+issues below.
+
+**Local build (advanced — fast, but fragile on Windows).** Needs the Android SDK + JDK 17
+(Android Studio) and a USB-connected phone with USB debugging (or an emulator):
 
 ```bash
 yarn workspace @wrsi/mobile run:android   # local prebuild + Gradle, installs directly
 ```
 
-After the dev build is installed (either route), day-to-day you only run Metro
-(`yarn workspace @wrsi/mobile start`) — you rebuild the binary only when native deps change.
+> ⚠️ **Known Windows failure:** the New-Architecture C++ link (`react-native-screens`,
+> `expo-modules-core`) fails with `ld.lld: undefined symbol` for libc++ symbols
+> (`__cxa_pure_virtual`, `std::bad_alloc`, …) and a `CLANG_~1` short-name in the error. Root
+> cause is the **space in the project path** (`C:\Users\Manuel Carretero\…`) breaking the
+> linker's STL path, plus the old bundled CMake 3.22.1. Fix: clone the repo to a **space-free
+> short path** (e.g. `C:\dev\wrsi`), and/or install a newer CMake and enable Windows long
+> paths. If you don't want to chase this, just use EAS — it's not worth the time.
+
+### iOS
+
+iOS binaries **cannot be built on Windows.** Use **EAS** (`--platform ios`) or a Mac. Installing
+a dev build on a physical iPhone also needs an **Apple Developer account** ($99/yr) with the
+device registered (unlike Android, where the APK installs freely). This is on the critical-path
+list in `docs/PROGRESS.md`.
+
+### Debugging
+
+- **JS / app logic:** with the dev build running via `yarn workspace @wrsi/mobile start`, press
+  `j` in the Metro terminal to open **React Native DevTools** (breakpoints, console, network,
+  React tree). `console.log` shows in the Metro terminal.
+- **Native (crashes, build):** `adb logcat` or Android Studio's Logcat for runtime; for a
+  failing native build, reproduce the exact task to see the real compiler/linker error, e.g.
+  re-run `ninja <target>.so` inside the module's `.cxx/Debug/<hash>/<abi>/` directory — the
+  Gradle console truncates it.
 
 **Then, each dev session:**
 

@@ -75,9 +75,10 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   build**: `apps/mobile/eas.json` has a `development` profile → `npx eas-cli build --profile
   development --platform android` (free Expo account, no store account needed for an Android
   APK) — but the free-tier queue can be 30 min–2 h; the build runs server-side, so `Ctrl+C`
-  is safe and `eas build:list` shows status. Faster local build (needs Android Studio + JDK):
-  `yarn workspace @wrsi/mobile run:android`. Then `yarn workspace @wrsi/mobile start` for
-  daily JS iteration. App ids: `com.wxstudy.wrsi`, scheme `wrsi://`. See README "Running on a device".
+  is safe and `eas build:list` shows status. **Local Windows builds (`run:android`) currently
+  fail** (see decisions log) — EAS is the recommended path; iOS requires EAS/Mac + an Apple
+  account. Then `yarn workspace @wrsi/mobile start` for daily JS iteration. App ids:
+  `com.wxstudy.wrsi`, scheme `wrsi://`. See README "Running on a device" + "Debugging".
 - **Supabase URL by target:** Android emulator `http://10.0.2.2:54321`; physical phone → the
   computer's **LAN IP** (same Wi-Fi + firewall open); iOS simulator `127.0.0.1`. `.env` is git-ignored.
 - **Supabase CLI** is a dev dependency — call it as `yarn supabase …`, not a global binary.
@@ -114,6 +115,15 @@ captured as a bucket midpoint into `students.budget`.
 
 ## Decisions log
 
+- **2026-07-02 — Dev builds via EAS; local Windows build blocked.** Expo Go can't run SDK 56,
+  so testing needs a dev build (added `expo-dev-client` + `eas.json`). Local `expo run:android`
+  on the dev machine fails at the New-Arch C++ link: `ld.lld: undefined symbol` for libc++
+  (`__cxa_pure_virtual`, `std::bad_alloc`) with a `CLANG_~1` short-name — caused by the **space
+  in the repo path** (`C:\Users\Manuel Carretero\…`) + old bundled CMake 3.22.1 (NDK is correct:
+  RN 0.85 pins 27.1.12297006, and the build used it). Decision: **use EAS cloud builds** as the
+  primary path (Linux workers dodge the issue; also the only iOS option on Windows). Local
+  fallback = clone to a space-free path like `C:\dev\wrsi` + newer CMake. Generated
+  `apps/*/android` + `apps/*/ios` are now git-ignored (CNG regenerates them).
 - **2026-07-02 — Monday migration analysis (planning only).** Analyzed two sample Monday
   exports (student leads + high schools). Key findings: subitems are inline sub-tables
   (leads subitems = university applications; HS subitems = service/plan lines); groups encode

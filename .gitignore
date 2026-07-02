@@ -10,6 +10,10 @@ dist
 build
 .turbo
 
+# Generated native projects (Expo prebuild / expo run) — regenerated from app.json, not committed
+apps/*/android
+apps/*/ios
+
 .env
 .env.*
 !.env.example
