@@ -49,7 +49,10 @@ docs/
 
 ## Prerequisites
 
-- **Node ≥ 20.19.4** (Expo SDK 56 requirement)
+- **Node ≥ 20.19.4** (Expo SDK 56 requirement). Version pinned in `.nvmrc` (22.13.0). If using
+  `nvm-windows`, run `nvm use` after opening a new terminal — it doesn't auto-switch, and if
+  the `C:\nodejs` symlink is ever missing/broken (`node`/`npx` not found anywhere on PATH),
+  re-run `nvm use <version>` **from an Administrator terminal** to recreate it.
 - **Yarn 4** — pinned via `packageManager`; run `corepack enable` if needed. Always use `yarn`, never `npm`.
 - **Docker Desktop** — required to run Supabase locally.
 - **Supabase CLI** — installed as a dev dependency; invoke via `yarn supabase …` (no global install needed).
