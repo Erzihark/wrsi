@@ -91,8 +91,19 @@ npx eas-cli build --profile development --platform android
 # → download + install the APK on your phone when it finishes
 ```
 
-Local alternative (no Expo account, needs Android Studio + a USB-connected phone/emulator):
-`yarn workspace @wrsi/mobile android` (runs `expo run:android`).
+The build runs on Expo's servers — you can `Ctrl+C` the "Waiting for build…" prompt and it
+keeps going. Check status with `npx eas-cli build:list` or the printed URL. **Free-tier
+Android builds can queue for 30 min – 2 h** behind paid jobs.
+
+**Local build (recommended for fast iteration — no queue).** Needs the Android SDK + JDK 17
+(install Android Studio) and a USB-connected phone with USB debugging (or an emulator):
+
+```bash
+yarn workspace @wrsi/mobile run:android   # local prebuild + Gradle, installs directly
+```
+
+After the dev build is installed (either route), day-to-day you only run Metro
+(`yarn workspace @wrsi/mobile start`) — you rebuild the binary only when native deps change.
 
 **Then, each dev session:**
 

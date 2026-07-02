@@ -24,9 +24,17 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-secure-store", "expo-localization"],
+    "plugins": [
+      "expo-secure-store",
+      "expo-localization"
+    ],
     "runtimeVersion": {
       "policy": "sdkVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3dda822e-9126-4ee0-b2d9-8c163683a085"
+      }
     }
   }
 }

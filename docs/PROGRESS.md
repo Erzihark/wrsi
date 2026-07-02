@@ -74,8 +74,10 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 - **Expo Go does NOT work** (SDK 56 mismatch + native modules). Must use a **development
   build**: `apps/mobile/eas.json` has a `development` profile → `npx eas-cli build --profile
   development --platform android` (free Expo account, no store account needed for an Android
-  APK), then `yarn workspace @wrsi/mobile start`. Local alt: `yarn workspace @wrsi/mobile
-  android`. App ids: `com.wxstudy.wrsi`, scheme `wrsi://`. See README "Running on a device".
+  APK) — but the free-tier queue can be 30 min–2 h; the build runs server-side, so `Ctrl+C`
+  is safe and `eas build:list` shows status. Faster local build (needs Android Studio + JDK):
+  `yarn workspace @wrsi/mobile run:android`. Then `yarn workspace @wrsi/mobile start` for
+  daily JS iteration. App ids: `com.wxstudy.wrsi`, scheme `wrsi://`. See README "Running on a device".
 - **Supabase URL by target:** Android emulator `http://10.0.2.2:54321`; physical phone → the
   computer's **LAN IP** (same Wi-Fi + firewall open); iOS simulator `127.0.0.1`. `.env` is git-ignored.
 - **Supabase CLI** is a dev dependency — call it as `yarn supabase …`, not a global binary.
