@@ -1,6 +1,6 @@
 # WX Study (WRSI) Platform
 
-One platform that connects Mexican high-school students with their ideal universities and
+One platform that connects high-school students with their ideal universities and
 replaces WX Study's fragmented workflow (Monday.com CRM, Google Drive, WhatsApp,
 Squarespace) with a single source of truth for **students, counselors/admins, high schools
 (prepas), and universities**.
@@ -16,15 +16,15 @@ backend is built as the shared source of truth so it slots in without rework.
 
 ## Tech stack
 
-| Layer | Choice |
-|-------|--------|
-| Monorepo | Turborepo + Yarn 4 (Berry) |
-| Mobile | Expo SDK 56, React Native 0.85, React 19 |
-| Navigation | React Navigation (native-stack + bottom-tabs) — **not** Expo Router |
-| Backend | Supabase (Postgres, Auth, Storage, Realtime, Edge Functions, RLS) |
-| Data/client | `@supabase/supabase-js`, TanStack Query |
-| Forms | React Hook Form + Zod *(introduced with onboarding)* |
-| i18n | i18next / react-i18next (Spanish default, English) |
+| Layer       | Choice                                                              |
+| ----------- | ------------------------------------------------------------------- |
+| Monorepo    | Turborepo + Yarn 4 (Berry)                                          |
+| Mobile      | Expo SDK 56, React Native 0.85, React 19                            |
+| Navigation  | React Navigation (native-stack + bottom-tabs) — **not** Expo Router |
+| Backend     | Supabase (Postgres, Auth, Storage, Realtime, Edge Functions, RLS)   |
+| Data/client | `@supabase/supabase-js`, TanStack Query                             |
+| Forms       | React Hook Form + Zod _(introduced with onboarding)_                |
+| i18n        | i18next / react-i18next (Spanish default, English)                  |
 
 ## Repository layout
 
@@ -77,14 +77,14 @@ yarn workspace @wrsi/mobile start   # then press a (Android) / i (iOS)
 
 ## Common commands
 
-| Command | What it does |
-|---------|--------------|
-| `yarn typecheck` | Typecheck every workspace (Turbo) |
-| `yarn lint` / `yarn test` / `yarn build` | Other Turbo tasks (add scripts per package as needed) |
-| `yarn supabase start` / `stop` / `status` | Manage the local Supabase stack |
-| `yarn supabase db reset` | Recreate the DB and re-apply all migrations + seed |
-| `yarn workspace @wrsi/shared-types gen` | Regenerate DB types from the local schema |
-| `yarn workspace @wrsi/mobile start` | Start the Expo dev server |
+| Command                                   | What it does                                          |
+| ----------------------------------------- | ----------------------------------------------------- |
+| `yarn typecheck`                          | Typecheck every workspace (Turbo)                     |
+| `yarn lint` / `yarn test` / `yarn build`  | Other Turbo tasks (add scripts per package as needed) |
+| `yarn supabase start` / `stop` / `status` | Manage the local Supabase stack                       |
+| `yarn supabase db reset`                  | Recreate the DB and re-apply all migrations + seed    |
+| `yarn workspace @wrsi/shared-types gen`   | Regenerate DB types from the local schema             |
+| `yarn workspace @wrsi/mobile start`       | Start the Expo dev server                             |
 
 ## Working with the database
 

@@ -3,7 +3,7 @@
 > Purpose: let anyone (or a fresh AI agent) resume work without re-deriving context.
 > **Update this file at the end of every working session.** Newest status at the top.
 
-**Last updated:** 2026-07-01
+**Last updated:** 2026-07-02
 **Current phase:** Phase 1 (MVP) — foundation complete, starting feature milestones.
 **Full plan:** `~/.claude/plans/i-am-building-this-sunny-lynx.md` (architecture + roadmap).
 
@@ -85,6 +85,23 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   idempotent import + dedup.
 - **Application-status workflow** — the 3 open questions (which statuses, who changes them,
   backward transitions) are deferred; must be answered before building the status UI.
+- **Atlas partner integration** — not scheduled, see decision log below. Waiting on
+  Alejandro to confirm scope with Atlas before any engineering starts.
+
+## Decisions log
+
+- **2026-07-02 — Atlas integration (no code changes, planning only).** Client is in early
+  talks with Atlas (vocational-orientation platform) about a hand-off: Atlas matches a
+  student's profile, then an "international universities" action should surface WX Study's
+  university directory. Recommendation (written into the plan file, not the Sept roadmap):
+  build a one-off Supabase Edge Function (`supabase/functions/partner-directory/`) with its
+  own `partner_api_keys` auth (not user JWT/RLS — current posture is zero `anon` grants and
+  should stay that way), returning a small versioned (`api_version`) projection of matching
+  universities/programs plus a deep-link/URL handoff — no student PII crosses the boundary.
+  Explicitly **not** building a general partner SDK yet (one partner, no signed agreement);
+  keep the naming/versioning generic so it's cheap to extract later if more partners commit.
+  Full writeup + 4 open confirmation questions for Alejandro: see "Future: Partner
+  Integration (Atlas)" section in the plan file.
 
 ## Key decisions (for context)
 
