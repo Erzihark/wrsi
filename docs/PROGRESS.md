@@ -81,8 +81,10 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 
 - **Apple Developer + Google Play accounts** — not yet created; critical path for a Sept
   launch (Apple org accounts can take 1–2+ weeks). Start ASAP.
-- **Monday.com export** — client still cleaning data; need a sample export to build the
-  idempotent import + dedup.
+- **Monday.com export** — client still cleaning data. Two sample exports (leads + high
+  schools) analyzed; structure, field→schema mapping, and schema gaps documented in
+  [`docs/MIGRATION.md`](MIGRATION.md). Still need the *clean* data (ideally via the Monday
+  API / with Item-ID relation columns) to build the importer.
 - **Application-status workflow** — the 3 open questions (which statuses, who changes them,
   backward transitions) are deferred; must be answered before building the status UI.
 - **Atlas partner integration** — not scheduled, see decision log below. Waiting on
@@ -90,6 +92,13 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 
 ## Decisions log
 
+- **2026-07-02 — Monday migration analysis (planning only).** Analyzed two sample Monday
+  exports (student leads + high schools). Key findings: subitems are inline sub-tables
+  (leads subitems = university applications; HS subitems = service/plan lines); groups encode
+  counselor + intake; multi-line quoted cells + UTF-8 mojibake; `Item ID` is the stable key.
+  Surfaced ~11 schema gaps (need `monday_item_id` + `monday_raw jsonb`, budget-as-range +
+  living budget, HE/SC service tracks, application offer/scholarship/deposit/credentials, HS
+  email/estimated-students/city/tier). Full write-up + client questions in `docs/MIGRATION.md`.
 - **2026-07-02 — Atlas integration (no code changes, planning only).** Client is in early
   talks with Atlas (vocational-orientation platform) about a hand-off: Atlas matches a
   student's profile, then an "international universities" action should surface WX Study's
