@@ -79,13 +79,12 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   fail** (see decisions log) — EAS is the recommended path; iOS requires EAS/Mac + an Apple
   account. Then `yarn workspace @wrsi/mobile start` for daily JS iteration. App ids:
   `com.wxstudy.wrsi`, scheme `wrsi://`. See README "Running on a device" + "Debugging".
-- **EAS Android build fails at "Install dependencies"** (build 3b4eff1c). Config is clean
-  (Yarn 4 via packageManager, lockfile tracked, `supabase` dep has no postinstall). Pinned
-  `node: 20.19.4` in `eas.json`. Two leading causes to confirm against the build log: (a)
-  Corepack failing to provision Yarn 4 on the worker → fix by committing a self-contained
-  Yarn (`yarn set version 4.12.0` → commit `.yarn/releases/*` + `.yarnrc.yml`); (b) monorepo
-  root not uploaded so `@wrsi/*` workspace deps don't resolve. **TODO: read the Install-deps
-  log to pick the fix.**
+- **EAS "Install dependencies" failure — FIXED.** Build log showed the worker runs global
+  **Yarn 1.22.22** with Corepack disabled, so it can't honor `packageManager: yarn@4.12.0`.
+  Fix: committed the Yarn 4.12.0 release binary (`.yarn/releases/yarn-4.12.0.cjs`) and set
+  `yarnPath` in `.yarnrc.yml`, so any Yarn delegates to Yarn 4 (no Corepack needed). Also
+  pinned `node: 20.19.4` in `eas.json`. Verified locally by running the exact EAS command
+  `yarn install --inline-builds --immutable` → exit 0.
 - **Supabase URL by target:** Android emulator `http://10.0.2.2:54321`; physical phone → the
   computer's **LAN IP** (same Wi-Fi + firewall open); iOS simulator `127.0.0.1`. `.env` is git-ignored.
 - **Supabase CLI** is a dev dependency — call it as `yarn supabase …`, not a global binary.
