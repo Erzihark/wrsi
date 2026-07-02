@@ -1409,6 +1409,7 @@ export type Database = {
           highest_education_level_id: string | null
           id: string
           last_name: string
+          onboarding_completed_at: string | null
           parent_or_guardian_name: string | null
           phone_number: string | null
           updated_at: string
@@ -1434,6 +1435,7 @@ export type Database = {
           highest_education_level_id?: string | null
           id?: string
           last_name: string
+          onboarding_completed_at?: string | null
           parent_or_guardian_name?: string | null
           phone_number?: string | null
           updated_at?: string
@@ -1459,6 +1461,7 @@ export type Database = {
           highest_education_level_id?: string | null
           id?: string
           last_name?: string
+          onboarding_completed_at?: string | null
           parent_or_guardian_name?: string | null
           phone_number?: string | null
           updated_at?: string
@@ -1854,6 +1857,45 @@ export type Database = {
     Functions: {
       can_access_student: { Args: { p_student_id: string }; Returns: boolean }
       can_access_user: { Args: { p_user_id: string }; Returns: boolean }
+      complete_student_onboarding: {
+        Args: {
+          p_country_interest_ids?: string[]
+          p_field_ids?: string[]
+          p_intended_level_ids?: string[]
+          p_passport_country_ids?: string[]
+          p_profile: Json
+        }
+        Returns: {
+          average_grade: number | null
+          birth_date: string | null
+          budget: number | null
+          budget_currency_id: string | null
+          cefr_level: string | null
+          counselor_id: string | null
+          country_id: string | null
+          created_at: string
+          desired_intake_term: Database["public"]["Enums"]["intake_term"] | null
+          desired_intake_year: number | null
+          expected_graduation_year: number | null
+          financial_plan_id: string | null
+          first_name: string
+          high_school_id: string | null
+          highest_education_level_id: string | null
+          id: string
+          last_name: string
+          onboarding_completed_at: string | null
+          parent_or_guardian_name: string | null
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "students"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       current_student_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       has_role: { Args: { role_name: string }; Returns: boolean }

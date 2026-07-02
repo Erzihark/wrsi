@@ -83,7 +83,7 @@ yarn workspace @wrsi/mobile start   # then press a (Android) / i (iOS)
 | `yarn lint` / `yarn test` / `yarn build`  | Other Turbo tasks (add scripts per package as needed) |
 | `yarn supabase start` / `stop` / `status` | Manage the local Supabase stack                       |
 | `yarn supabase db reset`                  | Recreate the DB and re-apply all migrations + seed    |
-| `yarn workspace @wrsi/shared-types gen`   | Regenerate DB types from the local schema             |
+| `yarn gen:types`   | Regenerate DB types from the local schema             |
 | `yarn workspace @wrsi/mobile start`       | Start the Expo dev server                             |
 
 ## Working with the database
@@ -93,7 +93,7 @@ The schema lives in `supabase/migrations/` as ordered SQL — this is the source
 1. Add a **new** migration file (`supabase/migrations/<timestamp>_name.sql`); don't edit
    applied ones.
 2. Apply it: `yarn supabase db reset` (or `yarn supabase migration up`).
-3. Regenerate types: `yarn workspace @wrsi/shared-types gen`, then commit
+3. Regenerate types: `yarn gen:types`, then commit
    `packages/shared-types/src/database.types.ts`.
 
 **Access model:** Row-Level Security is enabled on all tables. A student sees only their own

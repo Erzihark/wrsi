@@ -11,10 +11,11 @@
 
 ## TL;DR — where we are
 
-The backend and app **foundation are built, verified, and committed to `master`**. The app
-compiles, typechecks, and bundles; local Supabase runs with the full schema + RLS. Next up is
-the **student onboarding + dashboard** feature milestone. No feature screens have real
-behavior yet beyond auth (login/sign-up) and a universities list.
+Foundation + the **student onboarding + dashboard** milestone are built, verified, and
+committed to `master`. A new student is routed through a 3-step onboarding wizard that writes
+their profile atomically via an RPC, then lands on a dashboard showing their current lifecycle
+status + progress timeline (live via Realtime) and pending tasks. Next up: **documents upload**
+(Storage), then **universities search/filter + save/like**, then the **counselor CRM**.
 
 ## Done (verified)
 
@@ -44,6 +45,16 @@ Two commits on `master`:
    TanStack Query, Supabase, i18n, Theme, Auth); Supabase session persisted via
    `expo-secure-store`; login/sign-up work against Supabase; placeholder student tabs +
    counselor screen. *Verified:* `yarn typecheck` passes and `expo export` bundles 985 modules.
+6. **Onboarding + dashboard.** Migration `0011`:
+   `students.onboarding_completed_at`, the `complete_student_onboarding()` RPC (atomic,
+   idempotent, forces `user_id = auth.uid()`, sets initial `Onboarding` status), and
+   `status_history` added to the `supabase_realtime` publication. `@wrsi/ui`: `Chip` /
+   `Select` / `MultiSelect`. `@wrsi/api`: lookup hooks, `useCompleteOnboarding`,
+   `useStudentCurrentStatus` (Realtime), `useStudentTasks`. Mobile: a `StudentGate` routes to
+   a 3-step RHF+Zod onboarding wizard until `onboarding_completed_at` is set, then a rebuilt
+   dashboard (status badge + progress timeline + pending tasks). *Verified:* migration applies;
+   RPC + student-RLS reads tested via psql; `yarn typecheck` passes; `expo export` bundles
+   1008 modules.
 
 ## How to run / verify (quick)
 
@@ -66,16 +77,20 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 - After any schema change: new migration → `yarn supabase db reset` → regenerate types
   (`yarn workspace @wrsi/shared-types gen`) → commit the regenerated `database.types.ts`.
 
-## Next milestone — Student onboarding + dashboard
+## Next milestone — Documents upload (Storage)
 
-- Onboarding forms with **React Hook Form + Zod** (add these deps to `apps/mobile`). Fields
-  from the brief: countries of interest, desired intake term + year (`intake_year` current→+6),
-  achieved education level + average grade, intended level of study, fields of study,
-  nationality/passports, English level (CEFR + exams). Read the seeded lookups via `@wrsi/api`.
-- On submit: upsert the `students` row + the `student_*_interest` / `student_passports` rows.
-- Dashboard: show current application status + progress; subscribe to `status_history` via
-  Supabase **Realtime** so counselor status changes reflect live.
-- After this: documents upload to Storage, then the counselor CRM (single-pane-of-glass).
+- Create a **private Storage bucket** for student documents + storage RLS policies (student
+  owns their files under a `{user_id}/…` prefix; assigned counselor + admin can read — mirror
+  the `can_access_user` predicate).
+- Mobile Documents screen: pick a file (`expo-document-picker` / `expo-image-picker`), upload
+  to Storage, insert a `documents` row (`storage_path`, `type_id`, `original_filename`,
+  `mime_type`, `size_bytes`), list/download/categorize by `document_types`.
+- Then: **universities search/filter + save/like** (`student_university_interest` →
+  admin notification already wired), then the **counselor CRM**.
+
+Known follow-ups from this milestone (not blockers): birth date is a validated text input
+(YYYY-MM-DD) — consider a native date picker later; English level captured as CEFR; budget
+captured as a bucket midpoint into `students.budget`.
 
 ## Open items awaiting the client / owner
 

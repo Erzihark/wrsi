@@ -1274,6 +1274,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hookform/resolvers@npm:^3.9.1":
+  version: 3.10.0
+  resolution: "@hookform/resolvers@npm:3.10.0"
+  peerDependencies:
+    react-hook-form: ^7.0.0
+  checksum: 10c0/7ee44533b4cdc28c4fa2a94894c735411e5a1f830f4a617c580533321a9b901df0cc8c1e2fad81ad8d55154ebc5cb844cf9c116a3148ffae2bc48758c33cbb8e
+  languageName: node
+  linkType: hard
+
 "@isaacs/ttlcache@npm:^1.4.1":
   version: 1.4.1
   resolution: "@isaacs/ttlcache@npm:1.4.1"
@@ -1904,6 +1913,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@wrsi/mobile@workspace:apps/mobile"
   dependencies:
+    "@hookform/resolvers": "npm:^3.9.1"
     "@react-navigation/bottom-tabs": "npm:^7.3.10"
     "@react-navigation/native": "npm:^7.1.6"
     "@react-navigation/native-stack": "npm:^7.3.10"
@@ -1922,12 +1932,14 @@ __metadata:
     expo-status-bar: "npm:~56.0.4"
     i18next: "npm:^24.2.0"
     react: "npm:19.2.3"
+    react-hook-form: "npm:^7.53.0"
     react-i18next: "npm:^15.2.0"
     react-native: "npm:0.85.3"
     react-native-safe-area-context: "npm:~5.7.0"
     react-native-screens: "npm:4.25.2"
     react-native-url-polyfill: "npm:^3.0.0"
     typescript: "npm:~6.0.3"
+    zod: "npm:^3.23.8"
   languageName: unknown
   linkType: soft
 
@@ -4364,6 +4376,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-hook-form@npm:^7.53.0":
+  version: 7.80.0
+  resolution: "react-hook-form@npm:7.80.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17 || ^18 || ^19
+  checksum: 10c0/9a2a1316a562d3a144e3854ce22123b08fe886c8e0327a0682d3d30312a851beac115049f285bacd20d9dd1bdfe7d05333b5dab8ecb9b18c2976557220c8e648
+  languageName: node
+  linkType: hard
+
 "react-i18next@npm:^15.2.0":
   version: 15.7.4
   resolution: "react-i18next@npm:15.7.4"
@@ -5442,7 +5463,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.25.76":
+"zod@npm:^3.23.8, zod@npm:^3.25.76":
   version: 3.25.76
   resolution: "zod@npm:3.25.76"
   checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c

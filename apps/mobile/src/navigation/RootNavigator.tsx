@@ -2,7 +2,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { useTheme } from '@wrsi/ui';
 import { useAuth } from '../auth/AuthContext';
 import { AuthNavigator } from './AuthNavigator';
-import { StudentNavigator } from './StudentNavigator';
+import { StudentGate } from './StudentGate';
 import { CounselorNavigator } from './CounselorNavigator';
 
 /**
@@ -29,5 +29,5 @@ export function RootNavigator() {
   }
 
   if (!session) return <AuthNavigator />;
-  return experience === 'staff' ? <CounselorNavigator /> : <StudentNavigator />;
+  return experience === 'staff' ? <CounselorNavigator /> : <StudentGate />;
 }

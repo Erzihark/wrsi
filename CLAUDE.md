@@ -34,7 +34,7 @@ Foundation is built and committed on `master` (see `docs/PROGRESS.md` for the au
 - Requires **Docker Desktop** running. The CLI is a dev dependency — call it via `yarn supabase …`.
 - `yarn supabase start` / `stop` / `status` — manage the local stack (Studio on :54323, API on :54321).
 - `yarn supabase db reset` — recreate the DB and re-apply all `supabase/migrations` + `seed.sql`.
-- Schema changes = **new** migration file (never edit applied ones) → `db reset` → regenerate types (`yarn workspace @wrsi/shared-types gen`) → commit `packages/shared-types/src/database.types.ts`.
+- Schema changes = **new** migration file (never edit applied ones) → `db reset` → regenerate types (`yarn gen:types` from the repo root) → commit `packages/shared-types/src/database.types.ts`.
 
 ### Mobile app (`apps/mobile`, Expo/React Native)
 
