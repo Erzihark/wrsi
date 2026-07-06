@@ -1976,10 +1976,12 @@ __metadata:
     "@wrsi/typescript-config": "workspace:*"
     react: "npm:19.2.3"
     react-native: "npm:0.85.3"
+    react-native-safe-area-context: "npm:~5.7.0"
     typescript: "npm:~6.0.3"
   peerDependencies:
     react: "*"
     react-native: "*"
+    react-native-safe-area-context: "*"
   languageName: unknown
   linkType: soft
 

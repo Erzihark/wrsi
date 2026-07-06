@@ -26,6 +26,24 @@ export function initI18n(lng: string = 'es') {
   return i18n;
 }
 
+/** Localized month names (January-first) for date pickers. */
+export const monthNames: Record<AppLanguage, string[]> = {
+  en: [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ],
+  es: [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  ],
+};
+
+/** Month names for the active (or given) language, defaulting to Spanish. */
+export function getMonthNames(lng?: string): string[] {
+  const key = (lng ?? i18n.language ?? 'es').slice(0, 2) as AppLanguage;
+  return monthNames[key] ?? monthNames.es;
+}
+
 export default i18n;
 export { en, es };
 export type { TranslationResource } from './locales/en';

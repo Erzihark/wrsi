@@ -128,6 +128,27 @@ captured as a bucket midpoint into `students.budget`.
 
 ## Decisions log
 
+- **2026-07-03 — Onboarding: all fields required + dual validation + pro inputs (migration
+  `20260703000002`).** Product decision: every onboarding field is mandatory. Enforced in
+  BOTH layers: Zod schema (i18n-keyed messages, per-step validation gates, submit jumps to
+  the first invalid step) and a strict `complete_student_onboarding` RPC (required fields,
+  phone normalization to `+`digits, birth-date 10–100y, grade 0–100, CEFR whitelist, intake
+  year now→+6, non-empty passport/interest arrays; clear error messages). Table CHECK
+  constraints stay NULL-tolerant so the Monday import isn't blocked. New `@wrsi/ui`
+  components: `SearchSelect` / `SearchMultiSelect` (full-screen modal, accent-insensitive
+  type-to-filter, selection-only) used for nationality/passports/countries-of-interest, and
+  `DateField` (day/month/year dropdowns with real calendar validation) for birth date —
+  deliberately pure-JS (no native date picker) so **no dev-build rebuild is needed**.
+  Verified: 6 RPC validation tests via psql; typecheck green; bundle 1012 modules.
+- **2026-07-03 — User/role management direction.** No self-serve or bootstrap flow for
+  creating staff. Admins/super-admins will manage ALL user types (students, counselors,
+  high schools, universities) through dedicated admin CRUD pages (e.g. `/students`,
+  `/counselors`) built with the CRM milestone. Creating login-capable users requires the
+  auth Admin API (service role), so those pages will call a **service-role Edge Function**
+  — not a client RPC. The interim `assign_role`/`revoke_role` RPC migration was rejected
+  and removed before being applied. Roles remain many-to-many (`user_roles`); signup only
+  ever grants `student`.
+
 - **2026-07-03 — Architecture review + security hardening (migration `20260703000001`).**
   Full re-audit of schema/RLS/decisions before feature buildout. Architecture held up (no
   structural changes); found and fixed at the policy/constraint level:
