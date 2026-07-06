@@ -127,6 +127,26 @@ yarn workspace @wrsi/mobile run:android   # local prebuild + Gradle, installs di
 > short path** (e.g. `C:\dev\wrsi`), and/or install a newer CMake and enable Windows long
 > paths. If you don't want to chase this, just use EAS — it's not worth the time.
 
+### Loading the dev build each session
+
+Once the dev build ("WX Study") is installed on the phone:
+
+```bash
+cd apps/mobile
+npx expo start --dev-client -c      # or: yarn workspace @wrsi/mobile start
+```
+
+Open the **WX Study app** (the dev build) and connect to the Metro server it lists, or scan
+the QR from the terminal **with your phone camera** — it opens in the dev build via the
+`wrsi://` scheme.
+
+> ⚠️ **Do not use Expo Go / don't type an `exp://` URL.** Expo Go can't run SDK 56, and it
+> requests Expo's default entry (`node_modules/expo/AppEntry.js`), which fails in this monorepo
+> with `Unable to resolve "../../App"` (hoisted `node_modules` makes `../../App` point at the
+> repo root). The app uses its own `index.ts` entry, which only the **dev build** requests. If
+> you ever see that error, you're in Expo Go — switch to the dev build. `-c` clears a stale
+> Metro cache.
+
 ### iOS
 
 iOS binaries **cannot be built on Windows.** Use **EAS** (`--platform ios`) or a Mac. Installing
