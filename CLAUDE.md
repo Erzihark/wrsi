@@ -2,13 +2,39 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Git Workflow
+## Git Workflow (REQUIRED: branch → PR → review → merge)
 
-Never leave finished work uncommitted. To avoid losing progress:
+Never work directly on `master`. For every task or meaningful chunk of work:
 
-- After completing a task (or a meaningful chunk of one), commit it with a clean, descriptive message explaining _why_ the change was made.
-- Push commits to GitHub (`origin`) so work is backed up remotely, not just sitting locally.
-- Keep commits scoped and messages free of noise — no "wip", no vague "updates".
+1. **Branch.** Create a feature branch off `master` (e.g. `feat/document-upload`,
+   `fix/onboarding-validation`). Use the `compound-engineering:ce-worktree` skill to set up
+   isolated work when it's available; otherwise `git checkout -b <name>`.
+2. **Commit.** Commit with a clean, descriptive message explaining _why_ the change was
+   made — no "wip", no vague "updates". Push the branch to `origin` (repo:
+   `Erzihark/wrsi`) so work is backed up remotely, not just sitting locally.
+3. **Open a PR.** Use the GitHub MCP tools (`mcp__github__create_pull_request`, etc.) — the
+   `gh` CLI is not installed in this environment. Reach for the
+   `compound-engineering:ce-commit-push-pr` skill for the commit+push+PR flow, or
+   `compound-engineering:ce-compound` for writing up a durable learning once solved.
+4. **Code review.** Run a review on the PR's diff before merging — use the
+   `compound-engineering:ce-code-review` skill (or the plain `code-review` skill) at an
+   effort level matched to the change's risk. Fix findings, or explicitly note why a finding
+   doesn't apply, before merging.
+5. **Merge.** Merge the PR into `master` via the GitHub MCP tools
+   (`mcp__github__merge_pull_request`) once review is clean and CI (if any) passes. Prefer
+   squash merges to keep `master` history readable, unless the branch's individual commits
+   are independently meaningful.
+
+Keep each branch/PR scoped to one coherent piece of work — don't bundle unrelated fixes into
+a feature branch.
+
+**Token permissions / fallback.** The GitHub MCP PR + merge tools require the connected
+token to have `pull_requests: write` (fine-grained) or the `repo` scope (classic). If
+`create_pull_request` / `merge_pull_request` return `403 Resource not accessible`, the token
+is missing that scope — surface it to the user to fix. Until it's fixed, don't get blocked:
+push the branch, then complete the merge locally with a **squash** merge into `master`
+(`git merge --squash <branch>` → one clean commit → push), and note in the message that the
+PR/review step was done locally because the MCP token lacked PR access.
 
 ## Documentation & progress (REQUIRED)
 
