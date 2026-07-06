@@ -1901,6 +1901,7 @@ export type Database = {
       has_role: { Args: { role_name: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_counselor_of: { Args: { p_student_id: string }; Returns: boolean }
+      is_service_context: { Args: never; Returns: boolean }
     }
     Enums: {
       device_platform: "ios" | "android" | "web"

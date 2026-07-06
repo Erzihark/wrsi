@@ -121,6 +121,23 @@ captured as a bucket midpoint into `students.budget`.
 
 ## Decisions log
 
+- **2026-07-03 — Architecture review + security hardening (migration `20260703000001`).**
+  Full re-audit of schema/RLS/decisions before feature buildout. Architecture held up (no
+  structural changes); found and fixed at the policy/constraint level:
+  (1) `comments` were readable by all authenticated users → entity-scoped read (comments on a
+  student require `can_access_student`); (2) students could insert/edit their own
+  `status_history` (+ `application_status_history`) → read stays, writes are staff-only
+  (the onboarding RPC still works via SECURITY DEFINER); (3) students could reassign their own
+  `counselor_id`/`user_id`/`high_school_id` → column-guard trigger (admin; counselor may fix
+  prepa); (4) users could self-change `is_active`/`email` → guard trigger; (5) one-to-one
+  booking allowed editing slot times and blocked cancelling → booking guard trigger (book
+  free slot / cancel own only) + relaxed WITH CHECK; (6) workshop-overlap check was racy →
+  per-student `pg_advisory_xact_lock`; (7) added hot-path indexes (`status_history(student_id,
+  changed_at desc)`, `notifications(user_id, created_at desc)`, event/workshop reverse
+  lookups). All verified via 11 psql RLS regression tests (T1–T11); types regenerated;
+  typecheck green. Guards intentionally no-op for service contexts (`auth.uid() is null`) so
+  imports/Edge Functions are unaffected.
+
 - **2026-07-02 — Dev builds via EAS; local Windows build blocked.** Expo Go can't run SDK 56,
   so testing needs a dev build (added `expo-dev-client` + `eas.json`). Local `expo run:android`
   on the dev machine fails at the New-Arch C++ link: `ld.lld: undefined symbol` for libc++
