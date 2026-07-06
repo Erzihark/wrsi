@@ -87,6 +87,13 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   `yarn install --inline-builds --immutable` → exit 0.
 - **Supabase URL by target:** Android emulator `http://10.0.2.2:54321`; physical phone → the
   computer's **LAN IP** (same Wi-Fi + firewall open); iOS simulator `127.0.0.1`. `.env` is git-ignored.
+- **Phone can't reach Supabase (`ConnectException` / `curl` HTTP 000 on :54321):** the local
+  stack often ends up **half-up** after a PC sleep/restart — several containers (esp.
+  `supabase_kong` on 54321, `supabase_rest`) exit with code 137 while db/auth stay up, so
+  nothing serves the API. Fix: `yarn supabase status`; if anything is Exited,
+  `yarn supabase stop && yarn supabase start` (data persists in the volume). Verify with
+  `curl http://<LAN-IP>:54321/auth/v1/health` → 200. Docker mem (7.7 GB) is sufficient; not an
+  OOM-config issue. If the LAN IP changed (DHCP), update `apps/mobile/.env`.
 - **Supabase CLI** is a dev dependency — call it as `yarn supabase …`, not a global binary.
 - After any schema change: new migration → `yarn supabase db reset` → regenerate types
   (`yarn workspace @wrsi/shared-types gen`) → commit the regenerated `database.types.ts`.
