@@ -53,9 +53,18 @@ docs/
   `nvm-windows`, run `nvm use` after opening a new terminal — it doesn't auto-switch, and if
   the `C:\nodejs` symlink is ever missing/broken (`node`/`npx` not found anywhere on PATH),
   re-run `nvm use <version>` **from an Administrator terminal** to recreate it.
-- **Yarn 4** — pinned via `packageManager`; run `corepack enable` if needed. Always use `yarn`, never `npm`.
+- **Yarn 4** — pinned via `packageManager`, and the exact release is bundled in the repo
+  (`.yarnrc.yml` → `yarnPath`). But the bare `yarn` **command** only exists on your machine via
+  **Corepack** (ships with Node, shims `yarn`/`yarnpkg` next to `node.exe`). If `yarn: command
+  not found` — even right after fixing Node/nvm — run **`corepack enable`** once (re-run it any
+  time you switch Node versions via `nvm use`, since the shim lives next to that Node install).
+  Always use `yarn`, never `npm`.
 - **Docker Desktop** — required to run Supabase locally.
 - **Supabase CLI** — installed as a dev dependency; invoke via `yarn supabase …` (no global install needed).
+- **Run `yarn`/`supabase` commands from the repo root**, not from `apps/mobile` or another
+  workspace — only the root `package.json` has the `supabase` devDependency and `gen:types`
+  script. From inside a workspace, use `yarn workspace <name> <script>` instead (works from
+  anywhere in the repo).
 
 ## Setup
 
