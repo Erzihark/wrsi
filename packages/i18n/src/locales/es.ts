@@ -78,6 +78,9 @@ export const es: TranslationResource = {
     intakeYear: 'Año de inicio',
     graduationYear: 'Año en que terminas la preparatoria',
     submitting: 'Guardando tu perfil…',
+    exit: 'Salir',
+    exitConfirmTitle: '¿Salir del registro?',
+    exitConfirmMessage: 'Se cerrará tu sesión y no se guardará tu progreso en este formulario.',
   },
   dashboard: {
     welcome: 'Bienvenido, {{name}}',

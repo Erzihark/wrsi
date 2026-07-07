@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, BackHandler, View } from 'react-native';
 import { Controller, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,7 @@ import {
   Text,
   useTheme,
 } from '@wrsi/ui';
+import { useAuth } from '../../auth/AuthContext';
 import {
   BUDGET_OPTIONS,
   CEFR_OPTIONS,
@@ -39,6 +40,7 @@ import {
 export function OnboardingScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const { signOut } = useAuth();
   const [step, setStep] = useState(0);
 
   const countries = useCountries();
@@ -47,6 +49,34 @@ export function OnboardingScreen() {
   const plans = useFinancialPlans();
   const currencies = useCurrencies();
   const complete = useCompleteOnboarding();
+
+  // There is no navigation stack behind onboarding (signing up drops the user
+  // straight here), so the phone's back button has nothing to pop by default.
+  // On the first step, offer to exit (sign out, back to Login); on later
+  // steps, step backward through the wizard instead.
+  function confirmExit() {
+    Alert.alert(t('onboarding.exitConfirmTitle'), t('onboarding.exitConfirmMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('onboarding.exit'), style: 'destructive', onPress: () => void signOut() },
+    ]);
+  }
+
+  function handleBack() {
+    if (step > 0) {
+      setStep((s) => s - 1);
+    } else {
+      confirmExit();
+    }
+  }
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBack();
+      return true; // handled — prevent default (app close / no-op)
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const form = useForm<OnboardingFormInput, unknown, OnboardingForm>({
     resolver: zodResolver(onboardingSchema) as Resolver<
@@ -153,6 +183,19 @@ export function OnboardingScreen() {
 
   return (
     <Screen scroll>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Button
+          variant="ghost"
+          title={step > 0 ? `‹ ${t('common.back')}` : t('onboarding.exit')}
+          onPress={handleBack}
+        />
+      </View>
       <Text variant="heading">{t('onboarding.title')}</Text>
       <Text variant="muted">{t('onboarding.intro')}</Text>
       <Text variant="label">
@@ -452,11 +495,7 @@ export function OnboardingScreen() {
       <View style={{ flexDirection: 'row', gap: theme.spacing.md, marginTop: theme.spacing.md }}>
         {step > 0 && (
           <View style={{ flex: 1 }}>
-            <Button
-              variant="secondary"
-              title={t('common.back')}
-              onPress={() => setStep((s) => s - 1)}
-            />
+            <Button variant="secondary" title={t('common.back')} onPress={handleBack} />
           </View>
         )}
         <View style={{ flex: 1 }}>

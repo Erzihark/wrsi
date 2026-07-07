@@ -75,6 +75,9 @@ export const en = {
     intakeYear: "Intake year",
     graduationYear: "Year you finish high school",
     submitting: "Saving your profile…",
+    exit: "Exit",
+    exitConfirmTitle: "Exit sign-up?",
+    exitConfirmMessage: "You'll be signed out and your progress on this form won't be saved.",
   },
   dashboard: {
     welcome: "Welcome, {{name}}",

@@ -128,6 +128,17 @@ captured as a bucket midpoint into `students.budget`.
 
 ## Decisions log
 
+- **2026-07-07 — Onboarding back navigation (branch `fix/onboarding-back-navigation`).**
+  Root cause: `RootNavigator` swaps its whole subtree by session state, so a fresh sign-up
+  (email confirmation disabled locally) drops the user straight into `OnboardingScreen` with
+  **no navigation stack** behind it — nothing for the phone's back button to pop. Fix: added
+  a header control + wired `BackHandler` (Android hardware back) to the same
+  `handleBack()` — steps backward through the wizard on steps 2–3, and on step 1 shows a
+  confirm dialog then `signOut()` (which naturally routes back to Login via the existing auth
+  state swap). Login → Sign-up itself already had working back navigation (native-stack
+  default); the complaint was specifically about post-signup onboarding having none.
+  Verified: typecheck green; 1012-module bundle.
+
 - **2026-07-07 — Environments, seed data, countries, dial codes (branch
   `feat/environments-seed-data`).** (1) Explained/solved "my users disappeared": data
   persists across stop/start; `db reset` (needed per new migration) wipes it — so local dev
