@@ -1,7 +1,15 @@
 -- Seed reference/lookup data. Idempotent (safe to re-run on `supabase db reset`).
 
-insert into public.roles (name) values
-  ('super_admin'), ('admin'), ('counselor'), ('student'), ('university'), ('high_school')
+-- Fixed ids so roles are identical across every reset and environment —
+-- makes debugging/joins predictable and rules out "id changed under me"
+-- confusion when comparing rows across a `db reset`.
+insert into public.roles (id, name) values
+  ('00000000-0000-4000-8000-000000000001', 'super_admin'),
+  ('00000000-0000-4000-8000-000000000002', 'admin'),
+  ('00000000-0000-4000-8000-000000000003', 'counselor'),
+  ('00000000-0000-4000-8000-000000000004', 'student'),
+  ('00000000-0000-4000-8000-000000000005', 'university'),
+  ('00000000-0000-4000-8000-000000000006', 'high_school')
 on conflict (name) do nothing;
 
 insert into public.currencies (name, code, symbol) values
