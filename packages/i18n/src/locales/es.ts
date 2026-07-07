@@ -60,6 +60,7 @@ export const es: TranslationResource = {
     firstName: 'Nombre',
     lastName: 'Apellido',
     birthDate: 'Fecha de nacimiento',
+    phoneCountry: 'Código de país',
     phone: 'Teléfono (WhatsApp)',
     guardianName: 'Nombre del padre / tutor',
     nationality: 'Nacionalidad principal',

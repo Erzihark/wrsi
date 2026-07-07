@@ -29,12 +29,13 @@ export const onboardingSchema = z.object({
     .min(1, 'validation.invalidDate')
     .regex(isoDate, 'validation.invalidDate')
     .refine(isPlausibleBirthDate, 'validation.birthDateRange'),
+  phone_country_id: requiredId,
   phone_number: z
     .string()
     .trim()
     .min(1, REQUIRED)
     .refine(
-      (v) => /^\+?[0-9]{8,15}$/.test(v.replace(/[^0-9+]/g, '')),
+      (v) => /^[0-9]{6,12}$/.test(v.replace(/[^0-9]/g, '')),
       'validation.phoneInvalid',
     ),
   parent_or_guardian_name: z.string().trim().min(1, REQUIRED),
@@ -79,6 +80,7 @@ export const onboardingDefaults: OnboardingFormInput = {
   first_name: '',
   last_name: '',
   birth_date: '',
+  phone_country_id: null,
   phone_number: '',
   parent_or_guardian_name: '',
   country_id: null,
@@ -103,6 +105,7 @@ export const STEP_FIELDS: (keyof OnboardingFormInput)[][] = [
     'first_name',
     'last_name',
     'birth_date',
+    'phone_country_id',
     'phone_number',
     'parent_or_guardian_name',
     'country_id',

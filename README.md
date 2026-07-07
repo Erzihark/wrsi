@@ -187,6 +187,50 @@ through your firewall.
 | `yarn gen:types`   | Regenerate DB types from the local schema             |
 | `yarn workspace @wrsi/mobile start`       | Start the Expo dev server                             |
 
+## Environments & test data
+
+| Environment | Where | Dummy-data flavor | Seed file |
+|---|---|---|---|
+| Local dev | Docker (Supabase CLI) | Lorem ipsum names | `supabase/seeds/dev.sql` (auto on `db reset`) |
+| Staging | Hosted Supabase project | Realistic made-up names | `supabase/seeds/staging.sql` (manual, once) |
+
+Reference catalogs (countries — full standard list with Spanish names + dialing codes —
+roles, statuses, currencies, etc.) live in `supabase/seed.sql` and are **identical in every
+environment**; only people/orgs/activity differ.
+
+**Data persistence, explained:** your local data lives in a Docker volume and **survives
+`supabase stop`/`start` and machine reboots**. What wipes it is **`yarn supabase db reset`**
+— required whenever a new migration lands. That's why the dev seed exists: after any reset
+the environment comes back pre-filled, including the test accounts below, so a reset costs
+nothing. Anything you create manually on top *will* be lost on the next reset — if it's
+something you want permanently, add it to `supabase/seeds/dev.sql`.
+
+**Local test accounts** (password `password123`):
+
+| Email | Role / state |
+|---|---|
+| `admin@wrsi.dev` | super_admin + admin |
+| `counselor@wrsi.dev` | counselor (assigned to student1 & student2) |
+| `student1@wrsi.dev` | onboarded, furthest along (Documentation Pending) |
+| `student2@wrsi.dev` | onboarded (Onboarding) |
+| `student3@wrsi.dev` | onboarded, no counselor |
+| `student4@wrsi.dev` | fresh signup → lands on the onboarding wizard |
+
+**Staging setup (once the hosted project exists):**
+
+```bash
+yarn supabase link --project-ref <staging-project-ref>
+yarn supabase db push                       # apply all migrations
+# seed reference data + staging dummy data (direct DB URL from the dashboard):
+psql "<staging-db-url>" -f supabase/seed.sql -f supabase/seeds/staging.sql
+```
+Staging accounts use `@staging.wrsi.dev` emails with password `Staging123!` (listed in
+`supabase/seeds/staging.sql`).
+
+**Phone-number convention:** any phone field in a form must be preceded by a country
+dial-code selector (fed from `countries.calling_code`); numbers are stored as
+`+<code><digits>` (E.164-style).
+
 ## Working with the database
 
 The schema lives in `supabase/migrations/` as ordered SQL — this is the source of truth.

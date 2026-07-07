@@ -57,6 +57,7 @@ export const en = {
     firstName: "First name",
     lastName: "Last name",
     birthDate: "Date of birth",
+    phoneCountry: "Country code",
     phone: "Phone (WhatsApp)",
     guardianName: "Parent / guardian name",
     nationality: "Primary nationality",

@@ -267,19 +267,25 @@ export type Database = {
       }
       countries: {
         Row: {
+          calling_code: string | null
           id: string
           iso_code: string
           name: string
+          name_es: string | null
         }
         Insert: {
+          calling_code?: string | null
           id?: string
           iso_code: string
           name: string
+          name_es?: string | null
         }
         Update: {
+          calling_code?: string | null
           id?: string
           iso_code?: string
           name?: string
+          name_es?: string | null
         }
         Relationships: []
       }

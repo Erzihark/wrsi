@@ -14,7 +14,9 @@ major_version = 15
 
 [db.seed]
 enabled = true
-sql_paths = ["./seed.sql"]
+# seed.sql = shared reference catalogs; seeds/dev.sql = local-only dummy data
+# (lorem flavored) incl. test accounts. Staging gets seeds/staging.sql manually.
+sql_paths = ["./seed.sql", "./seeds/dev.sql"]
 
 [studio]
 enabled = true

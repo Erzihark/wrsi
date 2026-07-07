@@ -12,7 +12,7 @@ export function useCountries() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('countries')
-        .select('id, name, iso_code')
+        .select('id, name, name_es, iso_code, calling_code')
         .order('name');
       if (error) throw error;
       return data;

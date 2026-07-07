@@ -78,7 +78,19 @@ export function OnboardingScreen() {
 
   const opt = <T extends { id: string; name: string }>(rows: T[]) =>
     rows.map((r) => ({ label: r.name, value: r.id }));
-  const countryOptions = opt(countries.data);
+  const isEs = i18n.language.startsWith('es');
+  // Country display names follow the app language (name_es vs English name).
+  const countryOptions = countries.data.map((c) => ({
+    label: (isEs ? c.name_es : null) ?? c.name,
+    value: c.id,
+  }));
+  // Dial-code options: "México (+52)".
+  const dialOptions = countries.data
+    .filter((c) => c.calling_code)
+    .map((c) => ({
+      label: `${(isEs ? c.name_es : null) ?? c.name} (${c.calling_code})`,
+      value: c.id,
+    }));
   const fieldOptions = opt(fields.data);
   const levelOptions = opt(levels.data);
   const planOptions = opt(plans.data);
@@ -92,11 +104,15 @@ export function OnboardingScreen() {
 
   const submit = form.handleSubmit(
     async (values) => {
+      // Compose E.164-style phone: selected country's dial code + local digits.
+      const dialCode =
+        countries.data?.find((c) => c.id === values.phone_country_id)?.calling_code ?? '';
+      const fullPhone = `${dialCode}${values.phone_number.replace(/[^0-9]/g, '')}`;
       const p_profile = {
         first_name: values.first_name,
         last_name: values.last_name,
         birth_date: values.birth_date,
-        phone_number: values.phone_number,
+        phone_number: fullPhone,
         parent_or_guardian_name: values.parent_or_guardian_name,
         country_id: values.country_id,
         highest_education_level_id: values.highest_education_level_id,
@@ -188,6 +204,20 @@ export function OnboardingScreen() {
                 yearPlaceholder={t('picker.year')}
                 searchPlaceholder={picker.searchPlaceholder}
                 noResultsText={picker.noResultsText}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="phone_country_id"
+            render={({ field, fieldState }) => (
+              <SearchSelect
+                label={t('onboarding.phoneCountry')}
+                options={dialOptions}
+                value={field.value}
+                onChange={field.onChange}
+                error={errText(fieldState.error?.message)}
+                {...picker}
               />
             )}
           />

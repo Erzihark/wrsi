@@ -128,6 +128,23 @@ captured as a bucket midpoint into `students.budget`.
 
 ## Decisions log
 
+- **2026-07-07 — Environments, seed data, countries, dial codes (branch
+  `feat/environments-seed-data`).** (1) Explained/solved "my users disappeared": data
+  persists across stop/start; `db reset` (needed per new migration) wipes it — so local dev
+  now auto-seeds dummy data + login-able test accounts on every reset
+  (`supabase/seeds/dev.sql`, lorem-ipsum flavored, wired via `config.toml` sql_paths;
+  accounts in README). (2) `supabase/seeds/staging.sql` mirrors it with realistic fake names
+  for the future hosted staging project (manual runbook in README); reference catalogs stay
+  identical across envs in `seed.sql`. (3) Countries is now the full standard catalog
+  (236 entries) with `name_es` + `calling_code` (migration `20260707000001`); country labels
+  localize by app language. (4) New convention: every phone input is preceded by a dial-code
+  selector; numbers stored as `+<code><digits>` — onboarding updated (phone_country_id +
+  local number, composed at submit). (5) Fixed duplicate admin notifications from the
+  interest trigger (per-role join → distinct). Verified: real GoTrue logins for seeded
+  student + admin via curl; 236/236 countries with dial+es; typecheck green; 1012-module
+  bundle. Pending user decisions: staging project hosting + admin CRUD scope (see questions
+  in session notes).
+
 - **2026-07-03 — Onboarding: all fields required + dual validation + pro inputs (migration
   `20260703000002`).** Product decision: every onboarding field is mandatory. Enforced in
   BOTH layers: Zod schema (i18n-keyed messages, per-step validation gates, submit jumps to
