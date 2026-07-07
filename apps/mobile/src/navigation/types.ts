@@ -10,6 +10,15 @@ export type StudentTabParamList = {
   Events: undefined;
 };
 
+export type StudentsStackParamList = {
+  StudentsList: undefined;
+  StudentDetail: { studentId: string };
+};
+
+export type AdminTabParamList = {
+  Students: undefined;
+};
+
 export type CounselorTabParamList = {
   Students: undefined;
 };

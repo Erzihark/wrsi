@@ -128,6 +128,26 @@ captured as a bucket midpoint into `students.budget`.
 
 ## Decisions log
 
+- **2026-07-08 — Admin student management (CRUD) + role model refinement (branch
+  `feat/counselor-students-crud`).** Product decisions locked: (a) **counselors keep
+  operational writes** (status/notes/tasks on assigned students) but **cannot edit the
+  student record** — `students_update` RLS tightened to admin-or-self (migration
+  `20260708000002`); (b) the student **management feature is admin/super-admin only**; (c)
+  admins get a **dedicated Admin section**. Implemented: `AuthContext` experience is now
+  `admin | counselor | student` (was `staff | student`); `RootNavigator` routes admin →
+  new `AdminNavigator` (tabbed, one tab per manageable table — Students today). New
+  `student_directory` **security_invoker view** (migration `20260708000001`) joins counselor
+  name + high-school name + latest status, inheriting RLS automatically (verified: counselor
+  sees 2 assigned, admin sees 3, student sees own). API: `useStudentsList` (infinite-query,
+  filterable), `useStudent`, `useUpdateStudent`, `useCounselors`, `useHighSchools`. UI:
+  filterable/paginated `StudentsListScreen` (name search + counselor/high-school/status/grad-
+  year/nationality/budget-range filters) → `StudentDetailScreen` (full record edit, admin can
+  reassign counselor). Verified: RLS tests (counselor edit blocked, status write kept, admin
+  edit allowed); typecheck green; 1016-module bundle. Follow-ups: counselors currently still
+  see only the placeholder Students screen — their read-only student view is a separate task;
+  program/state/program-type filters and the other admin tables (counselors/high-schools/
+  universities CRUD) are next.
+
 - **2026-07-07 — Relationship-integrity audit + polymorphic guards (branch
   `fix/relationship-integrity`).** User reported an apparently orphaned
   `user_roles.role_id` → verified live: **false alarm** — the row resolved to

@@ -10,7 +10,11 @@ export {
   useFinancialPlans,
   useCurrencies,
   useStudentStatuses,
+  useCounselors,
+  useHighSchools,
 } from './lookups';
 export { useCompleteOnboarding } from './onboarding';
 export type { CompleteOnboardingArgs } from './onboarding';
 export { useStudentCurrentStatus, useStudentTasks } from './status';
+export { useStudentsList, useStudent, useUpdateStudent } from './students';
+export type { StudentFilters, StudentDirectoryRow, StudentUpdate } from './students';

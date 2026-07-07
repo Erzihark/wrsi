@@ -1,9 +1,10 @@
-import { ActivityIndicator, View } from 'react-native';
-import { useTheme } from '@wrsi/ui';
-import { useAuth } from '../auth/AuthContext';
-import { AuthNavigator } from './AuthNavigator';
-import { StudentGate } from './StudentGate';
-import { CounselorNavigator } from './CounselorNavigator';
+import { ActivityIndicator, View } from "react-native";
+import { useTheme } from "@wrsi/ui";
+import { useAuth } from "../auth/AuthContext";
+import { AuthNavigator } from "./AuthNavigator";
+import { StudentGate } from "./StudentGate";
+import { CounselorNavigator } from "./CounselorNavigator";
+import { AdminNavigator } from "./AdminNavigator";
 
 /**
  * Root auth switch: shows a splash while resolving the session, then mounts the
@@ -18,8 +19,8 @@ export function RootNavigator() {
       <View
         style={{
           flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: "center",
+          justifyContent: "center",
           backgroundColor: t.color.background,
         }}
       >
@@ -28,6 +29,15 @@ export function RootNavigator() {
     );
   }
 
-  if (!session) return <AuthNavigator />;
-  return experience === 'staff' ? <CounselorNavigator /> : <StudentGate />;
+  if (!session) {
+    return <AuthNavigator />;
+  }
+
+  if (experience === "admin") {
+    return <AdminNavigator />;
+  }
+  if (experience === "counselor") {
+    return <CounselorNavigator />;
+  }
+  return <StudentGate />;
 }

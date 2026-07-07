@@ -84,6 +84,40 @@ export function useCurrencies() {
   });
 }
 
+/** Counselors, for the CRM's "assigned counselor" filter/field. */
+export function useCounselors() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.lookup('counselors'),
+    staleTime: ONE_HOUR,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('counselors')
+        .select('id, first_name, last_name')
+        .order('first_name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+/** High schools (prepas), for the CRM's "high school" filter/field. */
+export function useHighSchools() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.lookup('high_schools'),
+    staleTime: ONE_HOUR,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('high_schools')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 /** Ordered student-lifecycle statuses (for the dashboard progress timeline). */
 export function useStudentStatuses() {
   const supabase = useSupabase();

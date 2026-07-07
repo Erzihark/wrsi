@@ -462,6 +462,13 @@ export type Database = {
             foreignKeyName: "event_notes_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_notes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -496,6 +503,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_directory"
             referencedColumns: ["id"]
           },
           {
@@ -874,6 +888,13 @@ export type Database = {
             foreignKeyName: "one_to_ones_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "one_to_ones_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1099,6 +1120,13 @@ export type Database = {
             foreignKeyName: "status_history_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1174,6 +1202,13 @@ export type Database = {
             foreignKeyName: "student_applications_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_applications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1217,6 +1252,13 @@ export type Database = {
             foreignKeyName: "student_countries_interest_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_countries_interest_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1244,6 +1286,13 @@ export type Database = {
             columns: ["education_level_id"]
             isOneToOne: false
             referencedRelation: "education_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_education_level_interest_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_directory"
             referencedColumns: ["id"]
           },
           {
@@ -1280,6 +1329,13 @@ export type Database = {
             columns: ["field_of_study_id"]
             isOneToOne: false
             referencedRelation: "fields_of_study"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_fields_of_study_interest_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_directory"
             referencedColumns: ["id"]
           },
           {
@@ -1325,6 +1381,13 @@ export type Database = {
             foreignKeyName: "student_language_exams_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_language_exams_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1349,6 +1412,13 @@ export type Database = {
             columns: ["country_id"]
             isOneToOne: false
             referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_passports_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_directory"
             referencedColumns: ["id"]
           },
           {
@@ -1380,6 +1450,13 @@ export type Database = {
           university_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "student_university_interest_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "student_university_interest_student_id_fkey"
             columns: ["student_id"]
@@ -1565,6 +1642,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_directory"
             referencedColumns: ["id"]
           },
           {
@@ -1796,6 +1880,13 @@ export type Database = {
             foreignKeyName: "workshop_registrations_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workshop_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1858,7 +1949,97 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      student_directory: {
+        Row: {
+          average_grade: number | null
+          birth_date: string | null
+          budget: number | null
+          budget_currency_id: string | null
+          cefr_level: string | null
+          counselor_first_name: string | null
+          counselor_id: string | null
+          counselor_last_name: string | null
+          country_id: string | null
+          created_at: string | null
+          desired_intake_term: Database["public"]["Enums"]["intake_term"] | null
+          desired_intake_year: number | null
+          expected_graduation_year: number | null
+          financial_plan_id: string | null
+          first_name: string | null
+          high_school_id: string | null
+          high_school_name: string | null
+          highest_education_level_id: string | null
+          id: string | null
+          last_name: string | null
+          onboarding_completed_at: string | null
+          parent_or_guardian_name: string | null
+          phone_number: string | null
+          status_changed_at: string | null
+          status_color: string | null
+          status_id: string | null
+          status_name: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_history_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_budget_currency_id_fkey"
+            columns: ["budget_currency_id"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_counselor_id_fkey"
+            columns: ["counselor_id"]
+            isOneToOne: false
+            referencedRelation: "counselors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_financial_plan_id_fkey"
+            columns: ["financial_plan_id"]
+            isOneToOne: false
+            referencedRelation: "financial_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_high_school_id_fkey"
+            columns: ["high_school_id"]
+            isOneToOne: false
+            referencedRelation: "high_schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_highest_education_level_id_fkey"
+            columns: ["highest_education_level_id"]
+            isOneToOne: false
+            referencedRelation: "education_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_access_student: { Args: { p_student_id: string }; Returns: boolean }
@@ -1904,6 +2085,10 @@ export type Database = {
       }
       current_student_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      entity_ref_exists: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: boolean
+      }
       has_role: { Args: { role_name: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_counselor_of: { Args: { p_student_id: string }; Returns: boolean }

@@ -10,9 +10,9 @@ import type { Session } from '@supabase/supabase-js';
 import { useSupabase } from '@wrsi/api';
 import type { AppRole } from '@wrsi/shared-types';
 
-type Experience = 'staff' | 'student';
+type Experience = 'admin' | 'counselor' | 'student';
 
-const STAFF_ROLES: AppRole[] = ['super_admin', 'admin', 'counselor'];
+const ADMIN_ROLES: AppRole[] = ['super_admin', 'admin'];
 
 interface AuthState {
   session: Session | null;
@@ -71,9 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthState>(() => {
     const experience: Experience | null = session
-      ? roles.some((role) => STAFF_ROLES.includes(role))
-        ? 'staff'
-        : 'student'
+      ? roles.some((role) => ADMIN_ROLES.includes(role))
+        ? 'admin'
+        : roles.includes('counselor')
+          ? 'counselor'
+          : 'student'
       : null;
     return {
       session,
