@@ -3,19 +3,29 @@
 > Purpose: let anyone (or a fresh AI agent) resume work without re-deriving context.
 > **Update this file at the end of every working session.** Newest status at the top.
 
-**Last updated:** 2026-07-02
-**Current phase:** Phase 1 (MVP) — foundation complete, starting feature milestones.
+**Last updated:** 2026-07-08
+**Current phase:** Phase 1 (MVP) — foundation + onboarding/dashboard + admin student CRUD done.
+**Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
+the original client brief, feature list, and their phased roadmap, preserved separately from
+our engineering decisions.
 **Full plan:** `~/.claude/plans/i-am-building-this-sunny-lynx.md` (architecture + roadmap).
 
 ---
 
 ## TL;DR — where we are
 
-Foundation + the **student onboarding + dashboard** milestone are built, verified, and
-committed to `master`. A new student is routed through a 3-step onboarding wizard that writes
-their profile atomically via an RPC, then lands on a dashboard showing their current lifecycle
-status + progress timeline (live via Realtime) and pending tasks. Next up: **documents upload**
-(Storage), then **universities search/filter + save/like**, then the **counselor CRM**.
+Foundation, **student onboarding + dashboard**, and **admin student management (CRUD)** are
+built, verified, and committed to `master`. A new student is routed through a 3-step
+onboarding wizard (all fields required, search-select/date pickers, dial-code phone) that
+writes their profile atomically via an RPC, then lands on a dashboard showing their current
+lifecycle status + progress timeline (live via Realtime) and pending tasks. Admins/
+super-admins have a dedicated Admin section to search/filter/edit student records; counselors
+have read-only-on-the-record access (they keep status/notes/tasks writes) via their own
+screen (still a placeholder pending their dedicated read-only student view). Local dev now
+auto-seeds realistic dummy data + login-able test accounts on every `db reset`. Next up:
+**documents upload** (Storage), then **universities search/filter + save/like**, then the
+**counselor's read-only student view** and the rest of the admin CRUD surface (counselors,
+high schools, universities tables).
 
 ## Done (verified)
 

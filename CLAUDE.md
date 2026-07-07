@@ -46,7 +46,19 @@ Keep the project self-documenting so any session can resume without re-explainin
 
 ## Project state
 
-Foundation is built and committed on `master` (see `docs/PROGRESS.md` for the authoritative, up-to-date status). In place: Supabase schema (`supabase/migrations`, 48 tables + RLS + seed), the shared packages (`@wrsi/api`, `ui`, `i18n`, `shared-types`, `shared-utils`), and the Expo mobile shell (React Navigation auth switch + providers + auth screens). `apps/web` is still a stub (public web is a later phase). Always check a package's actual contents before assuming feature behavior exists — most feature screens are still placeholders.
+**Read `docs/REQUIREMENTS.md` first** for the original client brief/feature list/roadmap
+(preserved separately from engineering decisions) — especially after a `/clear`, since it's
+not derivable from the codebase. Then `docs/PROGRESS.md` for the authoritative, up-to-date
+build status.
+
+Foundation, student onboarding + dashboard, and admin student management (CRUD) are built and
+committed on `master`. In place: Supabase schema (`supabase/migrations`, 48 tables + a
+`student_directory` view + RLS + seed + dev/staging seed data), the shared packages
+(`@wrsi/api`, `ui`, `i18n`, `shared-types`, `shared-utils`), and the Expo mobile app (React
+Navigation auth switch routing to Admin / Counselor / Student experiences). `apps/web` is
+still a stub (public web is a later phase). Always check a package's actual contents before
+assuming feature behavior exists — some screens (counselor's, most student tabs) are still
+placeholders.
 
 ## Commands
 
