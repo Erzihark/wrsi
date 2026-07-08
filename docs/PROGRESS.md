@@ -118,6 +118,19 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   (the admin-notification trigger is already wired).
 - Then: the **counselor CRM** (read-only student view + operational writes).
 
+**Just shipped — Counselor CRM read-only student view** (branch `feat/counselor-crm`, parallel
+to `feat/universities-directory`): the counselor's `Students` tab is now a stack — an
+assigned-students list (reuses `useStudentsList`; the `student_directory` RLS already limits a
+counselor to their own students) → a read-only single-pane student detail assembling existing
+hooks (`useStudent` + `useStudentCurrentStatus` + `useStudentTasks` + `useDocuments`): profile
+summary, current status badge, documents (open via a short-lived signed URL — counselors can
+read assigned students' files through `can_access_user`), and tasks. **Deliberately read-only:**
+the status-change workflow stays deferred pending the client's 3 open status questions; task/note
+writes are a follow-up. *Verified:* `yarn typecheck` green; RLS e2e — admin sees all 3 seeded
+students, the counselor sees only their 2 assigned, and an unassigned student's row returns 0
+rows to the counselor. **Follow-up:** admin CRUD for counselors is committed on
+`feat/admin-entity-crud` (`5c2ee44`) but was left out of merged PR #1 — needs its own PR.
+
 **Just shipped — Documents upload (Storage)** (branch `feat/document-upload`): private
 `documents` bucket + `storage.objects` RLS mirroring `can_access_user` via the `{user_id}/…`
 key prefix; `@wrsi/api` `documents.ts` hooks (types/list/upload/delete/signed-URL); the student
