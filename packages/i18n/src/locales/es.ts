@@ -151,4 +151,16 @@ export const es: TranslationResource = {
     pendingTasks: 'Tareas pendientes',
     noTasks: 'Estás al día.',
   },
+  documents: {
+    title: 'Mis documentos',
+    add: 'Subir documento',
+    uploading: 'Subiendo…',
+    uploaded: 'Subido',
+    selectType: 'Categoría (opcional)',
+    empty: 'Aún no hay documentos',
+    open: 'Abrir',
+    delete: 'Eliminar',
+    deleteConfirmTitle: 'Eliminar documento',
+    deleteConfirmMessage: 'Esto elimina el archivo permanentemente. ¿Continuar?',
+  },
 };
