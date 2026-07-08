@@ -160,6 +160,16 @@ export const en = {
     deleteConfirmTitle: "Delete document",
     deleteConfirmMessage: "This permanently deletes the file. Continue?",
   },
+  universities: {
+    search: "Search universities…",
+    empty: "No universities found",
+    save: "♡ Save",
+    saved: "♥ Saved",
+    visitWebsite: "Visit website",
+    requirements: "Requirements",
+    programs: "Programs",
+    noPrograms: "No programs listed yet",
+  },
 };
 
 // Value types are `string` (not literals), so translations enforce key parity

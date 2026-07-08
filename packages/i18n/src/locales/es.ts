@@ -163,4 +163,14 @@ export const es: TranslationResource = {
     deleteConfirmTitle: 'Eliminar documento',
     deleteConfirmMessage: 'Esto elimina el archivo permanentemente. ¿Continuar?',
   },
+  universities: {
+    search: 'Buscar universidades…',
+    empty: 'No se encontraron universidades',
+    save: '♡ Guardar',
+    saved: '♥ Guardada',
+    visitWebsite: 'Visitar sitio web',
+    requirements: 'Requisitos',
+    programs: 'Programas',
+    noPrograms: 'Aún no hay programas',
+  },
 };

@@ -7,6 +7,8 @@ export const queryKeys = {
   universities: (filters?: Record<string, unknown>) =>
     ['universities', filters ?? {}] as const,
   university: (id: string) => ['universities', id] as const,
+  universityPrograms: (id: string) => ['universities', id, 'programs'] as const,
+  universityInterests: ['university_interests'] as const,
   highSchools: () => ['high_schools'] as const,
   highSchool: (id: string) => ['high_schools', id] as const,
   student: (id: string) => ['students', id] as const,
