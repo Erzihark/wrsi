@@ -12,11 +12,23 @@ export type StudentTabParamList = {
 
 export type StudentsStackParamList = {
   StudentsList: undefined;
-  StudentDetail: { studentId: string };
+  StudentDetail: { studentId?: string };
+};
+
+export type HighSchoolsStackParamList = {
+  List: undefined;
+  Detail: { id?: string };
+};
+
+export type UniversitiesStackParamList = {
+  List: undefined;
+  Detail: { id?: string };
 };
 
 export type AdminTabParamList = {
   Students: undefined;
+  HighSchools: undefined;
+  Universities: undefined;
 };
 
 export type CounselorTabParamList = {

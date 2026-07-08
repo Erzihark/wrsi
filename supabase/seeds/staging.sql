@@ -10,6 +10,8 @@
 --   student2@staging.wrsi.dev   Valeria Soto — Onboarding
 --   student3@staging.wrsi.dev   Andrés Peña — no counselor assigned
 --   student4@staging.wrsi.dev   fresh signup (onboarding wizard)
+--   highschool1@staging.wrsi.dev / highschool2@staging.wrsi.dev   high_school portal logins
+--   university1@staging.wrsi.dev / university2@staging.wrsi.dev   university portal logins
 
 create or replace function pg_temp.seed_user(p_id uuid, p_email text, p_password text)
 returns void language plpgsql as $$
@@ -52,6 +54,10 @@ declare
   u_s2 uuid := 'abab0000-0000-4000-8000-000000000012';
   u_s3 uuid := 'abab0000-0000-4000-8000-000000000013';
   u_s4 uuid := 'abab0000-0000-4000-8000-000000000014';
+  u_hs1 uuid := 'abab0000-0000-4000-8000-000000000021';
+  u_hs2 uuid := 'abab0000-0000-4000-8000-000000000022';
+  u_un1 uuid := 'abab0000-0000-4000-8000-000000000031';
+  u_un2 uuid := 'abab0000-0000-4000-8000-000000000032';
   c1   uuid := 'bcbc0000-0000-4000-8000-000000000001';
   hs1  uuid := 'cdcd0000-0000-4000-8000-000000000001';
   hs2  uuid := 'cdcd0000-0000-4000-8000-000000000002';
@@ -89,16 +95,26 @@ begin
   perform pg_temp.seed_user(u_s3, 'student3@staging.wrsi.dev', 'Staging123!');
   perform pg_temp.seed_user(u_s4, 'student4@staging.wrsi.dev', 'Staging123!');
 
-  insert into public.high_schools (id, name, status_id, contact_first_name, contact_last_name, phone_number, monthly_cost, monthly_cost_currency_id)
+  -- High schools + universities are login-capable accounts (user_id NOT NULL).
+  perform pg_temp.seed_user(u_hs1, 'highschool1@staging.wrsi.dev', 'Staging123!');
+  perform pg_temp.seed_role(u_hs1, 'high_school', true);
+  perform pg_temp.seed_user(u_hs2, 'highschool2@staging.wrsi.dev', 'Staging123!');
+  perform pg_temp.seed_role(u_hs2, 'high_school', true);
+  perform pg_temp.seed_user(u_un1, 'university1@staging.wrsi.dev', 'Staging123!');
+  perform pg_temp.seed_role(u_un1, 'university', true);
+  perform pg_temp.seed_user(u_un2, 'university2@staging.wrsi.dev', 'Staging123!');
+  perform pg_temp.seed_role(u_un2, 'university', true);
+
+  insert into public.high_schools (id, user_id, name, status_id, contact_first_name, contact_last_name, phone_number, monthly_cost, monthly_cost_currency_id)
   values
-    (hs1, 'Colegio Del Valle', hs_active, 'Laura', 'Gutiérrez', '+529981234567', 8500, usd),
-    (hs2, 'Instituto Caribe', hs_active, 'Roberto', 'Mendoza', '+529987654321', 6200, usd)
+    (hs1, u_hs1, 'Colegio Del Valle', hs_active, 'Laura', 'Gutiérrez', '+529981234567', 8500, usd),
+    (hs2, u_hs2, 'Instituto Caribe', hs_active, 'Roberto', 'Mendoza', '+529987654321', 6200, usd)
   on conflict (id) do nothing;
 
-  insert into public.universities (id, name, description, website, currency_id)
+  insert into public.universities (id, user_id, name, description, website, currency_id)
   values
-    (un1, 'Universidad Europea de Valencia', 'Private university in Valencia with international programs.', 'https://europea-valencia.example.edu', usd),
-    (un2, 'Lakehead College Toronto', 'Canadian college known for co-op programs.', 'https://lakehead-toronto.example.edu', usd)
+    (un1, u_un1, 'Universidad Europea de Valencia', 'Private university in Valencia with international programs.', 'https://europea-valencia.example.edu', usd),
+    (un2, u_un2, 'Lakehead College Toronto', 'Canadian college known for co-op programs.', 'https://lakehead-toronto.example.edu', usd)
   on conflict (id) do nothing;
 
   insert into public.university_programs (university_id, field_of_study_id, education_level_id, name, duration, tuition, tuition_currency_id)

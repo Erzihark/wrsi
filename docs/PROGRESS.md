@@ -3,8 +3,9 @@
 > Purpose: let anyone (or a fresh AI agent) resume work without re-deriving context.
 > **Update this file at the end of every working session.** Newest status at the top.
 
-**Last updated:** 2026-07-08
-**Current phase:** Phase 1 (MVP) — foundation + onboarding/dashboard + admin student CRUD done.
+**Last updated:** 2026-07-09
+**Current phase:** Phase 1 (MVP) — foundation + onboarding/dashboard + admin CRUD for students,
+high schools & universities done.
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap, preserved separately from
 our engineering decisions.
@@ -22,10 +23,11 @@ lifecycle status + progress timeline (live via Realtime) and pending tasks. Admi
 super-admins have a dedicated Admin section to search/filter/edit student records; counselors
 have read-only-on-the-record access (they keep status/notes/tasks writes) via their own
 screen (still a placeholder pending their dedicated read-only student view). Local dev now
-auto-seeds realistic dummy data + login-able test accounts on every `db reset`. Next up:
+auto-seeds realistic dummy data + login-able test accounts on every `db reset`. Admins now
+have full CRUD (create/edit/delete) for **students, high schools, and universities** — all
+provisioned as login-capable accounts via service-role Edge Functions. Next up:
 **documents upload** (Storage), then **universities search/filter + save/like**, then the
-**counselor's read-only student view** and the rest of the admin CRUD surface (counselors,
-high schools, universities tables).
+**counselor's read-only student view** and **admin CRUD for counselors**.
 
 ## Done (verified)
 
@@ -137,6 +139,33 @@ captured as a bucket midpoint into `students.budget`.
   Alejandro to confirm scope with Atlas before any engineering starts.
 
 ## Decisions log
+
+- **2026-07-09 — Admin CRUD for students + high schools + universities; entities are
+  login-backed (branch `feat/admin-entity-crud`).** Product/architecture decision (with the
+  user): all three admin-managed entities are first-class **login-capable accounts**. Students
+  already required a login; **high schools and universities now do too** — migration
+  `20260709000001` makes `high_schools.user_id` / `universities.user_id` **NOT NULL** and
+  switches their FK to **ON DELETE CASCADE** (matching `students`). This gives one uniform
+  create/delete path. Because the client can't create/delete auth users, **create + delete go
+  through two service-role Edge Functions** (`supabase/functions/create-entity`,
+  `delete-entity`, sharing `_shared/{cors,admin-guard,entities}.ts`): create provisions the
+  auth user (the signup trigger grants `student`; the function swaps it for `high_school` /
+  `university` where needed), inserts the row from a per-entity column allow-list, and **rolls
+  back the auth user if the insert fails**; delete removes the auth user so the cascade cleans
+  up. **List/read/update stay client-side** (RLS already admin-gated). UI is DRY: generic
+  `EntityDetailScreen` (owns form state, create-vs-edit save, delete-with-confirm, and the
+  create-mode email/temp-password inputs) + `EntityListScreen` scaffolds, with a thin
+  per-entity `renderFields`/config; `StudentDetailScreen` was refactored onto the scaffold and
+  gained create/delete. Added `AdminNavigator` tabs (Students / High Schools / Universities),
+  `@wrsi/api` hooks (`useCreateEntity`/`useDeleteEntity`, HS/uni list+get+update,
+  `useStatuses`/`useStatesProvinces`/`useEducationModels`), a reusable `Button` `danger`
+  variant, and es/en strings. Seeds provision portal logins for the seeded HS/universities
+  (`highschool{1,2}@`, `university{1,2}@`, same passwords). **Verified:** `db reset` applies
+  the migration on empty tables; types regenerated (HS/uni `user_id` now non-null); `yarn
+  typecheck` green; Edge Functions exercised via curl — 403 for a non-admin, 201 create for
+  all three types with correct role, clean duplicate-email error, orphan-user rollback on a
+  failed insert, and delete cascading the row + auth user. **Note:** Edge Functions are a new
+  dev-loop dependency — run `yarn supabase functions serve` locally (`deploy` for staging).
 
 - **2026-07-08 — Admin student management (CRUD) + role model refinement (branch
   `feat/counselor-students-crud`).** Product decisions locked: (a) **counselors keep

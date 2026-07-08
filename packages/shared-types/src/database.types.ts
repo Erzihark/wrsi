@@ -675,7 +675,7 @@ export type Database = {
           state_province_id: string | null
           status_id: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           contact_first_name?: string | null
@@ -690,7 +690,7 @@ export type Database = {
           state_province_id?: string | null
           status_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           contact_first_name?: string | null
@@ -705,7 +705,7 @@ export type Database = {
           state_province_id?: string | null
           status_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -1672,7 +1672,7 @@ export type Database = {
           state_province_id: string | null
           status_id: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
           website: string | null
         }
         Insert: {
@@ -1686,7 +1686,7 @@ export type Database = {
           state_province_id?: string | null
           status_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
           website?: string | null
         }
         Update: {
@@ -1700,7 +1700,7 @@ export type Database = {
           state_province_id?: string | null
           status_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           website?: string | null
         }
         Relationships: [
