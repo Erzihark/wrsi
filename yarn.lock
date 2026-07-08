@@ -1926,8 +1926,11 @@ __metadata:
     "@wrsi/shared-utils": "workspace:*"
     "@wrsi/typescript-config": "workspace:*"
     "@wrsi/ui": "workspace:*"
+    base64-arraybuffer: "npm:^1.0.2"
     expo: "npm:~56.0.12"
     expo-dev-client: "npm:~56.0.21"
+    expo-document-picker: "npm:~56.0.4"
+    expo-file-system: "npm:~56.0.8"
     expo-localization: "npm:~56.0.6"
     expo-secure-store: "npm:~56.0.4"
     expo-status-bar: "npm:~56.0.4"
@@ -2262,6 +2265,13 @@ __metadata:
   version: 4.0.4
   resolution: "balanced-match@npm:4.0.4"
   checksum: 10c0/07e86102a3eb2ee2a6a1a89164f29d0dbaebd28f2ca3f5ca786f36b8b23d9e417eb3be45a4acf754f837be5ac0a2317de90d3fcb7f4f4dc95720a1f36b26a17b
+  languageName: node
+  linkType: hard
+
+"base64-arraybuffer@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "base64-arraybuffer@npm:1.0.2"
+  checksum: 10c0/3acac95c70f9406e87a41073558ba85b6be9dbffb013a3d2a710e3f2d534d506c911847d5d9be4de458af6362c676de0a5c4c2d7bdf4def502d00b313368e72f
   languageName: node
   linkType: hard
 
@@ -2893,6 +2903,15 @@ __metadata:
     expo: "*"
     react-native: "*"
   checksum: 10c0/d6dd2ab1bcc7630dcfc66ddd7aff46f113fac7c07b8a6a7e6aefe354448afc7663ae02f43327cf0cd7e8a02b0f5e2ece875c9092428cc98dfb2de3cd9e5866f2
+  languageName: node
+  linkType: hard
+
+"expo-document-picker@npm:~56.0.4":
+  version: 56.0.4
+  resolution: "expo-document-picker@npm:56.0.4"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/001ce99fc85acf3faf2a1f55cc85d77edf15395ac0f261e86de6749fd55386ac29c6fdd5a4a09f3063d814c8f0ef79ea5fac52a4c637ff3f11d97ae0fd32d422
   languageName: node
   linkType: hard
 

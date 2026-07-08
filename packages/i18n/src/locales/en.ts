@@ -113,6 +113,18 @@ export const en = {
     pendingTasks: "Pending tasks",
     noTasks: "You’re all caught up.",
   },
+  documents: {
+    title: "My documents",
+    add: "Upload document",
+    uploading: "Uploading…",
+    uploaded: "Uploaded",
+    selectType: "Category (optional)",
+    empty: "No documents yet",
+    open: "Open",
+    delete: "Delete",
+    deleteConfirmTitle: "Delete document",
+    deleteConfirmMessage: "This permanently deletes the file. Continue?",
+  },
 };
 
 // Value types are `string` (not literals), so translations enforce key parity

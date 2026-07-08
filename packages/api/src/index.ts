@@ -18,3 +18,11 @@ export type { CompleteOnboardingArgs } from './onboarding';
 export { useStudentCurrentStatus, useStudentTasks } from './status';
 export { useStudentsList, useStudent, useUpdateStudent } from './students';
 export type { StudentFilters, StudentDirectoryRow, StudentUpdate } from './students';
+export {
+  useDocumentTypes,
+  useDocuments,
+  useUploadDocument,
+  useDeleteDocument,
+  useCreateDocumentSignedUrl,
+} from './documents';
+export type { DocumentRow, UploadDocumentArgs } from './documents';

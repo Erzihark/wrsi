@@ -10,7 +10,7 @@ import { Text } from './Text';
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   title: string;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
 }
@@ -28,10 +28,13 @@ export function Button({
   const bg =
     variant === 'primary'
       ? t.color.primary
-      : variant === 'secondary'
-        ? t.color.surface
-        : 'transparent';
-  const fg = variant === 'primary' ? t.color.primaryText : t.color.text;
+      : variant === 'danger'
+        ? t.color.danger
+        : variant === 'secondary'
+          ? t.color.surface
+          : 'transparent';
+  const fg =
+    variant === 'primary' || variant === 'danger' ? t.color.primaryText : t.color.text;
 
   return (
     <Pressable
@@ -46,7 +49,12 @@ export function Button({
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: variant === 'ghost' ? 0 : 1,
-          borderColor: variant === 'primary' ? t.color.primary : t.color.border,
+          borderColor:
+            variant === 'primary'
+              ? t.color.primary
+              : variant === 'danger'
+                ? t.color.danger
+                : t.color.border,
           opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
         },
         style,

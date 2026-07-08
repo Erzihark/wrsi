@@ -3,8 +3,9 @@
 > Purpose: let anyone (or a fresh AI agent) resume work without re-deriving context.
 > **Update this file at the end of every working session.** Newest status at the top.
 
-**Last updated:** 2026-07-08
-**Current phase:** Phase 1 (MVP) — foundation + onboarding/dashboard + admin student CRUD done.
+**Last updated:** 2026-07-09
+**Current phase:** Phase 1 (MVP) — foundation + onboarding/dashboard + admin student CRUD +
+documents upload done.
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap, preserved separately from
 our engineering decisions.
@@ -108,18 +109,22 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 - After any schema change: new migration → `yarn supabase db reset` → regenerate types
   (`yarn workspace @wrsi/shared-types gen`) → commit the regenerated `database.types.ts`.
 
-## Next milestone — Documents upload (Storage)
+## Next milestone — Universities search/filter + save/like
 
-- Create a **private Storage bucket** for student documents + storage RLS policies (student
-  owns their files under a `{user_id}/…` prefix; assigned counselor + admin can read — mirror
-  the `can_access_user` predicate).
-- Mobile Documents screen: pick a file (`expo-document-picker` / `expo-image-picker`), upload
-  to Storage, insert a `documents` row (`storage_path`, `type_id`, `original_filename`,
-  `mime_type`, `size_bytes`), list/download/categorize by `document_types`.
-- Then: **universities search/filter + save/like** (`student_university_interest` →
-  admin notification already wired), then the **counselor CRM**.
+- Student-facing university directory: search/filter the `universities` table, view details
+  (programs, requirements), and a save/like button writing `student_university_interest`
+  (the admin-notification trigger is already wired).
+- Then: the **counselor CRM** (read-only student view + operational writes).
 
-Known follow-ups from this milestone (not blockers): birth date is a validated text input
+**Just shipped — Documents upload (Storage)** (branch `feat/document-upload`): private
+`documents` bucket + `storage.objects` RLS mirroring `can_access_user` via the `{user_id}/…`
+key prefix; `@wrsi/api` `documents.ts` hooks (types/list/upload/delete/signed-URL); the student
+`DocumentsScreen` (pick via `expo-document-picker` → read base64 via the SDK-56
+`expo-file-system` `File` API → `base64-arraybuffer` decode → Storage upload → `documents`
+row, with categorize/open/delete). **New native deps require a fresh EAS dev build before
+on-device testing.** See decision log for verification.
+
+Known follow-ups (not blockers): birth date is a validated text input
 (YYYY-MM-DD) — consider a native date picker later; English level captured as CEFR; budget
 captured as a bucket midpoint into `students.budget`.
 
@@ -137,6 +142,27 @@ captured as a bucket midpoint into `students.budget`.
   Alejandro to confirm scope with Atlas before any engineering starts.
 
 ## Decisions log
+
+- **2026-07-09 — Documents upload / private Storage (branch `feat/document-upload`, off
+  `master`).** Added the object store behind the pre-existing `documents` table +
+  `documents_access` RLS. Migration `20260709000002`: a **private `documents` bucket** and a
+  `storage.objects` FOR-ALL policy scoped to it that reuses `can_access_user(((storage.foldername(name))[1])::uuid)`
+  — i.e. the object's leading `{user_id}` path segment is the owner, and the same predicate that
+  guards the metadata row guards the file (owner / assigned counselor / admin). `@wrsi/api`
+  `documents.ts`: `useDocumentTypes`, `useDocuments`, `useUploadDocument` (uploads then inserts
+  the row; **removes the object if the row insert fails** so Storage doesn't orphan),
+  `useDeleteDocument`, `useCreateDocumentSignedUrl` (60s TTL). Mobile `DocumentsScreen` picks a
+  file (`expo-document-picker`), reads it via the SDK-56 `expo-file-system` **`File(uri).base64()`**
+  API, decodes with `base64-arraybuffer`, uploads, and lists with open (signed URL →
+  `Linking`) / delete. Also added a reusable `Button` `danger` variant (same change as the
+  admin-CRUD branch — trivial merge). **New native deps (`expo-document-picker`,
+  `expo-file-system`) mean the current dev build must be rebuilt (EAS) before the picker works
+  on device** — JS-only iteration can't exercise it. **Verified against local Storage via the
+  REST API:** bucket is private; a student uploads to their own `{id}/…` prefix (200) but is
+  blocked from another user's prefix (403, RLS); `documents` row insert (201); signed-URL
+  download returns the bytes (200); the student's **assigned counselor** sees the row while an
+  **unrelated student** gets `[]` and a 403 on a foreign signed-URL; delete of object + row
+  succeeds. `yarn typecheck` green; types regenerated.
 
 - **2026-07-08 — Admin student management (CRUD) + role model refinement (branch
   `feat/counselor-students-crud`).** Product decisions locked: (a) **counselors keep
