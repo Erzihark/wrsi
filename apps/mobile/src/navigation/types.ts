@@ -40,3 +40,8 @@ export type AdminTabParamList = {
 export type CounselorTabParamList = {
   Students: undefined;
 };
+
+export type CounselorStudentsStackParamList = {
+  StudentsList: undefined;
+  StudentDetail: { studentId: string };
+};

@@ -6,14 +6,12 @@ import {
   useStudentStatuses,
   useStudentTasks,
 } from '@wrsi/api';
-import { Badge, Button, Card, Screen, Text, useTheme } from '@wrsi/ui';
+import { Badge, Card, Screen, Text, useTheme } from '@wrsi/ui';
 import { fullName } from '@wrsi/shared-utils';
-import { useAuth } from '../../auth/AuthContext';
 
 export function DashboardScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { signOut } = useAuth();
   const { data: student } = useMyStudentProfile();
 
   const statusQuery = useStudentCurrentStatus(student?.id);
@@ -81,8 +79,6 @@ export function DashboardScreen() {
           <Text variant="muted">{t('dashboard.noTasks')}</Text>
         )}
       </Card>
-
-      <Button variant="secondary" title={t('auth.logout')} onPress={signOut} />
     </Screen>
   );
 }
