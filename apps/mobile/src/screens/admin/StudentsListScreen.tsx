@@ -118,6 +118,7 @@ export function StudentsListScreen() {
           onChangeText={setSearch}
           autoCapitalize="none"
         />
+        <Button title={t('admin.addStudent')} onPress={() => nav.navigate('StudentDetail', {})} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Button
             variant="ghost"

@@ -6,9 +6,12 @@ export { useUniversities, useMyStudentProfile, useNotifications } from './hooks'
 export {
   useCountries,
   useFieldsOfStudy,
+  useStatesProvinces,
+  useEducationModels,
   useEducationLevels,
   useFinancialPlans,
   useCurrencies,
+  useStatuses,
   useStudentStatuses,
   useCounselors,
   useHighSchools,
@@ -26,3 +29,19 @@ export {
   useCreateDocumentSignedUrl,
 } from './documents';
 export type { DocumentRow, UploadDocumentArgs } from './documents';
+export { useCreateEntity, useDeleteEntity } from './entities';
+export type { EntityType, CreateEntityArgs, CreateEntityResult } from './entities';
+export {
+  useHighSchoolsList,
+  useHighSchool,
+  useUpdateHighSchool,
+  useUniversitiesList,
+  useUniversity,
+  useUpdateUniversity,
+} from './directory';
+export type {
+  HighSchoolRow,
+  HighSchoolUpdate,
+  UniversityRow,
+  UniversityUpdate,
+} from './directory';

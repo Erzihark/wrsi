@@ -36,6 +36,38 @@ export function useFieldsOfStudy() {
   });
 }
 
+export function useStatesProvinces() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.lookup('states_provinces'),
+    staleTime: ONE_HOUR,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('states_provinces')
+        .select('id, name, country_id')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useEducationModels() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.lookup('education_models'),
+    staleTime: ONE_HOUR,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('education_models')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 export function useEducationLevels() {
   const supabase = useSupabase();
   return useQuery({
@@ -118,20 +150,25 @@ export function useHighSchools() {
   });
 }
 
-/** Ordered student-lifecycle statuses (for the dashboard progress timeline). */
-export function useStudentStatuses() {
+/** Ordered statuses for any entity type (student, high_school, university…). */
+export function useStatuses(entityType: string) {
   const supabase = useSupabase();
   return useQuery({
-    queryKey: queryKeys.lookup('student_statuses'),
+    queryKey: queryKeys.lookup(`statuses-${entityType}`),
     staleTime: ONE_HOUR,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('statuses')
         .select('id, name, color, sort_order, is_terminal')
-        .eq('entity_type', 'student')
+        .eq('entity_type', entityType)
         .order('sort_order');
       if (error) throw error;
       return data;
     },
   });
+}
+
+/** Ordered student-lifecycle statuses (for the dashboard progress timeline). */
+export function useStudentStatuses() {
+  return useStatuses('student');
 }

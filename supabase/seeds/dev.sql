@@ -10,6 +10,8 @@
 --   student2@wrsi.dev   onboarded (Onboarding)
 --   student3@wrsi.dev   onboarded, no counselor assigned
 --   student4@wrsi.dev   fresh signup (lands on the onboarding wizard)
+--   highschool1@wrsi.dev / highschool2@wrsi.dev   high_school portal logins
+--   university1@wrsi.dev / university2@wrsi.dev   university portal logins
 
 -- Creates a confirmed email/password auth user the app can sign in as.
 create or replace function pg_temp.seed_user(p_id uuid, p_email text, p_password text)
@@ -54,6 +56,10 @@ declare
   u_s2 uuid := 'aaaa0000-0000-4000-8000-000000000012';
   u_s3 uuid := 'aaaa0000-0000-4000-8000-000000000013';
   u_s4 uuid := 'aaaa0000-0000-4000-8000-000000000014';
+  u_hs1 uuid := 'aaaa0000-0000-4000-8000-000000000021';
+  u_hs2 uuid := 'aaaa0000-0000-4000-8000-000000000022';
+  u_un1 uuid := 'aaaa0000-0000-4000-8000-000000000031';
+  u_un2 uuid := 'aaaa0000-0000-4000-8000-000000000032';
   c1   uuid := 'bbbb0000-0000-4000-8000-000000000001';
   hs1  uuid := 'cccc0000-0000-4000-8000-000000000001';
   hs2  uuid := 'cccc0000-0000-4000-8000-000000000002';
@@ -92,17 +98,28 @@ begin
   perform pg_temp.seed_user(u_s3, 'student3@wrsi.dev', 'password123');
   perform pg_temp.seed_user(u_s4, 'student4@wrsi.dev', 'password123');
 
+  -- High schools + universities are login-capable accounts (user_id NOT NULL),
+  -- so each seeded org gets its own auth user + portal role.
+  perform pg_temp.seed_user(u_hs1, 'highschool1@wrsi.dev', 'password123');
+  perform pg_temp.seed_role(u_hs1, 'high_school', true);
+  perform pg_temp.seed_user(u_hs2, 'highschool2@wrsi.dev', 'password123');
+  perform pg_temp.seed_role(u_hs2, 'high_school', true);
+  perform pg_temp.seed_user(u_un1, 'university1@wrsi.dev', 'password123');
+  perform pg_temp.seed_role(u_un1, 'university', true);
+  perform pg_temp.seed_user(u_un2, 'university2@wrsi.dev', 'password123');
+  perform pg_temp.seed_role(u_un2, 'university', true);
+
   -- Directory ----------------------------------------------------------------
-  insert into public.high_schools (id, name, status_id, contact_first_name, contact_last_name, phone_number, monthly_cost, monthly_cost_currency_id)
+  insert into public.high_schools (id, user_id, name, status_id, contact_first_name, contact_last_name, phone_number, monthly_cost, monthly_cost_currency_id)
   values
-    (hs1, 'Lorem Ipsum Academy', hs_active, 'Dolor', 'Amet', '+529981234567', 8500, usd),
-    (hs2, 'Dolor Sit High School', hs_active, 'Elit', 'Adipiscing', '+529987654321', 6200, usd)
+    (hs1, u_hs1, 'Lorem Ipsum Academy', hs_active, 'Dolor', 'Amet', '+529981234567', 8500, usd),
+    (hs2, u_hs2, 'Dolor Sit High School', hs_active, 'Elit', 'Adipiscing', '+529987654321', 6200, usd)
   on conflict (id) do nothing;
 
-  insert into public.universities (id, name, description, website, currency_id)
+  insert into public.universities (id, user_id, name, description, website, currency_id)
   values
-    (un1, 'Universidad Lorem', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.', 'https://lorem.example.edu', usd),
-    (un2, 'Amet Elit University', 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.', 'https://amet.example.edu', usd)
+    (un1, u_un1, 'Universidad Lorem', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.', 'https://lorem.example.edu', usd),
+    (un2, u_un2, 'Amet Elit University', 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.', 'https://amet.example.edu', usd)
   on conflict (id) do nothing;
 
   insert into public.university_programs (university_id, field_of_study_id, education_level_id, name, duration, tuition, tuition_currency_id)

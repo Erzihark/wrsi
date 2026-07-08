@@ -6,6 +6,7 @@
 **Last updated:** 2026-07-09
 **Current phase:** Phase 1 (MVP) — foundation + onboarding/dashboard + admin student CRUD +
 documents upload done.
+
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap, preserved separately from
 our engineering decisions.
@@ -23,10 +24,11 @@ lifecycle status + progress timeline (live via Realtime) and pending tasks. Admi
 super-admins have a dedicated Admin section to search/filter/edit student records; counselors
 have read-only-on-the-record access (they keep status/notes/tasks writes) via their own
 screen (still a placeholder pending their dedicated read-only student view). Local dev now
-auto-seeds realistic dummy data + login-able test accounts on every `db reset`. Next up:
+auto-seeds realistic dummy data + login-able test accounts on every `db reset`. Admins now
+have full CRUD (create/edit/delete) for **students, high schools, and universities** — all
+provisioned as login-capable accounts via service-role Edge Functions. Next up:
 **documents upload** (Storage), then **universities search/filter + save/like**, then the
-**counselor's read-only student view** and the rest of the admin CRUD surface (counselors,
-high schools, universities tables).
+**counselor's read-only student view** and **admin CRUD for counselors**.
 
 ## Done (verified)
 
