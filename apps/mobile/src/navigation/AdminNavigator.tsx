@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import type {
   AdminTabParamList,
+  CounselorsStackParamList,
   HighSchoolsStackParamList,
   StudentsStackParamList,
   UniversitiesStackParamList,
@@ -13,6 +14,8 @@ import { HighSchoolsListScreen } from '../screens/admin/HighSchoolsListScreen';
 import { HighSchoolDetailScreen } from '../screens/admin/HighSchoolDetailScreen';
 import { UniversitiesListScreen } from '../screens/admin/UniversitiesListScreen';
 import { UniversityDetailScreen } from '../screens/admin/UniversityDetailScreen';
+import { CounselorsListScreen } from '../screens/admin/CounselorsListScreen';
+import { CounselorDetailScreen } from '../screens/admin/CounselorDetailScreen';
 
 const StudentsStack = createNativeStackNavigator<StudentsStackParamList>();
 
@@ -74,12 +77,31 @@ function UniversitiesManagement() {
   );
 }
 
+const CounselorsStack = createNativeStackNavigator<CounselorsStackParamList>();
+
+function CounselorsManagement() {
+  const { t } = useTranslation();
+  return (
+    <CounselorsStack.Navigator>
+      <CounselorsStack.Screen
+        name="List"
+        component={CounselorsListScreen}
+        options={{ title: t('admin.counselors') }}
+      />
+      <CounselorsStack.Screen
+        name="Detail"
+        component={CounselorDetailScreen}
+        options={{ title: t('admin.counselor') }}
+      />
+    </CounselorsStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 /**
  * Admin/super-admin experience: a dedicated management section, one tab per
- * manageable table (Students, High Schools, Universities). Counselors slot in as
- * a sibling tab as their surface is built.
+ * manageable table (Students, High Schools, Universities, Counselors).
  */
 export function AdminNavigator() {
   const { t } = useTranslation();
@@ -99,6 +121,11 @@ export function AdminNavigator() {
         name="Universities"
         component={UniversitiesManagement}
         options={{ title: t('admin.universities') }}
+      />
+      <Tab.Screen
+        name="Counselors"
+        component={CounselorsManagement}
+        options={{ title: t('admin.counselors') }}
       />
     </Tab.Navigator>
   );

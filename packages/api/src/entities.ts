@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from './context';
 import { queryKeys } from './queryKeys';
 
-/** The three admin-managed, login-backed entity types. */
-export type EntityType = 'student' | 'high_school' | 'university';
+/** The admin-managed, login-backed entity types. */
+export type EntityType = 'student' | 'high_school' | 'university' | 'counselor';
 
 export interface CreateEntityArgs {
   email: string;
@@ -29,6 +29,8 @@ function listKey(entityType: EntityType) {
       return queryKeys.highSchools();
     case 'university':
       return queryKeys.universities();
+    case 'counselor':
+      return queryKeys.lookup('counselors');
   }
 }
 

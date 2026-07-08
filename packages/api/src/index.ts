@@ -30,10 +30,15 @@ export {
   useUniversitiesList,
   useUniversity,
   useUpdateUniversity,
+  useCounselorsList,
+  useCounselor,
+  useUpdateCounselor,
 } from './directory';
 export type {
   HighSchoolRow,
   HighSchoolUpdate,
   UniversityRow,
   UniversityUpdate,
+  CounselorRow,
+  CounselorUpdate,
 } from './directory';

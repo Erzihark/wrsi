@@ -5,7 +5,7 @@
 
 **Last updated:** 2026-07-09
 **Current phase:** Phase 1 (MVP) — foundation + onboarding/dashboard + admin CRUD for students,
-high schools & universities done.
+high schools, universities & counselors done.
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap, preserved separately from
 our engineering decisions.
@@ -24,10 +24,10 @@ super-admins have a dedicated Admin section to search/filter/edit student record
 have read-only-on-the-record access (they keep status/notes/tasks writes) via their own
 screen (still a placeholder pending their dedicated read-only student view). Local dev now
 auto-seeds realistic dummy data + login-able test accounts on every `db reset`. Admins now
-have full CRUD (create/edit/delete) for **students, high schools, and universities** — all
-provisioned as login-capable accounts via service-role Edge Functions. Next up:
-**documents upload** (Storage), then **universities search/filter + save/like**, then the
-**counselor's read-only student view** and **admin CRUD for counselors**.
+have full CRUD (create/edit/delete) for **students, high schools, universities, and
+counselors** — all provisioned as login-capable accounts via service-role Edge Functions. Next
+up: **documents upload** (Storage), then **universities search/filter + save/like**, then the
+**counselor's read-only student view**.
 
 ## Done (verified)
 
@@ -140,8 +140,15 @@ captured as a bucket midpoint into `students.budget`.
 
 ## Decisions log
 
-- **2026-07-09 — Admin CRUD for students + high schools + universities; entities are
-  login-backed (branch `feat/admin-entity-crud`).** Product/architecture decision (with the
+- **2026-07-09 — Admin CRUD for students + high schools + universities + counselors; entities
+  are login-backed (branch `feat/admin-entity-crud`).** Counselors were folded into the same
+  pattern with **no migration** (`counselors.user_id` was already `NOT NULL UNIQUE` +
+  `ON DELETE CASCADE`, and `counselors_admin_write` RLS already allows `is_admin()` writes):
+  added `'counselor'` to the Edge Function `ENTITY_CONFIG` + client `EntityType`,
+  `useCounselorsList`/`useCounselor`/`useUpdateCounselor` in `directory.ts`, a
+  Counselors tab, and `CounselorsListScreen`/`CounselorDetailScreen` (name + phone) on the
+  same scaffolds. Verified via the Edge Function: 201 create with the correct single
+  `counselor` role, delete cascades the row + auth user. Product/architecture decision (with the
   user): all three admin-managed entities are first-class **login-capable accounts**. Students
   already required a login; **high schools and universities now do too** — migration
   `20260709000001` makes `high_schools.user_id` / `universities.user_id` **NOT NULL** and
