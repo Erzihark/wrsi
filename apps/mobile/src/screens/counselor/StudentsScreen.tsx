@@ -6,13 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { useStudentsList, type StudentDirectoryRow, type StudentFilters } from '@wrsi/api';
 import { fullName } from '@wrsi/shared-utils';
 import { Badge, Button, Card, Input, Screen, Text, useTheme } from '@wrsi/ui';
-import { useAuth } from '../../auth/AuthContext';
 import type { CounselorStudentsStackParamList } from '../../navigation/types';
 
 export function StudentsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { signOut } = useAuth();
   const nav =
     useNavigation<NativeStackNavigationProp<CounselorStudentsStackParamList, 'StudentsList'>>();
 
@@ -33,10 +31,7 @@ export function StudentsScreen() {
   return (
     <Screen>
       <View style={{ gap: theme.spacing.sm, paddingBottom: theme.spacing.sm }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text variant="heading">{t('counselor.students')}</Text>
-          <Button variant="ghost" title={t('auth.logout')} onPress={signOut} />
-        </View>
+        <Text variant="heading">{t('counselor.students')}</Text>
         <Input
           placeholder={t('counselor.search')}
           value={search}

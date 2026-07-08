@@ -131,6 +131,12 @@ students, the counselor sees only their 2 assigned, and an unassigned student's 
 rows to the counselor. **Follow-up:** admin CRUD for counselors is committed on
 `feat/admin-entity-crud` (`5c2ee44`) but was left out of merged PR #1 — needs its own PR.
 
+Also on this branch: a **global top `AppHeader`** (in `RootNavigator`) now carries the brand +
+a single **Log out** action across every signed-in experience (admin/counselor/student) — the
+admin section previously had no logout affordance at all. Redundant per-screen logout buttons
+were removed from the student dashboard and the counselor list. RootNavigator zeroes the top
+safe-area inset for the nested navigator so screen headers don't double-pad under the notch.
+
 **Just shipped — Documents upload (Storage)** (branch `feat/document-upload`): private
 `documents` bucket + `storage.objects` RLS mirroring `can_access_user` via the `{user_id}/…`
 key prefix; `@wrsi/api` `documents.ts` hooks (types/list/upload/delete/signed-URL); the student
