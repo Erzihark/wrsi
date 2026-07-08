@@ -1,9 +1,18 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
-import type { AdminTabParamList, StudentsStackParamList } from './types';
+import type {
+  AdminTabParamList,
+  HighSchoolsStackParamList,
+  StudentsStackParamList,
+  UniversitiesStackParamList,
+} from './types';
 import { StudentsListScreen } from '../screens/admin/StudentsListScreen';
 import { StudentDetailScreen } from '../screens/admin/StudentDetailScreen';
+import { HighSchoolsListScreen } from '../screens/admin/HighSchoolsListScreen';
+import { HighSchoolDetailScreen } from '../screens/admin/HighSchoolDetailScreen';
+import { UniversitiesListScreen } from '../screens/admin/UniversitiesListScreen';
+import { UniversityDetailScreen } from '../screens/admin/UniversityDetailScreen';
 
 const StudentsStack = createNativeStackNavigator<StudentsStackParamList>();
 
@@ -25,12 +34,52 @@ function StudentsManagement() {
   );
 }
 
+const HighSchoolsStack = createNativeStackNavigator<HighSchoolsStackParamList>();
+
+function HighSchoolsManagement() {
+  const { t } = useTranslation();
+  return (
+    <HighSchoolsStack.Navigator>
+      <HighSchoolsStack.Screen
+        name="List"
+        component={HighSchoolsListScreen}
+        options={{ title: t('admin.highSchools') }}
+      />
+      <HighSchoolsStack.Screen
+        name="Detail"
+        component={HighSchoolDetailScreen}
+        options={{ title: t('admin.highSchool') }}
+      />
+    </HighSchoolsStack.Navigator>
+  );
+}
+
+const UniversitiesStack = createNativeStackNavigator<UniversitiesStackParamList>();
+
+function UniversitiesManagement() {
+  const { t } = useTranslation();
+  return (
+    <UniversitiesStack.Navigator>
+      <UniversitiesStack.Screen
+        name="List"
+        component={UniversitiesListScreen}
+        options={{ title: t('admin.universities') }}
+      />
+      <UniversitiesStack.Screen
+        name="Detail"
+        component={UniversityDetailScreen}
+        options={{ title: t('admin.university') }}
+      />
+    </UniversitiesStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 /**
- * Admin/super-admin experience: a dedicated management section. One tab per
- * manageable table — Students today; Counselors / High Schools / Universities
- * slot in as sibling tabs as they're built.
+ * Admin/super-admin experience: a dedicated management section, one tab per
+ * manageable table (Students, High Schools, Universities). Counselors slot in as
+ * a sibling tab as their surface is built.
  */
 export function AdminNavigator() {
   const { t } = useTranslation();
@@ -40,6 +89,16 @@ export function AdminNavigator() {
         name="Students"
         component={StudentsManagement}
         options={{ title: t('admin.students') }}
+      />
+      <Tab.Screen
+        name="HighSchools"
+        component={HighSchoolsManagement}
+        options={{ title: t('admin.highSchools') }}
+      />
+      <Tab.Screen
+        name="Universities"
+        component={UniversitiesManagement}
+        options={{ title: t('admin.universities') }}
       />
     </Tab.Navigator>
   );

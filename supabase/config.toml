@@ -40,3 +40,11 @@ enable_confirmations = false
 [auth.hook.custom_access_token]
 enabled = true
 uri = "pg-functions://postgres/public/custom_access_token_hook"
+
+# Admin-only entity provisioning. verify_jwt stays on (default) so the platform
+# rejects unauthenticated callers; the functions additionally check is_admin().
+[functions.create-entity]
+verify_jwt = true
+
+[functions.delete-entity]
+verify_jwt = true
