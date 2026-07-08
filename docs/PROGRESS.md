@@ -111,12 +111,21 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 - After any schema change: new migration → `yarn supabase db reset` → regenerate types
   (`yarn workspace @wrsi/shared-types gen`) → commit the regenerated `database.types.ts`.
 
-## Next milestone — Universities search/filter + save/like
+## Next milestone — Counselor CRM (read-only student view + operational writes)
 
-- Student-facing university directory: search/filter the `universities` table, view details
-  (programs, requirements), and a save/like button writing `student_university_interest`
-  (the admin-notification trigger is already wired).
-- Then: the **counselor CRM** (read-only student view + operational writes).
+- The counselor's dedicated student view (single pane per student: profile, docs, status,
+  tasks) — read-only on the record, but keeps status/notes/tasks writes.
+- Also pending: **admin CRUD for counselors** exists on branch `feat/admin-entity-crud`
+  (commit `5c2ee44`) but was NOT included in merged PR #1 (which stopped at `e8a2402`) — it
+  needs its own PR/merge so that work isn't lost.
+
+**Just shipped — Universities search/filter + save/like** (branch `feat/universities-directory`):
+enhanced `useUniversities(search)` + new `useUniversityPrograms` / `useMyUniversityInterests`
+(returns a Set) / `useToggleUniversityInterest`; a reusable `SaveUniversityButton`; the student
+Universities tab is now a stack — searchable list with per-card save toggle → detail screen
+(description, website via `Linking`, requirements, programs). No migration (tables + RLS already
+existed). *Verified:* `yarn typecheck` green; e2e via a student JWT — save → 201 + admin
+`university_interest` notification fired (1→2), unsave → 204 row removed.
 
 **Just shipped — Documents upload (Storage)** (branch `feat/document-upload`): private
 `documents` bucket + `storage.objects` RLS mirroring `can_access_user` via the `{user_id}/…`
