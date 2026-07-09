@@ -101,8 +101,10 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   forms still use a single flat `state_province_id` picker (all states, no country filter,
   `useStatesProvinces()` unfiltered). Now that `states_provinces` is seeded, give those the
   same Country → State/Province cascade for consistency.
-- Workshop/1:1 slot times are plain `HH:mm`/`YYYY-MM-DD` text inputs (format + end-after-start
-  validated). Consider a time picker and constraining them to the event's date range.
+- Workshop/1:1 slot date/time now use `DateField`/new `TimeField` (hour/minute/AM-PM dropdowns,
+  `packages/ui`) with inline errors, including a check that the slot date falls within the
+  event's own start/end range. `TimeField` is event-scoped only so far — reuse it wherever
+  else a time (not just a date) gets captured.
 - `states_provinces` seed covers the primary study-abroad countries only; extend per ISO
   3166-2 as new destinations come up (the field is optional for unlisted countries).
 - **Confirmed not yet merged:** commit `5c2ee44` (admin CRUD for counselors) is still only on
