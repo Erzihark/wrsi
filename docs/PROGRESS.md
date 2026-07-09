@@ -75,8 +75,11 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   each event's participating universities, workshop schedule, and 1:1 slots (admin
   `EventsListScreen`/`EventDetailScreen`) — skips the login-provisioning Edge Function flow
   used for high schools/universities since events aren't login-capable entities.
-  Not yet verified on a device/emulator in this session — only typechecked and cross-checked
-  against the RLS policies.
+  Event geography is a structured **Country → State/Province** cascade (migration
+  `20260710000001_event_country.sql` adds `events.country_id` + a state-belongs-to-country
+  trigger; `states_provinces` is now seeded for MX/US/CA/GB/AU/ES/DE/FR/IT/NL/IE — it was
+  previously an empty table). Verified at the data layer this session (trigger cases + the
+  PostgREST embed) but not yet on a device/emulator.
 - Next up: counselor **write** actions (status/notes/tasks) — blocked on the application-
   status workflow questions below.
 
@@ -94,6 +97,14 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 
 - Birth date is a validated text input (YYYY-MM-DD) — consider a native date picker later.
 - English level captured as CEFR; budget captured as a bucket midpoint into `students.budget`.
+- **Geography cascade only wired into the event form.** The high-school and university admin
+  forms still use a single flat `state_province_id` picker (all states, no country filter,
+  `useStatesProvinces()` unfiltered). Now that `states_provinces` is seeded, give those the
+  same Country → State/Province cascade for consistency.
+- Workshop/1:1 slot times are plain `HH:mm`/`YYYY-MM-DD` text inputs (format + end-after-start
+  validated). Consider a time picker and constraining them to the event's date range.
+- `states_provinces` seed covers the primary study-abroad countries only; extend per ISO
+  3166-2 as new destinations come up (the field is optional for unlisted countries).
 - **Confirmed not yet merged:** commit `5c2ee44` (admin CRUD for counselors) is still only on
   `feat/admin-entity-crud`, built after PR #1 merged (which stopped at `e8a2402`). Needs its
   own PR before admins can create/delete counselor accounts through the app.
