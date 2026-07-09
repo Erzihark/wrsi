@@ -5,11 +5,11 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-08
+**Last updated:** 2026-07-09
 **Current phase:** Phase 1 (MVP) — foundation, onboarding/dashboard, admin CRUD (students/high
-schools/universities/counselors), documents upload, student university directory, and the
-counselor's read-only CRM view are all built and merged to `master`. Student event
-registration/workshops/1:1s/notes is built on `feat/student-events`, awaiting PR review.
+schools/universities/counselors), documents upload, student university directory, the
+counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
+admin event CRUD) are all built and merged to `master`.
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap.
 **Full plan:** `~/.claude/plans/i-am-building-this-sunny-lynx.md` (architecture + roadmap).
@@ -30,10 +30,11 @@ directory with a save/like button. **Counselors** have a read-only "single pane 
 assigned student (profile, status, documents, tasks) — no status/note writes yet, pending
 client answers on the status workflow. A global top app bar carries the brand + the one
 Log-out action across every experience. Local dev auto-seeds realistic dummy data +
-login-able test accounts on every `db reset`. On `feat/student-events` (unmerged): students
-can browse/register for events, book workshops and Open Fair Day 1:1 slots, and capture
-per-university notes/ranking; admins get an Events tab to create/manage events and their
-universities/workshops/1:1 slots.
+login-able test accounts on every `db reset`. **Events:** students can browse/register for
+events, book workshops and Open Fair Day 1:1 slots, and capture per-university notes/ranking;
+admins get an Events tab to create/manage events and their universities/workshops/1:1 slots.
+Admin high-school, university, and event forms all use a cascading **Country → State/Province**
+picker (`apps/mobile/src/components/CountryStateSelect.tsx`).
 
 ## How to run / verify (quick)
 
@@ -76,22 +77,15 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
   script's bare `supabase` isn't on PATH) → commit `database.types.ts`.
 - Edge Functions run on Deno; test locally with `yarn supabase functions serve`.
 
-## Next milestone — counselor write actions
+## Next milestone — counselor write actions (blocked)
 
-- Event management is built end-to-end on `feat/student-events`, not yet merged: students
-  browse/register for events, book workshops and Open Fair Day 1:1 slots, and capture
-  per-university notes/ranking (`packages/api/src/events.ts` + student `EventsScreen`/
-  `EventDetailScreen`). Admins get a new Events tab to create/edit/delete events and manage
-  each event's participating universities, workshop schedule, and 1:1 slots (admin
-  `EventsListScreen`/`EventDetailScreen`) — skips the login-provisioning Edge Function flow
-  used for high schools/universities since events aren't login-capable entities.
-  Event geography is a structured **Country → State/Province** cascade (migration
-  `20260710000001_event_country.sql` adds `events.country_id` + a state-belongs-to-country
-  trigger; `states_provinces` is now seeded for MX/US/CA/GB/AU/ES/DE/FR/IT/NL/IE — it was
-  previously an empty table). Verified at the data layer this session (trigger cases + the
-  PostgREST embed) but not yet on a device/emulator.
-- Next up: counselor **write** actions (status/notes/tasks) — blocked on the application-
-  status workflow questions below.
+- Counselor **write** actions (status/notes/tasks) are the stated next milestone but are
+  **blocked** on the application-status workflow questions below (which statuses, who changes
+  them, backward transitions).
+- Unblocked candidates while that's pending: backend integration/security tests for the events
+  API (`packages/api/src/events.ts`, merged without them), a notifications inbox UI (the
+  `notifications` table/hook/triggers exist but have no surface), and expanding the Maestro E2E
+  slice.
 
 ## Open items awaiting the client / owner
 
@@ -107,10 +101,13 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
 
 - Birth date is a validated text input (YYYY-MM-DD) — consider a native date picker later.
 - English level captured as CEFR; budget captured as a bucket midpoint into `students.budget`.
-- **Geography cascade only wired into the event form.** The high-school and university admin
-  forms still use a single flat `state_province_id` picker (all states, no country filter,
-  `useStatesProvinces()` unfiltered). Now that `states_provinces` is seeded, give those the
-  same Country → State/Province cascade for consistency.
+- **Geography cascade** is now shared across the event, high-school, and university admin forms
+  via `CountryStateSelect` (`apps/mobile/src/components`). Note: high schools/universities
+  persist only `state_province_id` (the country is a UI-only filter derived from the state),
+  whereas events store `country_id` explicitly. Verified at typecheck + data layer (states
+  seeded per country); the picker interaction itself is not yet exercised on a device/emulator.
+  The event form still has its own inline cascade — could be refactored onto `CountryStateSelect`
+  later (it also persists `country_id`, so not a drop-in).
 - Workshop/1:1 slot date/time now use `DateField`/new `TimeField` (hour/minute/AM-PM dropdowns,
   `packages/ui`) with inline errors, including a check that the slot date falls within the
   event's own start/end range. `TimeField` is event-scoped only so far — reuse it wherever

@@ -1,6 +1,7 @@
 import { type RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import {
+  useCountries,
   useCreateEntity,
   useCurrencies,
   useDeleteEntity,
@@ -10,8 +11,9 @@ import {
   useUpdateUniversity,
   type UniversityUpdate,
 } from '@wrsi/api';
-import { Input, SearchSelect, Select } from '@wrsi/ui';
+import { Input, Select } from '@wrsi/ui';
 import type { UniversitiesStackParamList } from '../../navigation/types';
+import { CountryStateSelect } from '../../components/CountryStateSelect';
 import { EntityDetailScreen, type SetField } from './EntityDetailScreen';
 
 // `type` (not `interface`) so it satisfies `Form extends Record<string, unknown>`.
@@ -46,11 +48,14 @@ export function UniversityDetailScreen() {
   const create = useCreateEntity('university');
   const update = useUpdateUniversity(id ?? '');
   const remove = useDeleteEntity('university');
+  const countries = useCountries();
   const currencies = useCurrencies();
   const states = useStatesProvinces();
   const statuses = useStatuses('university');
 
-  const optionsReady = Boolean(currencies.data && states.data && statuses.data);
+  const optionsReady = Boolean(
+    countries.data && currencies.data && states.data && statuses.data,
+  );
 
   const initialForm: FormState | undefined = record.data
     ? {
@@ -66,7 +71,6 @@ export function UniversityDetailScreen() {
     : undefined;
 
   const currencyOptions = (currencies.data ?? []).map((c) => ({ label: c.code, value: c.id }));
-  const stateOptions = (states.data ?? []).map((s) => ({ label: s.name, value: s.id }));
   const statusOptions = (statuses.data ?? []).map((s) => ({ label: s.name, value: s.id }));
 
   function validate(form: FormState): string | null {
@@ -126,14 +130,11 @@ export function UniversityDetailScreen() {
           value={form.currency_id}
           onChange={(v) => set('currency_id', v)}
         />
-        <SearchSelect
-          label={t('admin.state')}
-          options={stateOptions}
+        <CountryStateSelect
+          countries={countries.data ?? []}
+          states={states.data ?? []}
           value={form.state_province_id}
           onChange={(v) => set('state_province_id', v)}
-          placeholder={t('picker.select')}
-          searchPlaceholder={t('picker.search')}
-          noResultsText={t('picker.noResults')}
         />
         <Select
           label={t('admin.status')}

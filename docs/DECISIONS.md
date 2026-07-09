@@ -45,6 +45,24 @@ Two commits on `master`: `2276c44` (Supabase backend + monorepo foundation), `74
 
 ## Dated decisions
 
+- **2026-07-09 — Country → State/Province cascade in the admin directory forms (branch
+  `feat/geography-cascade-directory`).** The high-school and university admin forms used a
+  single flat `state_province_id` picker listing every seeded state with no country filter;
+  only the event form had the cascading picker. Extracted a reusable
+  `apps/mobile/src/components/CountryStateSelect.tsx` and wired it into
+  `HighSchoolDetailScreen` + `UniversityDetailScreen`. **Key difference from the event form:**
+  those two tables have **no `country_id` column** (only `state_province_id`, whose row already
+  carries its `country_id`), so the country is **UI-only** — the component derives the initial
+  country from the persisted state, uses it to scope the state list, and clears the state when
+  the country changes; only `state_province_id` is persisted (no schema/API change, `toPayload`
+  untouched). It's self-contained (takes `countries`/`states` arrays + `value`/`onChange`) and
+  derives the initial country synchronously in a `useState` initializer, which is safe because
+  the `EntityDetailScreen` scaffold only renders fields once `optionsReady` (incl. `states`) is
+  true. The event form keeps its own inline cascade for now since it also persists `country_id`
+  (not a drop-in for the component). *Verified:* `yarn typecheck` green across all 7 packages;
+  unit tests green; `states_provinces` confirmed seeded per country (US 51, MX 32, IT 20, …) so
+  the picker has real options. Not yet exercised on a device/emulator (no local RN E2E harness).
+
 - **2026-07-09 — Global top app bar with Log-out (branch `feat/counselor-crm`).** The admin
   experience had no logout affordance at all (its tabs hide the tab header; inner stacks only
   show screen titles). Added one persistent `AppHeader` in `RootNavigator`, shown above every

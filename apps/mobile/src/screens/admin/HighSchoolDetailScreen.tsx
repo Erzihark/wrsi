@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { type RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import {
+  useCountries,
   useCreateEntity,
   useCurrencies,
   useDeleteEntity,
@@ -12,8 +13,9 @@ import {
   useUpdateHighSchool,
   type HighSchoolUpdate,
 } from '@wrsi/api';
-import { Input, SearchSelect, Select, useTheme } from '@wrsi/ui';
+import { Input, Select, useTheme } from '@wrsi/ui';
 import type { HighSchoolsStackParamList } from '../../navigation/types';
+import { CountryStateSelect } from '../../components/CountryStateSelect';
 import { EntityDetailScreen, type SetField } from './EntityDetailScreen';
 
 // `type` (not `interface`) so it satisfies `Form extends Record<string, unknown>`.
@@ -51,13 +53,14 @@ export function HighSchoolDetailScreen() {
   const create = useCreateEntity('high_school');
   const update = useUpdateHighSchool(id ?? '');
   const remove = useDeleteEntity('high_school');
+  const countries = useCountries();
   const currencies = useCurrencies();
   const models = useEducationModels();
   const states = useStatesProvinces();
   const statuses = useStatuses('high_school');
 
   const optionsReady = Boolean(
-    currencies.data && models.data && states.data && statuses.data,
+    countries.data && currencies.data && models.data && states.data && statuses.data,
   );
 
   const initialForm: FormState | undefined = record.data
@@ -77,7 +80,6 @@ export function HighSchoolDetailScreen() {
 
   const currencyOptions = (currencies.data ?? []).map((c) => ({ label: c.code, value: c.id }));
   const modelOptions = (models.data ?? []).map((m) => ({ label: m.name, value: m.id }));
-  const stateOptions = (states.data ?? []).map((s) => ({ label: s.name, value: s.id }));
   const statusOptions = (statuses.data ?? []).map((s) => ({ label: s.name, value: s.id }));
 
   function validate(form: FormState): string | null {
@@ -147,14 +149,11 @@ export function HighSchoolDetailScreen() {
           value={form.education_model_id}
           onChange={(v) => set('education_model_id', v)}
         />
-        <SearchSelect
-          label={t('admin.state')}
-          options={stateOptions}
+        <CountryStateSelect
+          countries={countries.data ?? []}
+          states={states.data ?? []}
           value={form.state_province_id}
           onChange={(v) => set('state_province_id', v)}
-          placeholder={t('picker.select')}
-          searchPlaceholder={t('picker.search')}
-          noResultsText={t('picker.noResults')}
         />
         <Select
           label={t('admin.status')}
