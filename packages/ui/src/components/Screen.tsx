@@ -16,6 +16,7 @@ export function Screen({ scroll = false, style, children, ...rest }: ScreenProps
         style={{ flex: 1, backgroundColor: t.color.background }}
         contentContainerStyle={[padding, style]}
         keyboardShouldPersistTaps="handled"
+        {...rest}
       >
         {children}
       </ScrollView>

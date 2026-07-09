@@ -34,7 +34,7 @@ export function CounselorNavigator() {
       <Tab.Screen
         name="Students"
         component={StudentsStackScreen}
-        options={{ title: t('counselor.students') }}
+        options={{ title: t('counselor.students'), tabBarButtonTestID: 'counselor-tab-students' }}
       />
     </Tab.Navigator>
   );

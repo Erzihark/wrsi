@@ -1,0 +1,128 @@
+# Testing Guide
+
+WRSI has three test layers. **Tests are part of the definition of done** (see the "Testing
+(REQUIRED)" section in `CLAUDE.md`): when you change code, run the relevant layers, update
+tests the change affects, and add tests for new behavior.
+
+| Layer | Where | Runner | Needs the Supabase stack? |
+|-------|-------|--------|---------------------------|
+| Unit (pure logic) | `packages/*/src/**/*.test.ts` | Vitest | No |
+| Backend integration / security / edge | `tests/backend/**` | Vitest | **Yes** (live local stack) |
+| Mobile E2E | `.maestro/**` | Maestro | Yes (stack) + emulator/dev build |
+
+---
+
+## 1. Unit tests (fast, no backend)
+
+Pure functions with the Supabase client mocked or not involved at all.
+
+```bash
+yarn test                      # all workspaces' unit tests via Turbo
+yarn workspace @wrsi/shared-utils test
+yarn workspace @wrsi/api test
+```
+
+Covered today: `@wrsi/shared-utils` helpers (incl. `sanitizeSearchTerm`, the PostgREST
+metacharacter stripper shared by `useUniversities` / `useStudentsList`), `@wrsi/api`
+`queryKeys` factory, and `functionErrorMessage` (Edge Function error unwrapping).
+
+`yarn test` runs **only** this layer — it never needs Docker, so it's safe to run anytime and
+it's what the CI `checks` job gates on.
+
+## 2. Backend integration / security / edge tests
+
+These sign in as the seeded accounts and hit a **live local stack**, so they verify RLS,
+triggers, RPC validation, and the Edge Functions for real. They live in the `@wrsi/backend-tests`
+workspace (`tests/backend`) and are deliberately **not** wired into `yarn test` (they need
+Docker), only into `yarn test:backend`.
+
+### Prerequisites
+
+```bash
+# 1. Docker Desktop running, then:
+yarn supabase start
+yarn supabase db reset          # deterministic: re-applies migrations + seeds/dev.sql
+# 2. In a second terminal (needed only for the edge-function tests):
+yarn supabase functions serve
+```
+
+`seeds/dev.sql` creates the fixtures the tests assume — accounts (all password
+`password123`): `admin@wrsi.dev`, `counselor@wrsi.dev` (assigned to student1 & student2),
+`student1..4@wrsi.dev` (student3 has no counselor; student4 has no profile → onboarding),
+`highschool1/2@wrsi.dev`, `university1/2@wrsi.dev`; plus one event with workshops and a
+pre-registered student. Keep `tests/backend/helpers/ids.ts` in sync with that seed.
+
+### Run
+
+```bash
+yarn test:backend                                   # integration + security + edge
+yarn workspace @wrsi/backend-tests test:integration security   # subset by folder name
+```
+
+### Connection details / keys
+
+`tests/backend/helpers/env.ts` defaults to the local stack (`http://127.0.0.1:54321`) and the
+well-known local demo anon/service keys. **These are not secrets** and only work locally. If a
+future Supabase CLI prints different keys in `yarn supabase status`, override without editing
+code:
+
+```bash
+SUPABASE_URL=... SUPABASE_ANON_KEY=... SUPABASE_SERVICE_ROLE_KEY=... yarn test:backend
+```
+
+CI does exactly this — it exports the keys from `yarn supabase status -o env`.
+
+### What's covered
+
+- **Integration:** universities read + `ilike` search path, `student_directory` list + counselor
+  filter, `complete_student_onboarding` server-side validation.
+- **Security (RLS + triggers):** per-role row visibility (student own-row, counselor
+  assigned-vs-unassigned, admin all), admin-only tables invisible to non-admins (also proves a
+  `user_roles` JWT claim can't be leveraged for DB access), the student-record write guards
+  (own non-restricted column OK; counselor-reassign blocked; counselor can't edit the row),
+  owner-portal writes, and the workshop time-overlap trigger.
+- **Edge Functions:** `create-entity` / `delete-entity` — unauthenticated 401, non-admin
+  rejected, admin create with correct role + cascade delete, duplicate-email rejection.
+
+## 3. Mobile E2E (Maestro)
+
+Native flows against a real dev build. Maestro is the Expo-recommended E2E tool and drives the
+actual app, so native modules (document picker, secure store) work.
+
+### Prerequisites
+
+- **Maestro CLI** installed (on Windows, run it from **WSL2**):
+  `curl -fsSL https://get.maestro.mobile.dev | bash`
+- An Android emulator or iOS simulator running, with a **dev build** of `@wrsi/mobile`
+  installed (`npx eas-cli build --profile development` from `apps/mobile`, or a local build).
+  Expo Go does **not** work (SDK 56 native modules).
+- The local Supabase stack up and freshly `yarn supabase db reset` (deterministic accounts).
+- The app's `.env` pointing at the stack (Android emulator → `http://10.0.2.2:54321`).
+
+### Run
+
+```bash
+maestro test .maestro                        # all flows
+maestro test .maestro --include-tags auth    # just the login flows
+```
+
+App id (both platforms): `com.wxstudy.wrsi`.
+
+### What's covered / conventions
+
+Runnable today: login as each role lands on the correct experience
+(`.maestro/auth/login-{admin,counselor,student}.yaml`) and the onboarding gate for a
+profile-less student (`.maestro/student/onboarding-gate.yaml`). These rely on `testID`s:
+`login-email` / `login-password` / `login-submit`, the role tab ids
+`admin-tab-students` / `student-tab-dashboard` / `counselor-tab-students`, and
+`onboarding-screen`.
+
+**Extending E2E** (the incremental next step): add a `testID` to the element a new flow needs
+(the `@wrsi/ui` `Button`/`Input`/`Screen` primitives already forward `testID`), then add a
+flow. Prefer `testID`s over visible text — UI copy is i18n'd (Spanish default), so text
+selectors are locale-fragile. Deferred flows to add next: full onboarding completion, document
+upload/delete, admin student/high-school/university CRUD, counselor read-only CRM, and (once
+the events branch merges) the events browse/register/workshop/1:1/notes flow.
+
+Maestro E2E is **not** in CI yet (it needs an emulator + built app). That's a tracked
+follow-up; for now run it locally for UI-affecting changes.

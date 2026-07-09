@@ -1,0 +1,18 @@
+# A student with no completed profile (student4 — seeded with an auth account but
+# no students row) is forced into the onboarding wizard rather than the tabs.
+appId: com.wxstudy.wrsi
+tags:
+  - student
+  - onboarding
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "student4@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "onboarding-screen"
+- assertNotVisible:
+    id: "student-tab-dashboard"

@@ -1,0 +1,14 @@
+# Counselor signs in and lands on the counselor experience (assigned students).
+appId: com.wxstudy.wrsi
+tags:
+  - auth
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "counselor@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "counselor-tab-students"

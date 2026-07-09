@@ -239,6 +239,55 @@ Two commits on `master`: `2276c44` (Supabase backend + monorepo foundation), `74
   Full writeup + 4 open confirmation questions for Alejandro: see "Future: Partner
   Integration (Atlas)" section in the plan file.
 
+## 2026-07-09 — Testing foundation (unit + backend + E2E scaffold + CI)
+
+Introduced automated testing where there was none (both `lint` and `test` were no-op Turbo
+tasks). Branched `feat/testing-foundation` off `master`, so events-specific API/E2E coverage is
+deferred until `feat/student-events` merges (the events schema is on `master`, but `events.ts`
+hooks and the event screens are not).
+
+**Tooling choices.** *Vitest* for unit + backend (fast, ESM/TS-native, fits Yarn 4). *Maestro*
+for mobile E2E (Expo-recommended; drives the real dev build, so native modules like the
+document picker and secure store work — a web/Playwright route was rejected because
+`react-native-web`/`react-dom` aren't wired and native modules wouldn't run). *GitHub Actions*
+for CI.
+
+**Layers.**
+1. **Unit** — co-located `*.test.ts` in `packages/shared-utils` + `packages/api` (Vitest, node
+   env). Extracted the copy-pasted PostgREST search-sanitize regex from `hooks.ts` /
+   `students.ts` into a single tested `sanitizeSearchTerm` in `@wrsi/shared-utils` (behavior
+   preserved; added a `@wrsi/api → @wrsi/shared-utils` dep). Also test the `queryKeys` factory
+   and exported `functionErrorMessage` (Edge Function error unwrapping).
+2. **Backend integration/security/edge** — new `@wrsi/backend-tests` workspace (`tests/backend`,
+   added `tests/*` to root workspaces). Signs in as the seeded `dev.sql` accounts and hits a
+   live local stack. Kept out of the default `yarn test` (it needs Docker) via a `test:integration`
+   script invoked through the root `test:backend`. Helpers build anon/service/authed clients
+   directly with `@supabase/supabase-js` (not `createWrsiClient`) to avoid pulling the
+   React-flavored `@wrsi/api` barrel into a Node process. Covers per-role RLS visibility
+   (incl. the `student3`-has-no-counselor negative and the point that a `user_roles` JWT claim
+   can't be leveraged for DB access), the student-record write guards, owner-portal writes, the
+   workshop-overlap trigger, `complete_student_onboarding` validation, and the
+   `create-entity`/`delete-entity` Edge Functions (401 / non-admin / role-swap+cascade /
+   duplicate-email). *Verified:* full suite green against the live stack — 19 backend tests
+   (6 integration, 9 security, 4 edge) + 17 unit tests; whole monorepo typechecks.
+3. **Mobile E2E** — `.maestro/` flows (app id `com.wxstudy.wrsi`). Added stable `testID`s
+   (login fields/submit, role tab buttons via `tabBarButtonTestID`, onboarding screen) and made
+   `@wrsi/ui` `Screen` forward props in scroll mode so `testID` threads through. Runnable flows:
+   login-per-role landing + the onboarding gate. Not runnable in this environment (needs an
+   emulator + dev build); deeper flows are a documented follow-up.
+
+**CI** (`.github/workflows/ci.yml`): `checks` job (typecheck + `yarn test`) and `backend` job
+(`supabase start` + `db reset` + `functions serve` + `test:backend`, keys exported from
+`supabase status -o env`) gate every push/PR. Maestro E2E is intentionally not in CI yet
+(emulator + build cost).
+
+**Local demo keys gotcha.** The current Supabase CLI's local anon/service JWTs differ from the
+older "classic" demo keys; `tests/backend/helpers/env.ts` uses the current ones as fallback and
+honors `SUPABASE_*` env overrides (which CI sets from `supabase status`).
+
+**Process.** Testing is now part of "done" — see the new "Testing (REQUIRED)" section in
+`CLAUDE.md` and the full [`docs/TESTING.md`](TESTING.md) guide.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

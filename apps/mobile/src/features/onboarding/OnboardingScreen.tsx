@@ -182,7 +182,7 @@ export function OnboardingScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll testID="onboarding-screen">
       <View
         style={{
           flexDirection: 'row',

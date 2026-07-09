@@ -1,0 +1,19 @@
+{
+  "name": "@wrsi/backend-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:integration": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "@wrsi/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "@wrsi/typescript-config": "workspace:*",
+    "typescript": "~6.0.3",
+    "vitest": "^2.1.9"
+  }
+}
