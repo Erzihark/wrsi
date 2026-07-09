@@ -12,6 +12,16 @@ export function normalizeForDedup(value: string): string {
     .replace(/\p{Diacritic}/gu, '');
 }
 
+/**
+ * Strip characters that carry meaning inside a PostgREST filter (`or(...)`
+ * grouping and `ilike` wildcards) so a stray token typed into a search box can't
+ * malform the request. Returns the trimmed, sanitized term, or `''` for nullish
+ * input. RLS still bounds the result regardless — this is about query integrity.
+ */
+export function sanitizeSearchTerm(search?: string | null): string {
+  return (search ?? '').trim().replace(/[(),*]/g, '');
+}
+
 /** Join first/last name into a display string, skipping empty parts. */
 export function fullName(first?: string | null, last?: string | null): string {
   return [first, last].filter(Boolean).join(' ').trim();

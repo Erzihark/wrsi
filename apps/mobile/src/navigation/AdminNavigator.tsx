@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type {
   AdminEventsStackParamList,
   AdminTabParamList,
+  CounselorsStackParamList,
   HighSchoolsStackParamList,
   StudentsStackParamList,
   UniversitiesStackParamList,
@@ -16,6 +17,8 @@ import { UniversitiesListScreen } from '../screens/admin/UniversitiesListScreen'
 import { UniversityDetailScreen } from '../screens/admin/UniversityDetailScreen';
 import { EventsListScreen } from '../screens/admin/EventsListScreen';
 import { EventDetailScreen } from '../screens/admin/EventDetailScreen';
+import { CounselorsListScreen } from '../screens/admin/CounselorsListScreen';
+import { CounselorDetailScreen } from '../screens/admin/CounselorDetailScreen';
 
 const StudentsStack = createNativeStackNavigator<StudentsStackParamList>();
 
@@ -97,12 +100,31 @@ function EventsManagement() {
   );
 }
 
+const CounselorsStack = createNativeStackNavigator<CounselorsStackParamList>();
+
+function CounselorsManagement() {
+  const { t } = useTranslation();
+  return (
+    <CounselorsStack.Navigator>
+      <CounselorsStack.Screen
+        name="List"
+        component={CounselorsListScreen}
+        options={{ title: t('admin.counselors') }}
+      />
+      <CounselorsStack.Screen
+        name="Detail"
+        component={CounselorDetailScreen}
+        options={{ title: t('admin.counselor') }}
+      />
+    </CounselorsStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 /**
  * Admin/super-admin experience: a dedicated management section, one tab per
- * manageable table (Students, High Schools, Universities, Events). Counselors
- * slot in as a sibling tab as their surface is built.
+ * manageable table (Students, High Schools, Universities, Counselors, Events).
  */
 export function AdminNavigator() {
   const { t } = useTranslation();
@@ -111,7 +133,7 @@ export function AdminNavigator() {
       <Tab.Screen
         name="Students"
         component={StudentsManagement}
-        options={{ title: t('admin.students') }}
+        options={{ title: t('admin.students'), tabBarButtonTestID: 'admin-tab-students' }}
       />
       <Tab.Screen
         name="HighSchools"
@@ -122,6 +144,11 @@ export function AdminNavigator() {
         name="Universities"
         component={UniversitiesManagement}
         options={{ title: t('admin.universities') }}
+      />
+      <Tab.Screen
+        name="Counselors"
+        component={CounselorsManagement}
+        options={{ title: t('admin.counselors') }}
       />
       <Tab.Screen
         name="Events"

@@ -74,12 +74,40 @@ Two commits on `master`: `2276c44` (Supabase backend + monorepo foundation), `74
   e2e via a student JWT — save → 201 + admin `university_interest` notification fired (1→2),
   unsave → 204 row removed.
 
-- **2026-07-09 — Admin CRUD for counselors (branch `feat/admin-entity-crud`, commit
-  `5c2ee44`).** Folded counselors into the existing student/high-school/university
-  admin-entity CRUD pattern (create/edit/delete via the service-role `create-entity` /
-  `delete-entity` Edge Functions). **Note:** this commit was left out of merged PR #1 (which
-  stopped at `e8a2402`) — confirm it has landed in `master` before relying on it; if not, it
-  needs its own PR/cherry-pick.
+- **2026-07-09 — Admin CRUD for students + high schools + universities + counselors; entities
+  are login-backed (branch `feat/admin-entity-crud`, merged into `master` via `feat/testing-
+  foundation`'s follow-on merge after being left out of PR #1).** Product/architecture decision
+  (with the user): all four admin-managed entities are first-class **login-capable accounts**.
+  Students already required a login; **high schools and universities now do too** — migration
+  `20260709000001` makes `high_schools.user_id` / `universities.user_id` **NOT NULL** and
+  switches their FK to **ON DELETE CASCADE** (matching `students`), giving one uniform
+  create/delete path. Because the client can't create/delete auth users, **create + delete go
+  through two service-role Edge Functions** (`supabase/functions/create-entity`,
+  `delete-entity`, sharing `_shared/{cors,admin-guard,entities}.ts`): create provisions the
+  auth user (the signup trigger grants `student`; the function swaps it for
+  `high_school`/`university`/`counselor` where needed), inserts the row from a per-entity
+  column allow-list, and **rolls back the auth user if the insert fails**; delete removes the
+  auth user so the cascade cleans up. **List/read/update stay client-side** (RLS already
+  admin-gated). UI is DRY: generic `EntityDetailScreen` (form state, create-vs-edit save,
+  delete-with-confirm, create-mode email/temp-password inputs) + `EntityListScreen` scaffolds,
+  with a thin per-entity `renderFields`/config. `AdminNavigator` gained Students / High Schools
+  / Universities tabs; `@wrsi/api` gained `useCreateEntity`/`useDeleteEntity`, HS/uni
+  list+get+update, `useStatuses`/`useStatesProvinces`/`useEducationModels`.
+  **Counselors** (commit `5c2ee44`, originally left out of the merged PR #1 which stopped at
+  `e8a2402`) were folded into the same pattern with **no migration needed**
+  (`counselors.user_id` was already `NOT NULL UNIQUE` + `ON DELETE CASCADE`, and
+  `counselors_admin_write` RLS already allowed `is_admin()` writes): added `'counselor'` to the
+  Edge Function `ENTITY_CONFIG` + client `EntityType`, `useCounselorsList`/`useCounselor`/
+  `useUpdateCounselor` in `directory.ts`, a Counselors tab, and `CounselorsListScreen`/
+  `CounselorDetailScreen` (name + phone) on the same scaffolds.
+  **Verified:** `db reset` applies the migration on empty tables; types regenerated (HS/uni
+  `user_id` now non-null); `yarn typecheck` green; Edge Functions exercised via curl — 403 for
+  a non-admin, 201 create for all four types with the correct single role (no leftover
+  `student` grant), clean duplicate-email error, orphan-user rollback on a failed insert, and
+  delete cascading the row + auth user. **Note:** Edge Functions are a dev-loop dependency —
+  run `yarn supabase functions serve` locally (`deploy` for staging). Seeds provision portal
+  logins for the seeded HS/universities (`highschool{1,2}@`, `university{1,2}@`, same
+  passwords).
 
 - **2026-07-09 — Documents upload / private Storage (branch `feat/document-upload`, off
   `master`).** Added the object store behind the pre-existing `documents` table +
@@ -238,6 +266,55 @@ Two commits on `master`: `2276c44` (Supabase backend + monorepo foundation), `74
   keep the naming/versioning generic so it's cheap to extract later if more partners commit.
   Full writeup + 4 open confirmation questions for Alejandro: see "Future: Partner
   Integration (Atlas)" section in the plan file.
+
+## 2026-07-09 — Testing foundation (unit + backend + E2E scaffold + CI)
+
+Introduced automated testing where there was none (both `lint` and `test` were no-op Turbo
+tasks). Branched `feat/testing-foundation` off `master`, so events-specific API/E2E coverage is
+deferred until `feat/student-events` merges (the events schema is on `master`, but `events.ts`
+hooks and the event screens are not).
+
+**Tooling choices.** *Vitest* for unit + backend (fast, ESM/TS-native, fits Yarn 4). *Maestro*
+for mobile E2E (Expo-recommended; drives the real dev build, so native modules like the
+document picker and secure store work — a web/Playwright route was rejected because
+`react-native-web`/`react-dom` aren't wired and native modules wouldn't run). *GitHub Actions*
+for CI.
+
+**Layers.**
+1. **Unit** — co-located `*.test.ts` in `packages/shared-utils` + `packages/api` (Vitest, node
+   env). Extracted the copy-pasted PostgREST search-sanitize regex from `hooks.ts` /
+   `students.ts` into a single tested `sanitizeSearchTerm` in `@wrsi/shared-utils` (behavior
+   preserved; added a `@wrsi/api → @wrsi/shared-utils` dep). Also test the `queryKeys` factory
+   and exported `functionErrorMessage` (Edge Function error unwrapping).
+2. **Backend integration/security/edge** — new `@wrsi/backend-tests` workspace (`tests/backend`,
+   added `tests/*` to root workspaces). Signs in as the seeded `dev.sql` accounts and hits a
+   live local stack. Kept out of the default `yarn test` (it needs Docker) via a `test:integration`
+   script invoked through the root `test:backend`. Helpers build anon/service/authed clients
+   directly with `@supabase/supabase-js` (not `createWrsiClient`) to avoid pulling the
+   React-flavored `@wrsi/api` barrel into a Node process. Covers per-role RLS visibility
+   (incl. the `student3`-has-no-counselor negative and the point that a `user_roles` JWT claim
+   can't be leveraged for DB access), the student-record write guards, owner-portal writes, the
+   workshop-overlap trigger, `complete_student_onboarding` validation, and the
+   `create-entity`/`delete-entity` Edge Functions (401 / non-admin / role-swap+cascade /
+   duplicate-email). *Verified:* full suite green against the live stack — 19 backend tests
+   (6 integration, 9 security, 4 edge) + 17 unit tests; whole monorepo typechecks.
+3. **Mobile E2E** — `.maestro/` flows (app id `com.wxstudy.wrsi`). Added stable `testID`s
+   (login fields/submit, role tab buttons via `tabBarButtonTestID`, onboarding screen) and made
+   `@wrsi/ui` `Screen` forward props in scroll mode so `testID` threads through. Runnable flows:
+   login-per-role landing + the onboarding gate. Not runnable in this environment (needs an
+   emulator + dev build); deeper flows are a documented follow-up.
+
+**CI** (`.github/workflows/ci.yml`): `checks` job (typecheck + `yarn test`) and `backend` job
+(`supabase start` + `db reset` + `functions serve` + `test:backend`, keys exported from
+`supabase status -o env`) gate every push/PR. Maestro E2E is intentionally not in CI yet
+(emulator + build cost).
+
+**Local demo keys gotcha.** The current Supabase CLI's local anon/service JWTs differ from the
+older "classic" demo keys; `tests/backend/helpers/env.ts` uses the current ones as fallback and
+honors `SUPABASE_*` env overrides (which CI sets from `supabase status`).
+
+**Process.** Testing is now part of "done" — see the new "Testing (REQUIRED)" section in
+`CLAUDE.md` and the full [`docs/TESTING.md`](TESTING.md) guide.
 
 ## Key decisions (for context)
 

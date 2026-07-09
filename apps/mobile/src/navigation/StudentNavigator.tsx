@@ -58,7 +58,7 @@ export function StudentNavigator() {
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
-        options={{ title: t('student.dashboard') }}
+        options={{ title: t('student.dashboard'), tabBarButtonTestID: 'student-tab-dashboard' }}
       />
       <Tab.Screen
         name="Universities"

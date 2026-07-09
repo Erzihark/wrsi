@@ -1,9 +1,10 @@
-// One config map shared by create-entity + delete-entity so the three admin-managed
-// entities (students, high schools, universities) flow through identical code.
-export type EntityType = 'student' | 'high_school' | 'university';
+// One config map shared by create-entity + delete-entity so the admin-managed
+// entities (students, high schools, universities, counselors) flow through
+// identical code.
+export type EntityType = 'student' | 'high_school' | 'university' | 'counselor';
 
 interface EntityConfig {
-  table: 'students' | 'high_schools' | 'universities';
+  table: 'students' | 'high_schools' | 'universities' | 'counselors';
   role: EntityType; // role name to grant the provisioned auth user
   columns: string[]; // profile columns the client is allowed to set
 }
@@ -36,6 +37,11 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
       'name', 'description', 'requirements', 'logo_url', 'website',
       'currency_id', 'state_province_id', 'status_id',
     ],
+  },
+  counselor: {
+    table: 'counselors',
+    role: 'counselor',
+    columns: ['first_name', 'last_name', 'phone'],
   },
 };
 

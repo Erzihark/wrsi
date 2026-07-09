@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from './context';
 import { queryKeys } from './queryKeys';
 
-/** The three admin-managed, login-backed entity types. */
-export type EntityType = 'student' | 'high_school' | 'university';
+/** The admin-managed, login-backed entity types. */
+export type EntityType = 'student' | 'high_school' | 'university' | 'counselor';
 
 export interface CreateEntityArgs {
   email: string;
@@ -29,6 +29,8 @@ function listKey(entityType: EntityType) {
       return queryKeys.highSchools();
     case 'university':
       return queryKeys.universities();
+    case 'counselor':
+      return queryKeys.lookup('counselors');
   }
 }
 
@@ -37,7 +39,10 @@ function listKey(entityType: EntityType) {
  * Response), not on `error.message` — pull the server's `{ error }` out so the UI
  * shows "email already registered" instead of a generic "non-2xx status code".
  */
-async function functionErrorMessage(error: unknown, fallback: string): Promise<string> {
+export async function functionErrorMessage(
+  error: unknown,
+  fallback: string,
+): Promise<string> {
   const ctx = (error as { context?: Response }).context;
   if (ctx && typeof ctx.json === 'function') {
     try {

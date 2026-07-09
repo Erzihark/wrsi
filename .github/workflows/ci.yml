@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.4
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+      - name: Install
+        run: yarn install --immutable
+      - name: Typecheck
+        run: yarn typecheck
+      - name: Unit tests
+        run: yarn test
+
+  backend:
+    name: Backend integration / security / edge tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.4
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Start Supabase (Docker is preinstalled on ubuntu runners)
+        run: yarn supabase start
+
+      - name: Reset DB to migrations + seed
+        run: yarn supabase db reset
+
+      - name: Export local Supabase URL + keys
+        run: |
+          STATUS="$(yarn supabase status -o env)"
+          val() { echo "$STATUS" | grep -E "^$1=" | head -1 | cut -d'=' -f2- | tr -d '"'; }
+          {
+            echo "SUPABASE_URL=$(val API_URL)"
+            echo "SUPABASE_ANON_KEY=$(val ANON_KEY)"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$(val SERVICE_ROLE_KEY)"
+          } >> "$GITHUB_ENV"
+
+      - name: Serve Edge Functions
+        run: |
+          yarn supabase functions serve > functions.log 2>&1 &
+          echo "Waiting for the functions runtime..."
+          for i in $(seq 1 40); do
+            if curl -s -o /dev/null http://127.0.0.1:54321/functions/v1/create-entity -X POST -d '{}'; then
+              echo "Functions runtime is up."
+              break
+            fi
+            sleep 3
+          done
+
+      - name: Run backend test suite
+        run: yarn test:backend
+
+      - name: Dump functions log on failure
+        if: failure()
+        run: cat functions.log || true

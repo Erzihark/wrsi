@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { sanitizeSearchTerm } from '@wrsi/shared-utils';
 import { useSupabase } from './context';
 import { queryKeys } from './queryKeys';
 
@@ -6,9 +7,9 @@ import { queryKeys } from './queryKeys';
 export function useUniversities(search?: string) {
   const supabase = useSupabase();
   // Strip PostgREST filter metacharacters so a stray token can't malform the query.
-  const term = search?.trim().replace(/[(),*]/g, '');
+  const term = sanitizeSearchTerm(search);
   return useQuery({
-    queryKey: queryKeys.universities({ search: term ?? '' }),
+    queryKey: queryKeys.universities({ search: term }),
     queryFn: async () => {
       let query = supabase
         .from('universities')

@@ -1,0 +1,14 @@
+# An onboarded student signs in and lands on the student experience (Dashboard).
+appId: com.wxstudy.wrsi
+tags:
+  - auth
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "student1@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "student-tab-dashboard"

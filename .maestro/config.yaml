@@ -1,0 +1,12 @@
+# Maestro workspace config for the WRSI mobile app (Expo dev build).
+# App id is the same for iOS and Android: com.wxstudy.wrsi
+#
+# Run all flows:   maestro test .maestro
+# Run by tag:      maestro test .maestro --include-tags auth
+#
+# Prerequisites (see docs/TESTING.md):
+#   - A dev build of @wrsi/mobile installed on a running emulator/simulator.
+#   - The local Supabase stack up and freshly `yarn supabase db reset`, so the
+#     seeded accounts in supabase/seeds/dev.sql exist (all password: password123).
+flows:
+  - "**/*.yaml"
