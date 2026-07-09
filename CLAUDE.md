@@ -2,47 +2,82 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Git Workflow (REQUIRED: branch → PR → review → merge)
+## Git Workflow (REQUIRED: branch → commit → push → STOP)
 
-Never work directly on `master`. For every task or meaningful chunk of work:
+Never work directly on `master` unless the user explicitly asks for a change to land there in
+the current turn (e.g. a small docs-only edit). For every task or meaningful chunk of work:
 
 1. **Branch.** Create a feature branch off `master` (e.g. `feat/document-upload`,
    `fix/onboarding-validation`). Use the `compound-engineering:ce-worktree` skill to set up
    isolated work when it's available; otherwise `git checkout -b <name>`.
 2. **Commit.** Commit with a clean, descriptive message explaining _why_ the change was
-   made — no "wip", no vague "updates". Push the branch to `origin` (repo:
-   `Erzihark/wrsi`) so work is backed up remotely, not just sitting locally.
-3. **Open a PR.** Use the GitHub MCP tools (`mcp__github__create_pull_request`, etc.) — the
-   `gh` CLI is not installed in this environment. Reach for the
-   `compound-engineering:ce-commit-push-pr` skill for the commit+push+PR flow, or
-   `compound-engineering:ce-compound` for writing up a durable learning once solved.
-4. **Code review.** Run a review on the PR's diff before merging — use the
-   `compound-engineering:ce-code-review` skill (or the plain `code-review` skill) at an
-   effort level matched to the change's risk. Fix findings, or explicitly note why a finding
-   doesn't apply, before merging.
-5. **Merge.** Merge the PR into `master` via the GitHub MCP tools
-   (`mcp__github__merge_pull_request`) once review is clean and CI (if any) passes. Prefer
-   squash merges to keep `master` history readable, unless the branch's individual commits
-   are independently meaningful.
+   made — no "wip", no vague "updates".
+3. **Push and stop.** Push the branch to `origin` (repo: `Erzihark/wrsi`) so work is backed
+   up remotely, then **stop** — do not open or merge a PR. **The user opens, reviews, and
+   merges every PR themselves via GitHub's UI.** The connected GitHub token intentionally
+   does not have `pull_requests: write` (the user declined to grant it), and even if it did,
+   do not call `mcp__github__create_pull_request` / `mcp__github__merge_pull_request`, and do
+   not `git merge`/`git push` a feature branch into `master` — that would be self-approving
+   code onto the default branch with no human review. Give the user the compare/PR-creation
+   URL (`https://github.com/Erzihark/wrsi/pull/new/<branch>`) so they can open it.
+4. **Don't start new branches while one is pending review.** If the user is mid-review of a
+   branch, wait for their approval/merge before starting unrelated new work, unless they say
+   otherwise.
 
-Keep each branch/PR scoped to one coherent piece of work — don't bundle unrelated fixes into
-a feature branch.
+Keep each branch scoped to one coherent piece of work — don't bundle unrelated fixes into a
+feature branch. A code review (the `code-review` skill, effort matched to risk) is still
+valuable before handing a branch off, but it does not gate a merge you perform yourself.
 
-**Token permissions / fallback.** The GitHub MCP PR + merge tools require the connected
-token to have `pull_requests: write` (fine-grained) or the `repo` scope (classic). If
-`create_pull_request` / `merge_pull_request` return `403 Resource not accessible`, the token
-is missing that scope — surface it to the user to fix. Until it's fixed, don't get blocked:
-push the branch, then complete the merge locally with a **squash** merge into `master`
-(`git merge --squash <branch>` → one clean commit → push), and note in the message that the
-PR/review step was done locally because the MCP token lacked PR access.
+## Testing (REQUIRED — part of "done")
+
+Tests are a standing check on every piece of work, not a one-off. The full guide (how to run
+each layer, prerequisites, what's covered) is [`docs/TESTING.md`](docs/TESTING.md). The rule:
+
+1. **Run the affected layers before handing off a branch.** At minimum `yarn typecheck` +
+   `yarn test` (fast unit layer, no Docker). If the change touches the API/DB/RLS/Edge
+   Functions, also run `yarn test:backend` (needs `yarn supabase start` + `db reset`, and
+   `yarn supabase functions serve` for the edge tests). If it changes mobile UI, run the
+   relevant `.maestro` flow locally (WSL2 + emulator + dev build).
+2. **Update tests the change affects.** When you alter behavior, update the tests that assert
+   it — a red suite you caused is not "done".
+3. **Add tests for new behavior.** New API hook / RLS policy / trigger / Edge Function → add
+   backend coverage in `tests/backend`. New pure helper → a unit test. New user-facing flow →
+   a Maestro flow (add a `testID` rather than relying on i18n'd text).
+4. **Don't claim green without running it.** State which layers you ran; if a layer needs the
+   stack/emulator and you couldn't run it, say so.
+
+The three layers: **unit** (Vitest, `packages/*/src/**/*.test.ts`, no backend) · **backend
+integration/security/edge** (Vitest, `tests/backend`, live local stack) · **mobile E2E**
+(Maestro, `.maestro`, emulator + dev build). CI (`.github/workflows/ci.yml`) gates
+typecheck + unit + backend on every push/PR; Maestro E2E is local-only for now.
+
+## Session hygiene (token budget)
+
+The user is on a metered usage window and wants it stretched, not burned fast:
+
+- **Default to Sonnet.** Only use Opus for architecture calls with long-term lock-in,
+  security-critical code (auth, payments, RLS *design*), a bug that resisted a first pass,
+  genuinely ambiguous requirements, or a final pre-merge review of something risky. Routine
+  CRUD screens/hooks/migrations/i18n/tests don't need it. (Only the human running `/model`
+  can actually switch models — say which tier a task needs if it's non-obvious.)
+- **Suggest a `/clear` at feature boundaries.** When a self-contained feature is shipped,
+  committed, and verified, say so plainly and suggest clearing before starting the next
+  unrelated one, rather than silently letting one session sprawl across many features.
+- **Don't use subagents as a blanket cost-reduction trick.** Spawning one re-derives context
+  cold, which is often *more* expensive than doing routine work inline. Reserve them for
+  genuinely isolated/parallelizable work.
+- **Keep `docs/PROGRESS.md` short** (~100–150 lines: current status + next milestone). Full
+  dated write-ups go in `docs/DECISIONS.md` instead, since PROGRESS.md gets re-read/re-touched
+  far more often.
 
 ## Documentation & progress (REQUIRED)
 
 Keep the project self-documenting so any session can resume without re-explaining context:
 
 - **`README.md`** — developer-facing guide (stack, setup, commands, conventions). Keep it current as the project changes.
-- **`docs/PROGRESS.md`** — the handoff log. **Read it first** when starting work, and **update it at the end of every meaningful session**: what got done (with verification), env gotchas, and the next milestone. Newest status at the top.
-- Update both as part of the same change that alters behavior/structure — don't defer docs to "later".
+- **`docs/PROGRESS.md`** — the short handoff log. **Read it first** when starting work, and **update it at the end of every meaningful session**: current status, env gotchas, and the next milestone. Newest status at the top. Keep it short (see Session hygiene above).
+- **`docs/DECISIONS.md`** — the full dated decision log with verification write-ups. Append a new dated entry here when you ship something; don't grow `PROGRESS.md` with historical detail. Read on demand (not every session) when you need the reasoning behind a past change.
+- Update `README.md` + `PROGRESS.md` as part of the same change that alters behavior/structure — don't defer docs to "later".
 
 ## Project state
 

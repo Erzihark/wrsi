@@ -10,6 +10,12 @@ export type StudentTabParamList = {
   Events: undefined;
 };
 
+// Student-facing university browsing (distinct from the admin UniversitiesStack).
+export type StudentUniversitiesStackParamList = {
+  UniversitiesList: undefined;
+  UniversityDetail: { universityId: string };
+};
+
 export type StudentsStackParamList = {
   StudentsList: undefined;
   StudentDetail: { studentId?: string };
@@ -39,4 +45,9 @@ export type AdminTabParamList = {
 
 export type CounselorTabParamList = {
   Students: undefined;
+};
+
+export type CounselorStudentsStackParamList = {
+  StudentsList: undefined;
+  StudentDetail: { studentId: string };
 };

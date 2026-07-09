@@ -1,0 +1,13 @@
+# Reusable login steps. Callers pass EMAIL and PASSWORD via runFlow env.
+appId: com.wxstudy.wrsi
+---
+- tapOn:
+    id: "login-email"
+- inputText: ${EMAIL}
+- hideKeyboard
+- tapOn:
+    id: "login-password"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "login-submit"

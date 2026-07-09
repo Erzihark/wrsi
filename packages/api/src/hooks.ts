@@ -1,19 +1,100 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { sanitizeSearchTerm } from '@wrsi/shared-utils';
 import { useSupabase } from './context';
 import { queryKeys } from './queryKeys';
 
 /** Partner university directory (RLS: readable by all authenticated users). */
-export function useUniversities() {
+export function useUniversities(search?: string) {
   const supabase = useSupabase();
+  // Strip PostgREST filter metacharacters so a stray token can't malform the query.
+  const term = sanitizeSearchTerm(search);
   return useQuery({
-    queryKey: queryKeys.universities(),
+    queryKey: queryKeys.universities({ search: term }),
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('universities')
         .select('id, name, description, logo_url, website')
         .order('name');
+      if (term) query = query.ilike('name', `%${term}%`);
+      const { data, error } = await query;
       if (error) throw error;
       return data;
+    },
+  });
+}
+
+/** Programs offered by a university (level + field labels for display). */
+export function useUniversityPrograms(universityId: string | undefined) {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.universityPrograms(universityId ?? ''),
+    enabled: Boolean(universityId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('university_programs')
+        .select(
+          'id, name, duration, tuition, tuition_currency_id, education_levels(name), fields_of_study(name)',
+        )
+        .eq('university_id', universityId as string)
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+/**
+ * The set of university ids the signed-in student has saved. RLS returns only
+ * the student's own interest rows, so no student_id filter is needed.
+ */
+export function useMyUniversityInterests() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.universityInterests,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_university_interest')
+        .select('university_id');
+      if (error) throw error;
+      return new Set((data ?? []).map((r) => r.university_id));
+    },
+  });
+}
+
+/**
+ * Save/unsave a university for the current student. Inserting fires the
+ * admin-notification trigger (already wired in the schema). `saved` is the
+ * current state — true means "currently saved" → this call removes it.
+ */
+export function useToggleUniversityInterest() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      studentId,
+      universityId,
+      saved,
+    }: {
+      studentId: string;
+      universityId: string;
+      saved: boolean;
+    }) => {
+      if (saved) {
+        const { error } = await supabase
+          .from('student_university_interest')
+          .delete()
+          .eq('student_id', studentId)
+          .eq('university_id', universityId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('student_university_interest')
+          .insert({ student_id: studentId, university_id: universityId });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.universityInterests });
     },
   });
 }

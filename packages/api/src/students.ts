@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import type { Database } from '@wrsi/shared-types';
+import { sanitizeSearchTerm } from '@wrsi/shared-utils';
 import { useSupabase } from './context';
 import { queryKeys } from './queryKeys';
 
@@ -44,7 +45,7 @@ export function useStudentsList(filters: StudentFilters) {
 
       // Strip characters that have meaning in a PostgREST or() filter so a stray
       // comma/paren can't malform the request (RLS still bounds the result).
-      const search = filters.search?.trim().replace(/[(),*]/g, '');
+      const search = sanitizeSearchTerm(filters.search);
       if (search) {
         query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
       }
