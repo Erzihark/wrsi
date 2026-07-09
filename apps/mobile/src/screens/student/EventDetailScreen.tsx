@@ -18,11 +18,17 @@ import {
   useToggleEventRegistration,
   useToggleWorkshopRegistration,
 } from '@wrsi/api';
+import { formatGeography } from '@wrsi/shared-utils';
 import { Button, Card, Chip, Input, Screen, Text, useTheme } from '@wrsi/ui';
 import type { StudentEventsStackParamList } from '../../navigation/types';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateRange(start: string | null, end: string | null): string {
+  if (!start) return '';
+  return end && end !== start ? `${start} – ${end}` : start;
 }
 
 function NoteForm({
@@ -78,9 +84,10 @@ function NoteForm({
 }
 
 export function EventDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const { eventId } = useRoute<RouteProp<StudentEventsStackParamList, 'EventDetail'>>().params;
+  const spanish = i18n.language.startsWith('es');
 
   const event = useEvent(eventId);
   const profile = useMyStudentProfile();
@@ -109,9 +116,14 @@ export function EventDetailScreen() {
 
   const e = event.data;
 
+  const meta = [formatDateRange(e.start_date, e.end_date), formatGeography(e.countries, e.states_provinces, spanish)]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <Screen scroll>
       <Text variant="heading">{e.title}</Text>
+      {meta ? <Text variant="muted">{meta}</Text> : null}
       {e.description ? <Text style={{ marginTop: theme.spacing.sm }}>{e.description}</Text> : null}
 
       <Button

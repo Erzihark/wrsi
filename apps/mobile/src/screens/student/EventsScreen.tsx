@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useEvents, useMyEventRegistrations, useMyStudentProfile, useToggleEventRegistration } from '@wrsi/api';
+import { formatGeography } from '@wrsi/shared-utils';
 import { Badge, Button, Card, Screen, Text, useTheme } from '@wrsi/ui';
 import type { StudentEventsStackParamList } from '../../navigation/types';
 
@@ -12,7 +13,7 @@ function formatDateRange(start: string | null, end: string | null): string {
 }
 
 export function EventsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const nav = useNavigation<NativeStackNavigationProp<StudentEventsStackParamList, 'EventsList'>>();
   const events = useEvents();
@@ -22,6 +23,7 @@ export function EventsScreen() {
 
   const studentId = profile.data?.id;
   const today = new Date().toISOString().slice(0, 10);
+  const spanish = i18n.language.startsWith('es');
 
   return (
     <Screen>
@@ -43,7 +45,12 @@ export function EventsScreen() {
                   {item.title}
                 </Text>
                 <Text variant="muted">
-                  {[formatDateRange(item.start_date, item.end_date), item.location].filter(Boolean).join(' · ')}
+                  {[
+                    formatDateRange(item.start_date, item.end_date),
+                    formatGeography(item.countries, item.states_provinces, spanish),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </Text>
                 {isPast ? <Badge label={t('events.past')} color={theme.color.textMuted} /> : null}
                 <Button

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getMonthNames } from '@wrsi/i18n';
 import {
   useAddEventUniversity,
+  useCountries,
   useCreateEvent,
   useCreateOneToOneSlot,
   useCreateWorkshop,
@@ -26,28 +27,39 @@ import type { AdminEventsStackParamList } from '../../navigation/types';
 
 const EVENT_TYPES = ['fair', 'open_fair_day', 'other'];
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+/** Validate the shared date + start/end time inputs used by workshops and 1:1 slots. */
+function validateSlot(t: (k: string) => string, date: string, start: string, end: string): string | null {
+  if (!DATE_RE.test(date)) return t('validation.invalidDate');
+  if (!TIME_RE.test(start) || !TIME_RE.test(end)) return t('validation.invalidTime');
+  if (end <= start) return t('validation.endTimeBeforeStart');
+  return null;
+}
+
 type FormState = {
   title: string;
   description: string;
-  location: string;
   event_type: string | null;
   start_date: string;
   end_date: string;
+  country_id: string | null;
   state_province_id: string | null;
 };
+
+type FormErrors = Partial<Record<'title' | 'start_date' | 'end_date', string>>;
 
 const EMPTY_FORM: FormState = {
   title: '',
   description: '',
-  location: '',
   event_type: null,
   start_date: '',
   end_date: '',
+  country_id: null,
   state_province_id: null,
 };
 
@@ -125,8 +137,13 @@ function EventWorkshopsSection({ eventId }: { eventId: string }) {
   const universityOptions = (universities.data ?? []).map((u) => ({ label: u.name, value: u.id }));
 
   async function add() {
-    if (!title.trim() || !date || !TIME_RE.test(startTime) || !TIME_RE.test(endTime)) {
+    if (!title.trim()) {
       Alert.alert(t('common.error'), t('validation.required'));
+      return;
+    }
+    const slotError = validateSlot(t, date, startTime, endTime);
+    if (slotError) {
+      Alert.alert(t('common.error'), slotError);
       return;
     }
     try {
@@ -202,8 +219,9 @@ function EventOneToOnesSection({ eventId }: { eventId: string }) {
   const universityOptions = (universities.data ?? []).map((u) => ({ label: u.name, value: u.id }));
 
   async function add() {
-    if (!date || !TIME_RE.test(startTime) || !TIME_RE.test(endTime)) {
-      Alert.alert(t('common.error'), t('validation.required'));
+    const slotError = validateSlot(t, date, startTime, endTime);
+    if (slotError) {
+      Alert.alert(t('common.error'), slotError);
       return;
     }
     try {
@@ -261,34 +279,54 @@ export function EventDetailScreen() {
   const nav = useNavigation();
   const { id } = useRoute<RouteProp<AdminEventsStackParamList, 'Detail'>>().params;
   const mode = id ? 'edit' : 'create';
+  const spanish = i18n.language.startsWith('es');
   const nowY = new Date().getFullYear();
 
   const record = useEvent(id);
+  const countries = useCountries();
   const states = useStatesProvinces();
   const create = useCreateEvent();
   const update = useUpdateEvent(id ?? '');
   const remove = useDeleteEvent();
 
   const [form, setForm] = useState<FormState | null>(mode === 'create' ? EMPTY_FORM : null);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (mode === 'edit' && record.data && !form) {
       setForm({
         title: record.data.title,
         description: record.data.description ?? '',
-        location: record.data.location ?? '',
         event_type: record.data.event_type,
         start_date: record.data.start_date ?? '',
         end_date: record.data.end_date ?? '',
+        country_id: record.data.country_id,
         state_province_id: record.data.state_province_id,
       });
     }
   }, [mode, record.data, form]);
 
-  const stateOptions = (states.data ?? []).map((s) => ({ label: s.name, value: s.id }));
+  const countryOptions = useMemo(
+    () =>
+      (countries.data ?? [])
+        .map((c) => ({ label: spanish ? c.name_es ?? c.name : c.name, value: c.id }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [countries.data, spanish],
+  );
+
+  // State/province options are scoped to the chosen country (cascading select).
+  const stateOptions = useMemo(
+    () =>
+      (states.data ?? [])
+        .filter((s) => form?.country_id && s.country_id === form.country_id)
+        .map((s) => ({ label: s.name, value: s.id }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [states.data, form?.country_id],
+  );
+
   const typeOptions = EVENT_TYPES.map((v) => ({ label: v, value: v }));
 
-  const ready = Boolean(states.data) && form;
+  const ready = Boolean(countries.data && states.data) && form;
   if (!ready) {
     return (
       <Screen>
@@ -301,28 +339,43 @@ export function EventDetailScreen() {
     setForm((f) => (f ? { ...f, [key]: value } : f));
   }
 
+  // Changing the country invalidates any state picked under the previous one.
+  function setCountry(countryId: string) {
+    setForm((f) => (f ? { ...f, country_id: countryId, state_province_id: null } : f));
+  }
+
+  function validate(f: FormState): FormErrors {
+    const next: FormErrors = {};
+    if (!f.title.trim()) next.title = t('validation.required');
+    if (!f.start_date) next.start_date = t('validation.startDateRequired');
+    if (f.start_date && f.end_date && f.end_date < f.start_date) {
+      next.end_date = t('validation.endBeforeStart');
+    }
+    return next;
+  }
+
   function toPayload(f: FormState): EventInsert {
     return {
       title: f.title.trim(),
       description: f.description.trim() || null,
-      location: f.location.trim() || null,
       event_type: f.event_type,
       start_date: f.start_date || null,
       end_date: f.end_date || null,
+      country_id: f.country_id,
       state_province_id: f.state_province_id,
     };
   }
 
   async function save() {
     if (!form) return;
-    if (!form.title.trim()) {
-      Alert.alert(t('common.error'), t('validation.required'));
-      return;
-    }
+    const nextErrors = validate(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
     try {
       if (mode === 'create') {
         const created = await create.mutateAsync(toPayload(form));
         Alert.alert(t('admin.created'));
+        // Switch into edit mode so the child sections (universities/workshops/1:1) open.
         nav.setParams({ id: created.id } as never);
       } else {
         await update.mutateAsync(toPayload(form));
@@ -359,14 +412,18 @@ export function EventDetailScreen() {
     <Screen scroll>
       <Text variant="heading">{mode === 'create' ? t('admin.addEvent') : t('admin.editEvent')}</Text>
 
-      <Input label={t('admin.eventTitle')} value={form.title} onChangeText={(v) => set('title', v)} />
+      <Input
+        label={t('admin.eventTitle')}
+        value={form.title}
+        onChangeText={(v) => set('title', v)}
+        error={errors.title}
+      />
       <Input
         label={t('admin.description')}
         multiline
         value={form.description}
         onChangeText={(v) => set('description', v)}
       />
-      <Input label={t('admin.location')} value={form.location} onChangeText={(v) => set('location', v)} />
       <Select
         label={t('admin.eventType')}
         options={typeOptions}
@@ -377,6 +434,7 @@ export function EventDetailScreen() {
         label={t('admin.startDate')}
         value={form.start_date}
         onChange={(v) => set('start_date', v)}
+        error={errors.start_date}
         minYear={nowY - 1}
         maxYear={nowY + 6}
         monthLabels={getMonthNames(i18n.language)}
@@ -390,6 +448,7 @@ export function EventDetailScreen() {
         label={t('admin.endDate')}
         value={form.end_date}
         onChange={(v) => set('end_date', v)}
+        error={errors.end_date}
         minYear={nowY - 1}
         maxYear={nowY + 6}
         monthLabels={getMonthNames(i18n.language)}
@@ -399,15 +458,27 @@ export function EventDetailScreen() {
         searchPlaceholder={t('picker.search')}
         noResultsText={t('picker.noResults')}
       />
+      {/* Geography is a cascading Country -> State/Province pair (no free-text location). */}
       <SearchSelect
-        label={t('admin.state')}
-        options={stateOptions}
-        value={form.state_province_id}
-        onChange={(v) => set('state_province_id', v)}
+        label={t('admin.country')}
+        options={countryOptions}
+        value={form.country_id}
+        onChange={setCountry}
         placeholder={t('picker.select')}
         searchPlaceholder={t('picker.search')}
         noResultsText={t('picker.noResults')}
       />
+      {form.country_id && stateOptions.length > 0 ? (
+        <SearchSelect
+          label={t('admin.state')}
+          options={stateOptions}
+          value={form.state_province_id}
+          onChange={(v) => set('state_province_id', v)}
+          placeholder={t('picker.select')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
+        />
+      ) : null}
 
       <Button
         title={

@@ -329,3 +329,80 @@ insert into public.statuses (entity_type, name, color, sort_order, is_terminal) 
   ('high_school', 'Active', '#22c55e', 20, false),
   ('high_school', 'Inactive', '#ef4444', 30, true)
 on conflict (entity_type, name) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- States / provinces: a standard ISO-3166-2-style subdivision catalog for the
+-- countries WX actually operates in or sends students to. Mapped to countries
+-- by ISO code (country ids are random per environment). Idempotent. Countries
+-- not listed here have no subdivisions yet — the app treats the state/province
+-- field as optional and shows an empty picker for them; extend this list as
+-- new destination countries come into play.
+insert into public.states_provinces (country_id, name)
+select c.id, v.name
+from (values
+  -- Mexico (32)
+  ('MX','Aguascalientes'), ('MX','Baja California'), ('MX','Baja California Sur'),
+  ('MX','Campeche'), ('MX','Chiapas'), ('MX','Chihuahua'), ('MX','Ciudad de México'),
+  ('MX','Coahuila'), ('MX','Colima'), ('MX','Durango'), ('MX','Guanajuato'),
+  ('MX','Guerrero'), ('MX','Hidalgo'), ('MX','Jalisco'), ('MX','México'),
+  ('MX','Michoacán'), ('MX','Morelos'), ('MX','Nayarit'), ('MX','Nuevo León'),
+  ('MX','Oaxaca'), ('MX','Puebla'), ('MX','Querétaro'), ('MX','Quintana Roo'),
+  ('MX','San Luis Potosí'), ('MX','Sinaloa'), ('MX','Sonora'), ('MX','Tabasco'),
+  ('MX','Tamaulipas'), ('MX','Tlaxcala'), ('MX','Veracruz'), ('MX','Yucatán'),
+  ('MX','Zacatecas'),
+  -- United States (50 + DC)
+  ('US','Alabama'), ('US','Alaska'), ('US','Arizona'), ('US','Arkansas'),
+  ('US','California'), ('US','Colorado'), ('US','Connecticut'), ('US','Delaware'),
+  ('US','District of Columbia'), ('US','Florida'), ('US','Georgia'), ('US','Hawaii'),
+  ('US','Idaho'), ('US','Illinois'), ('US','Indiana'), ('US','Iowa'), ('US','Kansas'),
+  ('US','Kentucky'), ('US','Louisiana'), ('US','Maine'), ('US','Maryland'),
+  ('US','Massachusetts'), ('US','Michigan'), ('US','Minnesota'), ('US','Mississippi'),
+  ('US','Missouri'), ('US','Montana'), ('US','Nebraska'), ('US','Nevada'),
+  ('US','New Hampshire'), ('US','New Jersey'), ('US','New Mexico'), ('US','New York'),
+  ('US','North Carolina'), ('US','North Dakota'), ('US','Ohio'), ('US','Oklahoma'),
+  ('US','Oregon'), ('US','Pennsylvania'), ('US','Rhode Island'), ('US','South Carolina'),
+  ('US','South Dakota'), ('US','Tennessee'), ('US','Texas'), ('US','Utah'),
+  ('US','Vermont'), ('US','Virginia'), ('US','Washington'), ('US','West Virginia'),
+  ('US','Wisconsin'), ('US','Wyoming'),
+  -- Canada (13)
+  ('CA','Alberta'), ('CA','British Columbia'), ('CA','Manitoba'), ('CA','New Brunswick'),
+  ('CA','Newfoundland and Labrador'), ('CA','Northwest Territories'), ('CA','Nova Scotia'),
+  ('CA','Nunavut'), ('CA','Ontario'), ('CA','Prince Edward Island'), ('CA','Quebec'),
+  ('CA','Saskatchewan'), ('CA','Yukon'),
+  -- United Kingdom (4 nations)
+  ('GB','England'), ('GB','Scotland'), ('GB','Wales'), ('GB','Northern Ireland'),
+  -- Australia (8)
+  ('AU','Australian Capital Territory'), ('AU','New South Wales'), ('AU','Northern Territory'),
+  ('AU','Queensland'), ('AU','South Australia'), ('AU','Tasmania'), ('AU','Victoria'),
+  ('AU','Western Australia'),
+  -- Spain (17 autonomous communities)
+  ('ES','Andalucía'), ('ES','Aragón'), ('ES','Asturias'), ('ES','Islas Baleares'),
+  ('ES','Canarias'), ('ES','Cantabria'), ('ES','Castilla-La Mancha'), ('ES','Castilla y León'),
+  ('ES','Cataluña'), ('ES','Comunidad Valenciana'), ('ES','Extremadura'), ('ES','Galicia'),
+  ('ES','La Rioja'), ('ES','Madrid'), ('ES','Murcia'), ('ES','Navarra'), ('ES','País Vasco'),
+  -- Germany (16)
+  ('DE','Baden-Württemberg'), ('DE','Bavaria'), ('DE','Berlin'), ('DE','Brandenburg'),
+  ('DE','Bremen'), ('DE','Hamburg'), ('DE','Hesse'), ('DE','Lower Saxony'),
+  ('DE','Mecklenburg-Vorpommern'), ('DE','North Rhine-Westphalia'), ('DE','Rhineland-Palatinate'),
+  ('DE','Saarland'), ('DE','Saxony'), ('DE','Saxony-Anhalt'), ('DE','Schleswig-Holstein'),
+  ('DE','Thuringia'),
+  -- France (13 metropolitan regions)
+  ('FR','Auvergne-Rhône-Alpes'), ('FR','Bourgogne-Franche-Comté'), ('FR','Bretagne'),
+  ('FR','Centre-Val de Loire'), ('FR','Corse'), ('FR','Grand Est'), ('FR','Hauts-de-France'),
+  ('FR','Île-de-France'), ('FR','Normandie'), ('FR','Nouvelle-Aquitaine'), ('FR','Occitanie'),
+  ('FR','Pays de la Loire'), ('FR','Provence-Alpes-Côte d''Azur'),
+  -- Italy (20 regions)
+  ('IT','Abruzzo'), ('IT','Aosta Valley'), ('IT','Apulia'), ('IT','Basilicata'),
+  ('IT','Calabria'), ('IT','Campania'), ('IT','Emilia-Romagna'), ('IT','Friuli-Venezia Giulia'),
+  ('IT','Lazio'), ('IT','Liguria'), ('IT','Lombardy'), ('IT','Marche'), ('IT','Molise'),
+  ('IT','Piedmont'), ('IT','Sardinia'), ('IT','Sicily'), ('IT','Trentino-South Tyrol'),
+  ('IT','Tuscany'), ('IT','Umbria'), ('IT','Veneto'),
+  -- Netherlands (12)
+  ('NL','Drenthe'), ('NL','Flevoland'), ('NL','Friesland'), ('NL','Gelderland'),
+  ('NL','Groningen'), ('NL','Limburg'), ('NL','North Brabant'), ('NL','North Holland'),
+  ('NL','Overijssel'), ('NL','South Holland'), ('NL','Utrecht'), ('NL','Zeeland'),
+  -- Ireland (4 provinces)
+  ('IE','Connacht'), ('IE','Leinster'), ('IE','Munster'), ('IE','Ulster')
+) as v(iso, name)
+join public.countries c on c.iso_code = v.iso
+on conflict (country_id, name) do nothing;

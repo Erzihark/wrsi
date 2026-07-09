@@ -24,7 +24,7 @@ export function useEventsAdminList(search?: string) {
     queryFn: async () => {
       let query = supabase
         .from('events')
-        .select('id, title, start_date, end_date, location')
+        .select('id, title, start_date, end_date, states_provinces(name), countries(name, name_es)')
         .order('start_date', { ascending: false });
       if (term) query = query.ilike('title', `%${term}%`);
       const { data, error } = await query;
@@ -180,13 +180,18 @@ export function useDeleteOneToOneSlot() {
   });
 }
 
+// Event geography is captured as a structured country [+ state/province] pair, so
+// list/detail reads embed both names for display. `states_provinces`/`countries`
+// resolve via the single FK on each id.
+const EVENT_SELECT = '*, states_provinces(name), countries(name, name_es)';
+
 /** All WX events (fairs, Open Fair Day, ...), soonest first. RLS: readable by all authenticated users. */
 export function useEvents() {
   const supabase = useSupabase();
   return useQuery({
     queryKey: queryKeys.events,
     queryFn: async () => {
-      const { data, error } = await supabase.from('events').select('*').order('start_date');
+      const { data, error } = await supabase.from('events').select(EVENT_SELECT).order('start_date');
       if (error) throw error;
       return data;
     },
@@ -202,7 +207,7 @@ export function useEvent(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(EVENT_SELECT)
         .eq('id', id as string)
         .single();
       if (error) throw error;
