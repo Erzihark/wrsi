@@ -42,3 +42,17 @@ export function intakeYearOptions(now: Date = new Date()): number[] {
   const start = now.getFullYear();
   return Array.from({ length: 7 }, (_, i) => start + i);
 }
+
+/**
+ * Format a structured event location — "State, Country" — from the embedded
+ * country/state names, skipping missing parts. `spanish` picks the Spanish
+ * country name when available (state names are stored in their local form).
+ */
+export function formatGeography(
+  country: { name: string; name_es: string | null } | null | undefined,
+  state: { name: string } | null | undefined,
+  spanish = false,
+): string {
+  const countryName = country ? (spanish ? country.name_es ?? country.name : country.name) : null;
+  return [state?.name, countryName].filter(Boolean).join(', ');
+}

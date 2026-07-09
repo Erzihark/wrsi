@@ -16,6 +16,11 @@ export type StudentUniversitiesStackParamList = {
   UniversityDetail: { universityId: string };
 };
 
+export type StudentEventsStackParamList = {
+  EventsList: undefined;
+  EventDetail: { eventId: string };
+};
+
 export type StudentsStackParamList = {
   StudentsList: undefined;
   StudentDetail: { studentId?: string };
@@ -31,6 +36,11 @@ export type UniversitiesStackParamList = {
   Detail: { id?: string };
 };
 
+export type AdminEventsStackParamList = {
+  List: undefined;
+  Detail: { id?: string };
+};
+
 export type CounselorsStackParamList = {
   List: undefined;
   Detail: { id?: string };
@@ -41,6 +51,7 @@ export type AdminTabParamList = {
   HighSchools: undefined;
   Universities: undefined;
   Counselors: undefined;
+  Events: undefined;
 };
 
 export type CounselorTabParamList = {

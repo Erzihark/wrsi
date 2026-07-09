@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import type {
+  AdminEventsStackParamList,
   AdminTabParamList,
   CounselorsStackParamList,
   HighSchoolsStackParamList,
@@ -14,6 +15,8 @@ import { HighSchoolsListScreen } from '../screens/admin/HighSchoolsListScreen';
 import { HighSchoolDetailScreen } from '../screens/admin/HighSchoolDetailScreen';
 import { UniversitiesListScreen } from '../screens/admin/UniversitiesListScreen';
 import { UniversityDetailScreen } from '../screens/admin/UniversityDetailScreen';
+import { EventsListScreen } from '../screens/admin/EventsListScreen';
+import { EventDetailScreen } from '../screens/admin/EventDetailScreen';
 import { CounselorsListScreen } from '../screens/admin/CounselorsListScreen';
 import { CounselorDetailScreen } from '../screens/admin/CounselorDetailScreen';
 
@@ -77,6 +80,26 @@ function UniversitiesManagement() {
   );
 }
 
+const EventsStack = createNativeStackNavigator<AdminEventsStackParamList>();
+
+function EventsManagement() {
+  const { t } = useTranslation();
+  return (
+    <EventsStack.Navigator>
+      <EventsStack.Screen
+        name="List"
+        component={EventsListScreen}
+        options={{ title: t('admin.events') }}
+      />
+      <EventsStack.Screen
+        name="Detail"
+        component={EventDetailScreen}
+        options={{ title: t('admin.events') }}
+      />
+    </EventsStack.Navigator>
+  );
+}
+
 const CounselorsStack = createNativeStackNavigator<CounselorsStackParamList>();
 
 function CounselorsManagement() {
@@ -101,7 +124,7 @@ const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 /**
  * Admin/super-admin experience: a dedicated management section, one tab per
- * manageable table (Students, High Schools, Universities, Counselors).
+ * manageable table (Students, High Schools, Universities, Counselors, Events).
  */
 export function AdminNavigator() {
   const { t } = useTranslation();
@@ -126,6 +149,11 @@ export function AdminNavigator() {
         name="Counselors"
         component={CounselorsManagement}
         options={{ title: t('admin.counselors') }}
+      />
+      <Tab.Screen
+        name="Events"
+        component={EventsManagement}
+        options={{ title: t('admin.events') }}
       />
     </Tab.Navigator>
   );

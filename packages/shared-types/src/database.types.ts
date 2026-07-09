@@ -553,6 +553,7 @@ export type Database = {
       }
       events: {
         Row: {
+          country_id: string | null
           created_at: string
           description: string | null
           end_date: string | null
@@ -566,6 +567,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          country_id?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
@@ -579,6 +581,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          country_id?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
@@ -592,6 +595,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "events_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_state_province_id_fkey"
             columns: ["state_province_id"]

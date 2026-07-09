@@ -16,5 +16,12 @@ export const queryKeys = {
   studentTasks: (id: string) => ['students', id, 'tasks'] as const,
   studentDocuments: (userId: string) => ['documents', userId] as const,
   events: ['events'] as const,
+  event: (id: string) => ['events', id] as const,
+  eventUniversities: (id: string) => ['events', id, 'universities'] as const,
+  eventWorkshops: (id: string) => ['events', id, 'workshops'] as const,
+  oneToOnes: (id: string) => ['events', id, 'one_to_ones'] as const,
+  eventNotes: (id: string) => ['events', id, 'notes'] as const,
+  myEventRegistrations: ['me', 'event_registrations'] as const,
+  myWorkshopRegistrations: (eventId: string) => ['me', 'workshop_registrations', eventId] as const,
   notifications: ['notifications'] as const,
 };
