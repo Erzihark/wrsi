@@ -66,5 +66,23 @@ export {
   useCancelOneToOne,
   useEventNotes,
   useSaveEventNote,
+  useEventsAdminList,
+  useCreateEvent,
+  useUpdateEvent,
+  useDeleteEvent,
+  useAddEventUniversity,
+  useRemoveEventUniversity,
+  useCreateWorkshop,
+  useDeleteWorkshop,
+  useCreateOneToOneSlot,
+  useDeleteOneToOneSlot,
 } from './events';
-export type { EventRow, EventNoteRow } from './events';
+export type {
+  EventRow,
+  EventInsert,
+  EventUpdate,
+  EventNoteRow,
+  WorkshopRow,
+  WorkshopInsert,
+  OneToOneInsert,
+} from './events';

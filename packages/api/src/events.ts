@@ -4,7 +4,181 @@ import { useSupabase } from './context';
 import { queryKeys } from './queryKeys';
 
 export type EventRow = Database['public']['Tables']['events']['Row'];
+export type EventInsert = Database['public']['Tables']['events']['Insert'];
+export type EventUpdate = Database['public']['Tables']['events']['Update'];
 export type EventNoteRow = Database['public']['Tables']['event_notes']['Row'];
+export type WorkshopRow = Database['public']['Tables']['workshops']['Row'];
+export type WorkshopInsert = Database['public']['Tables']['workshops']['Insert'];
+export type OneToOneInsert = Database['public']['Tables']['one_to_ones']['Insert'];
+
+// Strip characters meaningful to a PostgREST filter so a stray token can't
+// malform the request (RLS still bounds the result). Mirrors students.ts/directory.ts.
+const sanitize = (search?: string) => search?.trim().replace(/[(),*]/g, '');
+
+/** Events list for the admin CRM (title search, most recent first). */
+export function useEventsAdminList(search?: string) {
+  const supabase = useSupabase();
+  const term = sanitize(search);
+  return useQuery({
+    queryKey: [...queryKeys.events, 'admin', term ?? ''],
+    queryFn: async () => {
+      let query = supabase
+        .from('events')
+        .select('id, title, start_date, end_date, location')
+        .order('start_date', { ascending: false });
+      if (term) query = query.ilike('title', `%${term}%`);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+/** Create an event. RLS enforces admin-only. */
+export function useCreateEvent() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: EventInsert) => {
+      const { data, error } = await supabase.from('events').insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.events });
+    },
+  });
+}
+
+/** Partial update to an event. RLS enforces admin-only. */
+export function useUpdateEvent(id: string) {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (patch: EventUpdate) => {
+      const { data, error } = await supabase.from('events').update(patch).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.event(id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.events });
+    },
+  });
+}
+
+/** Delete an event (cascades to registrations/workshops/1:1s/notes). RLS enforces admin-only. */
+export function useDeleteEvent() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('events').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.events });
+    },
+  });
+}
+
+/** Add a university to an event's participating-universities list. */
+export function useAddEventUniversity() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ eventId, universityId }: { eventId: string; universityId: string }) => {
+      const { error } = await supabase
+        .from('event_universities')
+        .insert({ event_id: eventId, university_id: universityId });
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.eventUniversities(vars.eventId) });
+    },
+  });
+}
+
+/** Remove a university from an event's participating-universities list. */
+export function useRemoveEventUniversity() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ eventId, universityId }: { eventId: string; universityId: string }) => {
+      const { error } = await supabase
+        .from('event_universities')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('university_id', universityId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.eventUniversities(vars.eventId) });
+    },
+  });
+}
+
+/** Create a workshop within an event. */
+export function useCreateWorkshop() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: WorkshopInsert) => {
+      const { data, error } = await supabase.from('workshops').insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.eventWorkshops(data.event_id) });
+    },
+  });
+}
+
+/** Delete a workshop (cascades to its registrations). */
+export function useDeleteWorkshop() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; eventId: string }) => {
+      const { error } = await supabase.from('workshops').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.eventWorkshops(vars.eventId) });
+    },
+  });
+}
+
+/** Create an Open Fair Day 1:1 slot within an event (unbooked until a student claims it). */
+export function useCreateOneToOneSlot() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: OneToOneInsert) => {
+      const { data, error } = await supabase.from('one_to_ones').insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.oneToOnes(data.event_id) });
+    },
+  });
+}
+
+/** Delete a 1:1 slot. */
+export function useDeleteOneToOneSlot() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; eventId: string }) => {
+      const { error } = await supabase.from('one_to_ones').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.oneToOnes(vars.eventId) });
+    },
+  });
+}
 
 /** All WX events (fairs, Open Fair Day, ...), soonest first. RLS: readable by all authenticated users. */
 export function useEvents() {

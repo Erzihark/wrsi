@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import type {
+  AdminEventsStackParamList,
   AdminTabParamList,
   HighSchoolsStackParamList,
   StudentsStackParamList,
@@ -13,6 +14,8 @@ import { HighSchoolsListScreen } from '../screens/admin/HighSchoolsListScreen';
 import { HighSchoolDetailScreen } from '../screens/admin/HighSchoolDetailScreen';
 import { UniversitiesListScreen } from '../screens/admin/UniversitiesListScreen';
 import { UniversityDetailScreen } from '../screens/admin/UniversityDetailScreen';
+import { EventsListScreen } from '../screens/admin/EventsListScreen';
+import { EventDetailScreen } from '../screens/admin/EventDetailScreen';
 
 const StudentsStack = createNativeStackNavigator<StudentsStackParamList>();
 
@@ -74,12 +77,32 @@ function UniversitiesManagement() {
   );
 }
 
+const EventsStack = createNativeStackNavigator<AdminEventsStackParamList>();
+
+function EventsManagement() {
+  const { t } = useTranslation();
+  return (
+    <EventsStack.Navigator>
+      <EventsStack.Screen
+        name="List"
+        component={EventsListScreen}
+        options={{ title: t('admin.events') }}
+      />
+      <EventsStack.Screen
+        name="Detail"
+        component={EventDetailScreen}
+        options={{ title: t('admin.events') }}
+      />
+    </EventsStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 /**
  * Admin/super-admin experience: a dedicated management section, one tab per
- * manageable table (Students, High Schools, Universities). Counselors slot in as
- * a sibling tab as their surface is built.
+ * manageable table (Students, High Schools, Universities, Events). Counselors
+ * slot in as a sibling tab as their surface is built.
  */
 export function AdminNavigator() {
   const { t } = useTranslation();
@@ -99,6 +122,11 @@ export function AdminNavigator() {
         name="Universities"
         component={UniversitiesManagement}
         options={{ title: t('admin.universities') }}
+      />
+      <Tab.Screen
+        name="Events"
+        component={EventsManagement}
+        options={{ title: t('admin.events') }}
       />
     </Tab.Navigator>
   );
