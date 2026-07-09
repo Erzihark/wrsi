@@ -22,23 +22,40 @@ import {
   useUpdateEvent,
   type EventInsert,
 } from '@wrsi/api';
-import { Button, Card, DateField, Input, Screen, SearchSelect, Select, Text, useTheme } from '@wrsi/ui';
+import { Button, Card, DateField, Input, Screen, SearchSelect, Select, Text, TimeField, useTheme } from '@wrsi/ui';
 import type { AdminEventsStackParamList } from '../../navigation/types';
 
 const EVENT_TYPES = ['fair', 'open_fair_day', 'other'];
-const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-/** Validate the shared date + start/end time inputs used by workshops and 1:1 slots. */
-function validateSlot(t: (k: string) => string, date: string, start: string, end: string): string | null {
-  if (!DATE_RE.test(date)) return t('validation.invalidDate');
-  if (!TIME_RE.test(start) || !TIME_RE.test(end)) return t('validation.invalidTime');
-  if (end <= start) return t('validation.endTimeBeforeStart');
-  return null;
+type SlotFormErrors = Partial<Record<'title' | 'date' | 'startTime' | 'endTime', string>>;
+
+/**
+ * Validate the shared date + start/end time inputs used by workshops and 1:1
+ * slots. `DateField`/`TimeField` only ever emit a well-formed value or '', so
+ * this only needs to check presence + ordering + the event's own date range —
+ * malformed input is unrepresentable by construction.
+ */
+function validateSlot(
+  t: (key: string, opts?: Record<string, unknown>) => string,
+  date: string,
+  start: string,
+  end: string,
+  eventStartDate: string | null,
+  eventEndDate: string | null,
+): SlotFormErrors {
+  const errors: SlotFormErrors = {};
+  if (!date) errors.date = t('validation.invalidDate');
+  else if ((eventStartDate && date < eventStartDate) || (eventEndDate && date > eventEndDate)) {
+    errors.date = t('validation.dateOutsideEvent');
+  }
+  if (!start) errors.startTime = t('validation.invalidTime');
+  if (!end) errors.endTime = t('validation.invalidTime');
+  if (start && end && end <= start) errors.endTime = t('validation.endTimeBeforeStart');
+  return errors;
 }
 
 type FormState = {
@@ -120,9 +137,18 @@ function EventUniversitiesSection({ eventId }: { eventId: string }) {
   );
 }
 
-function EventWorkshopsSection({ eventId }: { eventId: string }) {
-  const { t } = useTranslation();
+function EventWorkshopsSection({
+  eventId,
+  eventStartDate,
+  eventEndDate,
+}: {
+  eventId: string;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
+}) {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const nowY = new Date().getFullYear();
   const workshops = useEventWorkshops(eventId);
   const universities = useUniversitiesList();
   const create = useCreateWorkshop();
@@ -133,19 +159,15 @@ function EventWorkshopsSection({ eventId }: { eventId: string }) {
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [errors, setErrors] = useState<SlotFormErrors>({});
 
   const universityOptions = (universities.data ?? []).map((u) => ({ label: u.name, value: u.id }));
 
   async function add() {
-    if (!title.trim()) {
-      Alert.alert(t('common.error'), t('validation.required'));
-      return;
-    }
-    const slotError = validateSlot(t, date, startTime, endTime);
-    if (slotError) {
-      Alert.alert(t('common.error'), slotError);
-      return;
-    }
+    const slotErrors = validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate);
+    if (!title.trim()) slotErrors.title = t('validation.required');
+    setErrors(slotErrors);
+    if (Object.keys(slotErrors).length > 0) return;
     try {
       await create.mutateAsync({
         event_id: eventId,
@@ -156,8 +178,10 @@ function EventWorkshopsSection({ eventId }: { eventId: string }) {
       });
       setTitle('');
       setUniversityId(null);
+      setDate('');
       setStartTime('');
       setEndTime('');
+      setErrors({});
     } catch (e) {
       Alert.alert(t('common.error'), (e as Error).message);
     }
@@ -187,25 +211,72 @@ function EventWorkshopsSection({ eventId }: { eventId: string }) {
       ) : null}
 
       <Card style={{ gap: theme.spacing.sm }}>
-        <Input label={t('events.workshopTitle')} value={title} onChangeText={setTitle} />
+        <Input
+          label={t('events.workshopTitle')}
+          value={title}
+          onChangeText={setTitle}
+          error={errors.title}
+        />
         <Select
           label={t('admin.university')}
           options={universityOptions}
           value={universityId}
           onChange={setUniversityId}
         />
-        <Input label={t('events.date')} placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} />
-        <Input label={t('events.startTime')} placeholder="14:00" value={startTime} onChangeText={setStartTime} />
-        <Input label={t('events.endTime')} placeholder="15:00" value={endTime} onChangeText={setEndTime} />
+        <DateField
+          label={t('events.date')}
+          value={date}
+          onChange={setDate}
+          error={errors.date}
+          minYear={nowY - 1}
+          maxYear={nowY + 6}
+          monthLabels={getMonthNames(i18n.language)}
+          dayPlaceholder={t('picker.day')}
+          monthPlaceholder={t('picker.month')}
+          yearPlaceholder={t('picker.year')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
+        />
+        <TimeField
+          label={t('events.startTime')}
+          value={startTime}
+          onChange={setStartTime}
+          error={errors.startTime}
+          hourPlaceholder={t('picker.hour')}
+          minutePlaceholder={t('picker.minute')}
+          periodPlaceholder={t('picker.period')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
+        />
+        <TimeField
+          label={t('events.endTime')}
+          value={endTime}
+          onChange={setEndTime}
+          error={errors.endTime}
+          hourPlaceholder={t('picker.hour')}
+          minutePlaceholder={t('picker.minute')}
+          periodPlaceholder={t('picker.period')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
+        />
         <Button variant="secondary" title={t('events.addWorkshop')} loading={create.isPending} onPress={add} />
       </Card>
     </View>
   );
 }
 
-function EventOneToOnesSection({ eventId }: { eventId: string }) {
-  const { t } = useTranslation();
+function EventOneToOnesSection({
+  eventId,
+  eventStartDate,
+  eventEndDate,
+}: {
+  eventId: string;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
+}) {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const nowY = new Date().getFullYear();
   const slots = useOneToOnes(eventId);
   const universities = useUniversitiesList();
   const create = useCreateOneToOneSlot();
@@ -215,15 +286,14 @@ function EventOneToOnesSection({ eventId }: { eventId: string }) {
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [errors, setErrors] = useState<SlotFormErrors>({});
 
   const universityOptions = (universities.data ?? []).map((u) => ({ label: u.name, value: u.id }));
 
   async function add() {
-    const slotError = validateSlot(t, date, startTime, endTime);
-    if (slotError) {
-      Alert.alert(t('common.error'), slotError);
-      return;
-    }
+    const slotErrors = validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate);
+    setErrors(slotErrors);
+    if (Object.keys(slotErrors).length > 0) return;
     try {
       await create.mutateAsync({
         event_id: eventId,
@@ -232,8 +302,10 @@ function EventOneToOnesSection({ eventId }: { eventId: string }) {
         end_time: `${date}T${endTime}:00`,
       });
       setUniversityId(null);
+      setDate('');
       setStartTime('');
       setEndTime('');
+      setErrors({});
     } catch (e) {
       Alert.alert(t('common.error'), (e as Error).message);
     }
@@ -264,9 +336,42 @@ function EventOneToOnesSection({ eventId }: { eventId: string }) {
           value={universityId}
           onChange={setUniversityId}
         />
-        <Input label={t('events.date')} placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} />
-        <Input label={t('events.startTime')} placeholder="09:00" value={startTime} onChangeText={setStartTime} />
-        <Input label={t('events.endTime')} placeholder="09:20" value={endTime} onChangeText={setEndTime} />
+        <DateField
+          label={t('events.date')}
+          value={date}
+          onChange={setDate}
+          error={errors.date}
+          minYear={nowY - 1}
+          maxYear={nowY + 6}
+          monthLabels={getMonthNames(i18n.language)}
+          dayPlaceholder={t('picker.day')}
+          monthPlaceholder={t('picker.month')}
+          yearPlaceholder={t('picker.year')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
+        />
+        <TimeField
+          label={t('events.startTime')}
+          value={startTime}
+          onChange={setStartTime}
+          error={errors.startTime}
+          hourPlaceholder={t('picker.hour')}
+          minutePlaceholder={t('picker.minute')}
+          periodPlaceholder={t('picker.period')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
+        />
+        <TimeField
+          label={t('events.endTime')}
+          value={endTime}
+          onChange={setEndTime}
+          error={errors.endTime}
+          hourPlaceholder={t('picker.hour')}
+          minutePlaceholder={t('picker.minute')}
+          periodPlaceholder={t('picker.period')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
+        />
         <Button variant="secondary" title={t('events.addSlot')} loading={create.isPending} onPress={add} />
       </Card>
     </View>
@@ -502,8 +607,8 @@ export function EventDetailScreen() {
             style={{ marginTop: theme.spacing.sm }}
           />
           <EventUniversitiesSection eventId={id} />
-          <EventWorkshopsSection eventId={id} />
-          <EventOneToOnesSection eventId={id} />
+          <EventWorkshopsSection eventId={id} eventStartDate={form.start_date || null} eventEndDate={form.end_date || null} />
+          <EventOneToOnesSection eventId={id} eventStartDate={form.start_date || null} eventEndDate={form.end_date || null} />
         </>
       ) : null}
     </Screen>

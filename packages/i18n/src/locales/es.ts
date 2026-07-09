@@ -130,6 +130,9 @@ export const es: TranslationResource = {
     day: 'Día',
     month: 'Mes',
     year: 'Año',
+    hour: 'Hora',
+    minute: 'Min',
+    period: 'AM/PM',
   },
   validation: {
     required: 'Este campo es obligatorio',
@@ -140,8 +143,9 @@ export const es: TranslationResource = {
     gradeRange: 'El promedio debe estar entre 0 y 100',
     startDateRequired: 'Se requiere una fecha de inicio',
     endBeforeStart: 'La fecha de fin no puede ser anterior a la de inicio',
-    invalidTime: 'Ingresa una hora como HH:mm (24 horas)',
+    invalidTime: 'Selecciona una hora',
     endTimeBeforeStart: 'La hora de fin debe ser posterior a la de inicio',
+    dateOutsideEvent: 'Elige una fecha dentro del rango de inicio/fin del evento',
   },
   onboarding: {
     title: 'Bienvenido — configuremos tu perfil',

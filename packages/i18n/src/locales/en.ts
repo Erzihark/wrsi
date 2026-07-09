@@ -127,6 +127,9 @@ export const en = {
     day: "Day",
     month: "Month",
     year: "Year",
+    hour: "Hour",
+    minute: "Min",
+    period: "AM/PM",
   },
   validation: {
     required: "This field is required",
@@ -137,8 +140,9 @@ export const en = {
     gradeRange: "Grade must be between 0 and 100",
     startDateRequired: "A start date is required",
     endBeforeStart: "The end date can't be before the start date",
-    invalidTime: "Enter a time as HH:mm (24-hour)",
+    invalidTime: "Select a time",
     endTimeBeforeStart: "The end time must be after the start time",
+    dateOutsideEvent: "Pick a date within the event's start/end range",
   },
   onboarding: {
     title: "Welcome — let’s set up your profile",
