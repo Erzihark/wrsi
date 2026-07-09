@@ -5,10 +5,11 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-07-08
 **Current phase:** Phase 1 (MVP) — foundation, onboarding/dashboard, admin CRUD (students/high
 schools/universities/counselors), documents upload, student university directory, and the
-counselor's read-only CRM view are all built and merged to `master`.
+counselor's read-only CRM view are all built and merged to `master`. Student event
+registration/workshops/1:1s/notes is built on `feat/student-events`, awaiting PR review.
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap.
 **Full plan:** `~/.claude/plans/i-am-building-this-sunny-lynx.md` (architecture + roadmap).
@@ -29,7 +30,9 @@ directory with a save/like button. **Counselors** have a read-only "single pane 
 assigned student (profile, status, documents, tasks) — no status/note writes yet, pending
 client answers on the status workflow. A global top app bar carries the brand + the one
 Log-out action across every experience. Local dev auto-seeds realistic dummy data +
-login-able test accounts on every `db reset`.
+login-able test accounts on every `db reset`. On `feat/student-events` (unmerged): students
+can browse/register for events, book workshops and Open Fair Day 1:1 slots, and capture
+per-university notes/ranking.
 
 ## How to run / verify (quick)
 
@@ -62,14 +65,16 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
   script's bare `supabase` isn't on PATH) → commit `database.types.ts`.
 - Edge Functions run on Deno; test locally with `yarn supabase functions serve`.
 
-## Next milestone — Events management
+## Next milestone — counselor write actions
 
-- Client Phase-1 "must have": digital event registration tied to student login (no
-  duplicates), Open Fair Day workshop + one-to-one slots, per-event note/ranking capture,
-  multi-year event history. Schema (`events`, `event_universities`, `workshops`,
-  `event_registrations`, `workshop_registrations`, `event_notes`) already exists — this is
-  UI + hooks, same shape as the universities-directory work.
-- After that: counselor **write** actions (status/notes/tasks) — blocked on the application-
+- Student events (browse/register, workshops, Open Fair Day 1:1 booking, per-university
+  note/ranking capture) is built on `feat/student-events` (`packages/api/src/events.ts` +
+  `EventsScreen`/`EventDetailScreen`), mirroring the universities-directory hook/screen shape.
+  Not yet merged — needs review + a manual pass on a device/emulator (not verified in this
+  session; only typechecked and cross-checked against the RLS policies).
+- Not yet done: an admin/counselor-side event CRUD screen to create events/workshops/1:1
+  slots — right now they only exist if seeded directly in the DB.
+- Next up: counselor **write** actions (status/notes/tasks) — blocked on the application-
   status workflow questions below.
 
 ## Open items awaiting the client / owner
