@@ -52,3 +52,19 @@ export type {
   UniversityRow,
   UniversityUpdate,
 } from './directory';
+export {
+  useEvents,
+  useEvent,
+  useEventUniversities,
+  useEventWorkshops,
+  useOneToOnes,
+  useMyEventRegistrations,
+  useToggleEventRegistration,
+  useMyWorkshopRegistrations,
+  useToggleWorkshopRegistration,
+  useBookOneToOne,
+  useCancelOneToOne,
+  useEventNotes,
+  useSaveEventNote,
+} from './events';
+export type { EventRow, EventNoteRow } from './events';

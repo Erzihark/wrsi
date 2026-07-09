@@ -16,6 +16,11 @@ export type StudentUniversitiesStackParamList = {
   UniversityDetail: { universityId: string };
 };
 
+export type StudentEventsStackParamList = {
+  EventsList: undefined;
+  EventDetail: { eventId: string };
+};
+
 export type StudentsStackParamList = {
   StudentsList: undefined;
   StudentDetail: { studentId?: string };

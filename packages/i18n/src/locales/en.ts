@@ -187,6 +187,28 @@ export const en = {
     programs: "Programs",
     noPrograms: "No programs listed yet",
   },
+  events: {
+    empty: "No events yet",
+    register: "Register",
+    registered: "Registered",
+    past: "Past",
+    universities: "Participating universities",
+    noUniversities: "No universities listed yet",
+    workshops: "Workshops",
+    noWorkshops: "No workshops scheduled yet",
+    oneToOnes: "1:1 appointments",
+    noOneToOnes: "No 1:1 slots scheduled yet",
+    book: "Book",
+    booked: "Booked",
+    cancel: "Cancel",
+    full: "Booked",
+    notes: "My notes",
+    noteFor: "Note for {{university}}",
+    ranking: "Ranking (1–5)",
+    saveNote: "Save note",
+    noteSaved: "Note saved",
+    registerFirst: "Register for this event first",
+  },
 };
 
 // Value types are `string` (not literals), so translations enforce key parity

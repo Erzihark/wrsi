@@ -1,12 +1,17 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import type { StudentTabParamList, StudentUniversitiesStackParamList } from './types';
+import type {
+  StudentEventsStackParamList,
+  StudentTabParamList,
+  StudentUniversitiesStackParamList,
+} from './types';
 import { DashboardScreen } from '../screens/student/DashboardScreen';
 import { UniversitiesScreen } from '../screens/student/UniversitiesScreen';
 import { UniversityDetailScreen } from '../screens/student/UniversityDetailScreen';
 import { DocumentsScreen } from '../screens/student/DocumentsScreen';
 import { EventsScreen } from '../screens/student/EventsScreen';
+import { EventDetailScreen } from '../screens/student/EventDetailScreen';
 
 const UniversitiesStack = createNativeStackNavigator<StudentUniversitiesStackParamList>();
 
@@ -25,6 +30,22 @@ function UniversitiesStackScreen() {
         options={{ title: t('student.universities') }}
       />
     </UniversitiesStack.Navigator>
+  );
+}
+
+const EventsStack = createNativeStackNavigator<StudentEventsStackParamList>();
+
+function EventsStackScreen() {
+  const { t } = useTranslation();
+  return (
+    <EventsStack.Navigator>
+      <EventsStack.Screen name="EventsList" component={EventsScreen} options={{ headerShown: false }} />
+      <EventsStack.Screen
+        name="EventDetail"
+        component={EventDetailScreen}
+        options={{ title: t('student.events') }}
+      />
+    </EventsStack.Navigator>
   );
 }
 
@@ -51,7 +72,7 @@ export function StudentNavigator() {
       />
       <Tab.Screen
         name="Events"
-        component={EventsScreen}
+        component={EventsStackScreen}
         options={{ title: t('student.events') }}
       />
     </Tab.Navigator>
