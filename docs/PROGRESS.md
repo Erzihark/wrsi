@@ -32,7 +32,8 @@ client answers on the status workflow. A global top app bar carries the brand + 
 Log-out action across every experience. Local dev auto-seeds realistic dummy data +
 login-able test accounts on every `db reset`. On `feat/student-events` (unmerged): students
 can browse/register for events, book workshops and Open Fair Day 1:1 slots, and capture
-per-university notes/ranking.
+per-university notes/ranking; admins get an Events tab to create/manage events and their
+universities/workshops/1:1 slots.
 
 ## How to run / verify (quick)
 
@@ -67,13 +68,15 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 
 ## Next milestone — counselor write actions
 
-- Student events (browse/register, workshops, Open Fair Day 1:1 booking, per-university
-  note/ranking capture) is built on `feat/student-events` (`packages/api/src/events.ts` +
-  `EventsScreen`/`EventDetailScreen`), mirroring the universities-directory hook/screen shape.
-  Not yet merged — needs review + a manual pass on a device/emulator (not verified in this
-  session; only typechecked and cross-checked against the RLS policies).
-- Not yet done: an admin/counselor-side event CRUD screen to create events/workshops/1:1
-  slots — right now they only exist if seeded directly in the DB.
+- Event management is built end-to-end on `feat/student-events`, not yet merged: students
+  browse/register for events, book workshops and Open Fair Day 1:1 slots, and capture
+  per-university notes/ranking (`packages/api/src/events.ts` + student `EventsScreen`/
+  `EventDetailScreen`). Admins get a new Events tab to create/edit/delete events and manage
+  each event's participating universities, workshop schedule, and 1:1 slots (admin
+  `EventsListScreen`/`EventDetailScreen`) — skips the login-provisioning Edge Function flow
+  used for high schools/universities since events aren't login-capable entities.
+  Not yet verified on a device/emulator in this session — only typechecked and cross-checked
+  against the RLS policies.
 - Next up: counselor **write** actions (status/notes/tasks) — blocked on the application-
   status workflow questions below.
 
