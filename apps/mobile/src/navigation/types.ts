@@ -31,10 +31,16 @@ export type UniversitiesStackParamList = {
   Detail: { id?: string };
 };
 
+export type CounselorsStackParamList = {
+  List: undefined;
+  Detail: { id?: string };
+};
+
 export type AdminTabParamList = {
   Students: undefined;
   HighSchools: undefined;
   Universities: undefined;
+  Counselors: undefined;
 };
 
 export type CounselorTabParamList = {

@@ -104,6 +104,3 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
   (`events.ts`) are also deferred until that branch lands (schema is on `master`, hooks aren't).
 - **Testing — Maestro in CI.** E2E isn't wired into GitHub Actions yet (needs an Android
   emulator + a built dev app). Add a dedicated workflow when worth the runner cost.
-- **Confirmed not yet merged:** commit `5c2ee44` (admin CRUD for counselors) is still only on
-  `feat/admin-entity-crud`, built after PR #1 merged (which stopped at `e8a2402`). Needs its
-  own PR before admins can create/delete counselor accounts through the app.

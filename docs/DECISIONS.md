@@ -74,12 +74,40 @@ Two commits on `master`: `2276c44` (Supabase backend + monorepo foundation), `74
   e2e via a student JWT — save → 201 + admin `university_interest` notification fired (1→2),
   unsave → 204 row removed.
 
-- **2026-07-09 — Admin CRUD for counselors (branch `feat/admin-entity-crud`, commit
-  `5c2ee44`).** Folded counselors into the existing student/high-school/university
-  admin-entity CRUD pattern (create/edit/delete via the service-role `create-entity` /
-  `delete-entity` Edge Functions). **Note:** this commit was left out of merged PR #1 (which
-  stopped at `e8a2402`) — confirm it has landed in `master` before relying on it; if not, it
-  needs its own PR/cherry-pick.
+- **2026-07-09 — Admin CRUD for students + high schools + universities + counselors; entities
+  are login-backed (branch `feat/admin-entity-crud`, merged into `master` via `feat/testing-
+  foundation`'s follow-on merge after being left out of PR #1).** Product/architecture decision
+  (with the user): all four admin-managed entities are first-class **login-capable accounts**.
+  Students already required a login; **high schools and universities now do too** — migration
+  `20260709000001` makes `high_schools.user_id` / `universities.user_id` **NOT NULL** and
+  switches their FK to **ON DELETE CASCADE** (matching `students`), giving one uniform
+  create/delete path. Because the client can't create/delete auth users, **create + delete go
+  through two service-role Edge Functions** (`supabase/functions/create-entity`,
+  `delete-entity`, sharing `_shared/{cors,admin-guard,entities}.ts`): create provisions the
+  auth user (the signup trigger grants `student`; the function swaps it for
+  `high_school`/`university`/`counselor` where needed), inserts the row from a per-entity
+  column allow-list, and **rolls back the auth user if the insert fails**; delete removes the
+  auth user so the cascade cleans up. **List/read/update stay client-side** (RLS already
+  admin-gated). UI is DRY: generic `EntityDetailScreen` (form state, create-vs-edit save,
+  delete-with-confirm, create-mode email/temp-password inputs) + `EntityListScreen` scaffolds,
+  with a thin per-entity `renderFields`/config. `AdminNavigator` gained Students / High Schools
+  / Universities tabs; `@wrsi/api` gained `useCreateEntity`/`useDeleteEntity`, HS/uni
+  list+get+update, `useStatuses`/`useStatesProvinces`/`useEducationModels`.
+  **Counselors** (commit `5c2ee44`, originally left out of the merged PR #1 which stopped at
+  `e8a2402`) were folded into the same pattern with **no migration needed**
+  (`counselors.user_id` was already `NOT NULL UNIQUE` + `ON DELETE CASCADE`, and
+  `counselors_admin_write` RLS already allowed `is_admin()` writes): added `'counselor'` to the
+  Edge Function `ENTITY_CONFIG` + client `EntityType`, `useCounselorsList`/`useCounselor`/
+  `useUpdateCounselor` in `directory.ts`, a Counselors tab, and `CounselorsListScreen`/
+  `CounselorDetailScreen` (name + phone) on the same scaffolds.
+  **Verified:** `db reset` applies the migration on empty tables; types regenerated (HS/uni
+  `user_id` now non-null); `yarn typecheck` green; Edge Functions exercised via curl — 403 for
+  a non-admin, 201 create for all four types with the correct single role (no leftover
+  `student` grant), clean duplicate-email error, orphan-user rollback on a failed insert, and
+  delete cascading the row + auth user. **Note:** Edge Functions are a dev-loop dependency —
+  run `yarn supabase functions serve` locally (`deploy` for staging). Seeds provision portal
+  logins for the seeded HS/universities (`highschool{1,2}@`, `university{1,2}@`, same
+  passwords).
 
 - **2026-07-09 — Documents upload / private Storage (branch `feat/document-upload`, off
   `master`).** Added the object store behind the pre-existing `documents` table +
