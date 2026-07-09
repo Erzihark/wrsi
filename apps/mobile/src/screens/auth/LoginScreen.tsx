@@ -27,6 +27,7 @@ export function LoginScreen() {
     <Screen>
       <Text variant="heading">WX Study</Text>
       <Input
+        testID="login-email"
         label={t('auth.email')}
         autoCapitalize="none"
         keyboardType="email-address"
@@ -34,12 +35,18 @@ export function LoginScreen() {
         onChangeText={setEmail}
       />
       <Input
+        testID="login-password"
         label={t('auth.password')}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
-      <Button title={t('auth.login')} loading={loading} onPress={handleLogin} />
+      <Button
+        testID="login-submit"
+        title={t('auth.login')}
+        loading={loading}
+        onPress={handleLogin}
+      />
       <Button
         variant="ghost"
         title={t('auth.noAccount')}

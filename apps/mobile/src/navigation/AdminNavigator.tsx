@@ -88,7 +88,7 @@ export function AdminNavigator() {
       <Tab.Screen
         name="Students"
         component={StudentsManagement}
-        options={{ title: t('admin.students') }}
+        options={{ title: t('admin.students'), tabBarButtonTestID: 'admin-tab-students' }}
       />
       <Tab.Screen
         name="HighSchools"

@@ -1,0 +1,14 @@
+# Admin signs in and lands on the admin experience (Students management tab).
+appId: com.wxstudy.wrsi
+tags:
+  - auth
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"

@@ -28,6 +28,29 @@ Keep each branch scoped to one coherent piece of work — don't bundle unrelated
 feature branch. A code review (the `code-review` skill, effort matched to risk) is still
 valuable before handing a branch off, but it does not gate a merge you perform yourself.
 
+## Testing (REQUIRED — part of "done")
+
+Tests are a standing check on every piece of work, not a one-off. The full guide (how to run
+each layer, prerequisites, what's covered) is [`docs/TESTING.md`](docs/TESTING.md). The rule:
+
+1. **Run the affected layers before handing off a branch.** At minimum `yarn typecheck` +
+   `yarn test` (fast unit layer, no Docker). If the change touches the API/DB/RLS/Edge
+   Functions, also run `yarn test:backend` (needs `yarn supabase start` + `db reset`, and
+   `yarn supabase functions serve` for the edge tests). If it changes mobile UI, run the
+   relevant `.maestro` flow locally (WSL2 + emulator + dev build).
+2. **Update tests the change affects.** When you alter behavior, update the tests that assert
+   it — a red suite you caused is not "done".
+3. **Add tests for new behavior.** New API hook / RLS policy / trigger / Edge Function → add
+   backend coverage in `tests/backend`. New pure helper → a unit test. New user-facing flow →
+   a Maestro flow (add a `testID` rather than relying on i18n'd text).
+4. **Don't claim green without running it.** State which layers you ran; if a layer needs the
+   stack/emulator and you couldn't run it, say so.
+
+The three layers: **unit** (Vitest, `packages/*/src/**/*.test.ts`, no backend) · **backend
+integration/security/edge** (Vitest, `tests/backend`, live local stack) · **mobile E2E**
+(Maestro, `.maestro`, emulator + dev build). CI (`.github/workflows/ci.yml`) gates
+typecheck + unit + backend on every push/PR; Maestro E2E is local-only for now.
+
 ## Session hygiene (token budget)
 
 The user is on a metered usage window and wants it stretched, not burned fast:

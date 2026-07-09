@@ -37,10 +37,20 @@ login-able test accounts on every `db reset`.
 yarn install
 yarn supabase start                 # needs Docker Desktop
 yarn typecheck                      # all workspaces should pass
+yarn test                           # fast unit tests (no Docker)
+yarn supabase db reset && yarn test:backend   # integration/security/edge (stack up)
 cd apps/mobile && cp .env.example .env   # fill from `yarn supabase status`
 yarn workspace @wrsi/mobile start
 ```
 Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
+
+## Testing (see `docs/TESTING.md` + CLAUDE.md "Testing (REQUIRED)")
+
+Three layers, now a standing part of "done": **unit** (Vitest, `yarn test`, no Docker) ·
+**backend integration/security/edge** (Vitest, `tests/backend`, `yarn test:backend` against a
+live local stack + `supabase functions serve`) · **mobile E2E** (Maestro, `.maestro`, needs an
+emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) gates typecheck
++ unit + backend on every push/PR. `edge` tests need `yarn supabase functions serve` running.
 
 ## Environment gotchas
 
@@ -86,6 +96,14 @@ Local Supabase Studio: http://127.0.0.1:54323 · API: http://127.0.0.1:54321
 
 - Birth date is a validated text input (YYYY-MM-DD) — consider a native date picker later.
 - English level captured as CEFR; budget captured as a bucket midpoint into `students.budget`.
+- **Testing — expand the E2E slice.** Backend coverage is solid; Maestro currently covers only
+  login-per-role + the onboarding gate. Add flows (and `testID`s) for: full onboarding
+  completion, document upload/delete, admin CRUD (students/high schools/universities),
+  counselor read-only CRM, and — once `feat/student-events` merges — events
+  browse/register/workshop/1:1/notes. Backend integration/security tests for the events API
+  (`events.ts`) are also deferred until that branch lands (schema is on `master`, hooks aren't).
+- **Testing — Maestro in CI.** E2E isn't wired into GitHub Actions yet (needs an Android
+  emulator + a built dev app). Add a dedicated workflow when worth the runner cost.
 - **Confirmed not yet merged:** commit `5c2ee44` (admin CRUD for counselors) is still only on
   `feat/admin-entity-crud`, built after PR #1 merged (which stopped at `e8a2402`). Needs its
   own PR before admins can create/delete counselor accounts through the app.
