@@ -51,6 +51,25 @@ integration/security/edge** (Vitest, `tests/backend`, live local stack) · **mob
 (Maestro, `.maestro`, emulator + dev build). CI (`.github/workflows/ci.yml`) gates
 typecheck + unit + backend on every push/PR; Maestro E2E is local-only for now.
 
+## Platform support (REQUIRED: iOS + Android parity)
+
+The mobile app ships on **both iOS and Android** — every feature must work on **both**. This is
+non-negotiable, not a "nice to have":
+
+1. **Never ship something that only works on one platform.** Before choosing an approach, check
+   it renders/behaves on both. Common traps: flag/other emoji (do **not** render on most Android
+   system fonts), platform-only native APIs, haptics, blur/shadow, date/file pickers, keyboard
+   avoidance, and share sheets.
+2. **When a single cross-platform implementation genuinely isn't possible, don't degrade one
+   platform — branch and use each OS's native standard.** Use `Platform.OS` / `Platform.select`
+   or a `Component.ios.tsx` / `Component.android.tsx` split so each platform gets the idiomatic
+   result. (If a feature can't work on iOS, fall back to the iOS-standard approach there, and
+   vice-versa — never leave a platform broken.)
+3. **Verify on both, or say you didn't.** A UI/native change isn't "done" until it's exercised
+   on an iOS **and** an Android build; if you could only check one (or neither), state which.
+4. **Prefer dependency-light, cross-platform-reliable options** (see Session hygiene) — but
+   correctness on both platforms wins over avoiding a dependency.
+
 ## Session hygiene (token budget)
 
 The user is on a metered usage window and wants it stretched, not burned fast:
