@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useForm, type Control, type DefaultValues, type Resolver } from 'react-hook-form';
@@ -97,16 +97,18 @@ export function EntityDetailScreen<
     mode: 'onTouched',
   });
 
-  // Edit mode: once the record loads, seed the form and compute validity so the
-  // submit button reflects whether the existing data passes the schema.
-  const loaded = mode === 'edit' && initialForm ? initialForm : null;
+  // Edit mode: seed the form once the record loads, then compute validity so the
+  // submit button reflects whether the existing data passes the schema. Guarded
+  // by a ref because `initialForm` is rebuilt every render (mapped from the
+  // query data) — without this, reset would fire on every keystroke and wipe edits.
+  const seeded = useRef(false);
   useEffect(() => {
-    if (loaded) {
-      form.reset(loaded as DefaultValues<Form>);
+    if (mode === 'edit' && initialForm && !seeded.current) {
+      seeded.current = true;
+      form.reset(initialForm as DefaultValues<Form>);
       void form.trigger();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [mode, initialForm, form]);
 
   if (!optionsReady || (mode === 'edit' && !initialForm)) {
     return (

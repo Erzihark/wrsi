@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useForm, type Control } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
+import { requiredString } from '@wrsi/shared-utils';
 import { getMonthNames } from '@wrsi/i18n';
 import {
   useAddEventUniversity,
@@ -37,6 +41,7 @@ import {
   useToast,
 } from '@wrsi/ui';
 import type { AdminEventsStackParamList } from '../../navigation/types';
+import { FormDateField, FormInput, FormSearchSelect, FormSelect } from '../../components/form';
 
 const EVENT_TYPES = ['fair', 'open_fair_day', 'other'];
 
@@ -71,17 +76,26 @@ function validateSlot(
   return errors;
 }
 
-type FormState = {
-  title: string;
-  description: string;
-  event_type: string | null;
-  start_date: string;
-  end_date: string;
-  country_id: string | null;
-  state_province_id: string | null;
-};
-
-type FormErrors = Partial<Record<'title' | 'start_date' | 'end_date', string>>;
+const eventSchema = z
+  .object({
+    title: requiredString(),
+    description: z.string(),
+    event_type: z.string().nullable(),
+    start_date: z.string().min(1, 'validation.startDateRequired'),
+    end_date: z.string(),
+    country_id: z.string().nullable(),
+    state_province_id: z.string().nullable(),
+  })
+  .superRefine((f, ctx) => {
+    if (f.start_date && f.end_date && f.end_date < f.start_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['end_date'],
+        message: 'validation.endBeforeStart',
+      });
+    }
+  });
+type FormState = z.infer<typeof eventSchema>;
 
 const EMPTY_FORM: FormState = {
   title: '',
@@ -204,6 +218,11 @@ function EventWorkshopsSection({
 
   const universityOptions = (universities.data ?? []).map((u) => ({ label: u.name, value: u.id }));
 
+  // Live validity → gate the Add button (errors are still shown on press).
+  const canAdd =
+    title.trim().length > 0 &&
+    Object.keys(validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate)).length === 0;
+
   async function add() {
     const slotErrors = validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate);
     if (!title.trim()) slotErrors.title = t('validation.required');
@@ -318,7 +337,13 @@ function EventWorkshopsSection({
           searchPlaceholder={t('picker.search')}
           noResultsText={t('picker.noResults')}
         />
-        <Button variant="secondary" title={t('events.addWorkshop')} loading={create.isPending} onPress={add} />
+        <Button
+          variant="secondary"
+          title={t('events.addWorkshop')}
+          loading={create.isPending}
+          disabled={!canAdd || create.isPending}
+          onPress={add}
+        />
       </Card>
     </View>
   );
@@ -350,6 +375,10 @@ function EventOneToOnesSection({
   const [errors, setErrors] = useState<SlotFormErrors>({});
 
   const universityOptions = (universities.data ?? []).map((u) => ({ label: u.name, value: u.id }));
+
+  // Live validity → gate the Add button (errors are still shown on press).
+  const canAdd =
+    Object.keys(validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate)).length === 0;
 
   async function add() {
     const slotErrors = validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate);
@@ -451,7 +480,13 @@ function EventOneToOnesSection({
           searchPlaceholder={t('picker.search')}
           noResultsText={t('picker.noResults')}
         />
-        <Button variant="secondary" title={t('events.addSlot')} loading={create.isPending} onPress={add} />
+        <Button
+          variant="secondary"
+          title={t('events.addSlot')}
+          loading={create.isPending}
+          disabled={!canAdd || create.isPending}
+          onPress={add}
+        />
       </Card>
     </View>
   );
@@ -475,22 +510,36 @@ export function EventDetailScreen() {
   const update = useUpdateEvent(id ?? '');
   const remove = useDeleteEvent();
 
-  const [form, setForm] = useState<FormState | null>(mode === 'create' ? EMPTY_FORM : null);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const form = useForm<FormState>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: EMPTY_FORM,
+    mode: 'onTouched',
+  });
 
+  // Seed once when the record loads. Guarded by a ref so a later refetch (e.g.
+  // refetch-on-focus giving a new data reference) can't reset the form and wipe
+  // edits in progress.
+  const seeded = useRef(false);
+  const loaded = mode === 'edit' ? record.data : null;
   useEffect(() => {
-    if (mode === 'edit' && record.data && !form) {
-      setForm({
-        title: record.data.title,
-        description: record.data.description ?? '',
-        event_type: record.data.event_type,
-        start_date: record.data.start_date ?? '',
-        end_date: record.data.end_date ?? '',
-        country_id: record.data.country_id,
-        state_province_id: record.data.state_province_id,
+    if (loaded && !seeded.current) {
+      seeded.current = true;
+      form.reset({
+        title: loaded.title,
+        description: loaded.description ?? '',
+        event_type: loaded.event_type,
+        start_date: loaded.start_date ?? '',
+        end_date: loaded.end_date ?? '',
+        country_id: loaded.country_id,
+        state_province_id: loaded.state_province_id,
       });
+      void form.trigger();
     }
-  }, [mode, record.data, form]);
+  }, [loaded, form]);
+
+  const countryId = form.watch('country_id');
+  const startDate = form.watch('start_date');
+  const endDate = form.watch('end_date');
 
   const countryOptions = useMemo(
     () =>
@@ -504,15 +553,15 @@ export function EventDetailScreen() {
   const stateOptions = useMemo(
     () =>
       (states.data ?? [])
-        .filter((s) => form?.country_id && s.country_id === form.country_id)
+        .filter((s) => countryId && s.country_id === countryId)
         .map((s) => ({ label: s.name, value: s.id }))
         .sort((a, b) => a.label.localeCompare(b.label)),
-    [states.data, form?.country_id],
+    [states.data, countryId],
   );
 
   const typeOptions = EVENT_TYPES.map((v) => ({ label: v, value: v }));
 
-  const ready = Boolean(countries.data && states.data) && form;
+  const ready = Boolean(countries.data && states.data) && (mode === 'create' || record.data);
   if (!ready) {
     return (
       <Screen>
@@ -521,23 +570,10 @@ export function EventDetailScreen() {
     );
   }
 
-  function set<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((f) => (f ? { ...f, [key]: value } : f));
-  }
-
   // Changing the country invalidates any state picked under the previous one.
-  function setCountry(countryId: string) {
-    setForm((f) => (f ? { ...f, country_id: countryId, state_province_id: null } : f));
-  }
-
-  function validate(f: FormState): FormErrors {
-    const next: FormErrors = {};
-    if (!f.title.trim()) next.title = t('validation.required');
-    if (!f.start_date) next.start_date = t('validation.startDateRequired');
-    if (f.start_date && f.end_date && f.end_date < f.start_date) {
-      next.end_date = t('validation.endBeforeStart');
-    }
-    return next;
+  function setCountry(next: string) {
+    form.setValue('country_id', next, { shouldValidate: true, shouldTouch: true });
+    form.setValue('state_province_id', null, { shouldValidate: true });
   }
 
   function toPayload(f: FormState): EventInsert {
@@ -552,25 +588,21 @@ export function EventDetailScreen() {
     };
   }
 
-  async function save() {
-    if (!form) return;
-    const nextErrors = validate(form);
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+  const onSubmit = async (values: FormState) => {
     try {
       if (mode === 'create') {
-        const created = await create.mutateAsync(toPayload(form));
+        const created = await create.mutateAsync(toPayload(values));
         toast.show({ type: 'success', message: t('admin.created') });
         // Switch into edit mode so the child sections (universities/workshops/1:1) open.
         nav.setParams({ id: created.id } as never);
       } else {
-        await update.mutateAsync(toPayload(form));
+        await update.mutateAsync(toPayload(values));
         toast.show({ type: 'success', message: t('admin.saved') });
       }
     } catch (e) {
       toast.show({ type: 'error', message: (e as Error).message });
     }
-  }
+  };
 
   async function confirmRemove() {
     if (!id) return;
@@ -592,73 +624,44 @@ export function EventDetailScreen() {
   }
 
   const submitting = create.isPending || update.isPending;
+  const control: Control<FormState> = form.control;
+  const dateProps = {
+    minYear: nowY - 1,
+    maxYear: nowY + 6,
+    monthLabels: getMonthNames(i18n.language),
+    dayPlaceholder: t('picker.day'),
+    monthPlaceholder: t('picker.month'),
+    yearPlaceholder: t('picker.year'),
+    searchPlaceholder: t('picker.search'),
+    noResultsText: t('picker.noResults'),
+  };
 
   return (
     <Screen scroll>
       <Text variant="heading">{mode === 'create' ? t('admin.addEvent') : t('admin.editEvent')}</Text>
 
-      <Input
-        label={t('admin.eventTitle')}
-        value={form.title}
-        onChangeText={(v) => set('title', v)}
-        error={errors.title}
-      />
-      <Input
-        label={t('admin.description')}
-        multiline
-        value={form.description}
-        onChangeText={(v) => set('description', v)}
-      />
-      <Select
-        label={t('admin.eventType')}
-        options={typeOptions}
-        value={form.event_type}
-        onChange={(v) => set('event_type', v)}
-      />
-      <DateField
-        label={t('admin.startDate')}
-        value={form.start_date}
-        onChange={(v) => set('start_date', v)}
-        error={errors.start_date}
-        minYear={nowY - 1}
-        maxYear={nowY + 6}
-        monthLabels={getMonthNames(i18n.language)}
-        dayPlaceholder={t('picker.day')}
-        monthPlaceholder={t('picker.month')}
-        yearPlaceholder={t('picker.year')}
-        searchPlaceholder={t('picker.search')}
-        noResultsText={t('picker.noResults')}
-      />
-      <DateField
-        label={t('admin.endDate')}
-        value={form.end_date}
-        onChange={(v) => set('end_date', v)}
-        error={errors.end_date}
-        minYear={nowY - 1}
-        maxYear={nowY + 6}
-        monthLabels={getMonthNames(i18n.language)}
-        dayPlaceholder={t('picker.day')}
-        monthPlaceholder={t('picker.month')}
-        yearPlaceholder={t('picker.year')}
-        searchPlaceholder={t('picker.search')}
-        noResultsText={t('picker.noResults')}
-      />
-      {/* Geography is a cascading Country -> State/Province pair (no free-text location). */}
+      <FormInput control={control} name="title" label={t('admin.eventTitle')} />
+      <FormInput control={control} name="description" label={t('admin.description')} multiline />
+      <FormSelect control={control} name="event_type" label={t('admin.eventType')} options={typeOptions} />
+      <FormDateField control={control} name="start_date" label={t('admin.startDate')} {...dateProps} />
+      <FormDateField control={control} name="end_date" label={t('admin.endDate')} {...dateProps} />
+      {/* Geography is a cascading Country -> State/Province pair (no free-text location).
+          Country is set manually so it can clear the dependent state selection. */}
       <SearchSelect
         label={t('admin.country')}
         options={countryOptions}
-        value={form.country_id}
+        value={countryId}
         onChange={setCountry}
         placeholder={t('picker.select')}
         searchPlaceholder={t('picker.search')}
         noResultsText={t('picker.noResults')}
       />
-      {form.country_id && stateOptions.length > 0 ? (
-        <SearchSelect
+      {countryId && stateOptions.length > 0 ? (
+        <FormSearchSelect
+          control={control}
+          name="state_province_id"
           label={t('admin.state')}
           options={stateOptions}
-          value={form.state_province_id}
-          onChange={(v) => set('state_province_id', v)}
           placeholder={t('picker.select')}
           searchPlaceholder={t('picker.search')}
           noResultsText={t('picker.noResults')}
@@ -674,7 +677,8 @@ export function EventDetailScreen() {
               : t('admin.saveChanges')
         }
         loading={submitting}
-        onPress={save}
+        disabled={!form.formState.isValid || submitting}
+        onPress={form.handleSubmit(onSubmit)}
       />
 
       {mode === 'edit' && id ? (
@@ -687,8 +691,8 @@ export function EventDetailScreen() {
             style={{ marginTop: theme.spacing.sm }}
           />
           <EventUniversitiesSection eventId={id} />
-          <EventWorkshopsSection eventId={id} eventStartDate={form.start_date || null} eventEndDate={form.end_date || null} />
-          <EventOneToOnesSection eventId={id} eventStartDate={form.start_date || null} eventEndDate={form.end_date || null} />
+          <EventWorkshopsSection eventId={id} eventStartDate={startDate || null} eventEndDate={endDate || null} />
+          <EventOneToOnesSection eventId={id} eventStartDate={startDate || null} eventEndDate={endDate || null} />
         </>
       ) : null}
     </Screen>
