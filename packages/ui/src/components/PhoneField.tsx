@@ -7,6 +7,7 @@ import {
 } from '@wrsi/shared-utils';
 import { useTheme } from '../theme/ThemeProvider';
 import { Text } from './Text';
+import { CountryFlag } from './CountryFlag';
 import { OptionPickerModal } from './OptionPickerModal';
 
 /** Minimal country shape the field needs (subset of the `countries` row). */
@@ -60,6 +61,13 @@ export function PhoneField({
   );
   const iso = selected?.iso_code ?? null;
 
+  // id → ISO lookup so each picker row can render its flag without a linear scan.
+  const isoById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of countries) m.set(c.id, c.iso_code);
+    return m;
+  }, [countries]);
+
   const dialOptions = useMemo(
     () =>
       countries
@@ -103,6 +111,7 @@ export function PhoneField({
             opacity: pressed ? 0.8 : 1,
           })}
         >
+          {selected ? <CountryFlag iso={selected.iso_code} size={14} /> : null}
           <Text style={{ color: selected ? t.color.text : t.color.textMuted }}>
             {selected?.calling_code ?? '+—'}
           </Text>
@@ -142,6 +151,10 @@ export function PhoneField({
         onClose={() => setOpen(false)}
         searchPlaceholder={searchPlaceholder}
         noResultsText={noResultsText}
+        renderLeading={(id) => {
+          const flagIso = isoById.get(id);
+          return flagIso ? <CountryFlag iso={flagIso} size={16} /> : null;
+        }}
       />
     </View>
   );
