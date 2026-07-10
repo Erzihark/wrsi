@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Screen, Text, useTheme } from '@wrsi/ui';
+import { Button, Input, Screen, Text, useConfirm, useTheme, useToast } from '@wrsi/ui';
 
 /** A mutation-like object (matches TanStack `useMutation` results). */
 interface Mutation<TArgs, TResult = unknown> {
@@ -68,6 +68,8 @@ export function EntityDetailScreen<
   const { t } = useTranslation();
   const theme = useTheme();
   const nav = useNavigation();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [form, setForm] = useState<Form | null>(mode === 'create' ? emptyForm : null);
   // Login credentials for the provisioned account (create mode only).
@@ -94,13 +96,13 @@ export function EntityDetailScreen<
     if (!form) return;
     const validationError = validate?.(form);
     if (validationError) {
-      Alert.alert(t('common.error'), validationError);
+      toast.show({ type: 'error', message: validationError });
       return;
     }
     try {
       if (mode === 'create') {
         if (!email.trim()) {
-          Alert.alert(t('common.error'), t('admin.emailRequired'));
+          toast.show({ type: 'error', message: t('admin.emailRequired') });
           return;
         }
         const result = await create.mutateAsync({
@@ -108,7 +110,8 @@ export function EntityDetailScreen<
           password: password.trim() || undefined,
           profile: toPayload(form),
         });
-        // Surface the (possibly generated) password so the admin can share it.
+        // Surface the (possibly generated) password in a blocking alert — a toast
+        // would auto-dismiss before the admin can read/copy the credentials.
         Alert.alert(
           t('admin.created'),
           t('admin.credentials', { email: email.trim(), password: result.password }),
@@ -116,32 +119,31 @@ export function EntityDetailScreen<
         nav.goBack();
       } else {
         await update.mutateAsync(toPayload(form));
-        Alert.alert(t('admin.saved'));
+        toast.show({ type: 'success', message: t('admin.saved') });
         nav.goBack();
       }
     } catch (e) {
-      Alert.alert(t('common.error'), (e as Error).message);
+      toast.show({ type: 'error', message: (e as Error).message });
     }
   }
 
-  function confirmRemove() {
+  async function confirmRemove() {
     if (!entityId) return;
-    Alert.alert(t('admin.deleteTitle'), t('admin.confirmDelete'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('admin.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove.mutateAsync(entityId);
-            Alert.alert(t('admin.deleted'));
-            nav.goBack();
-          } catch (e) {
-            Alert.alert(t('common.error'), (e as Error).message);
-          }
-        },
-      },
-    ]);
+    const ok = await confirm.confirm({
+      title: t('admin.deleteTitle'),
+      message: t('admin.confirmDelete'),
+      confirmText: t('admin.delete'),
+      cancelText: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync(entityId);
+      toast.show({ type: 'success', message: t('admin.deleted') });
+      nav.goBack();
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
   }
 
   const submitting = create.isPending || update.isPending;

@@ -334,6 +334,42 @@ honors `SUPABASE_*` env overrides (which CI sets from `supabase status`).
 **Process.** Testing is now part of "done" — see the new "Testing (REQUIRED)" section in
 `CLAUDE.md` and the full [`docs/TESTING.md`](TESTING.md) guide.
 
+## 2026-07-10 — Confirmation dialogs + toast feedback (reusable UI)
+
+Branched `feat/confirm-dialogs-and-toasts` off `master`. Two problems: (1) destructive actions
+were inconsistently guarded — entity/document deletes had a native `Alert.alert` confirm, but
+event/workshop unregister and 1:1 cancel had none; (2) action feedback was clunky blocking
+`Alert.alert('Saved')` popups, and toggles/creates gave no confirmation at all, so the app felt
+unresponsive.
+
+**Two reusable, token-driven `@wrsi/ui` primitives, mounted once in `AppProviders`:**
+- **`ToastProvider` + `useToast()`** — an animated, auto-dismissing (3s), tappable-to-dismiss
+  toast reporting `success` / `error` / `info`. Non-blocking, unlike a native Alert.
+- **`ConfirmProvider` + `useConfirm()`** — a themed modal returning `Promise<boolean>`, replacing
+  ad-hoc native `Alert.alert(...)` confirms with one restyleable surface.
+
+Both derive entirely from `tokens.ts` and take their **text from the caller** (where i18n `t` is
+in scope), keeping `@wrsi/ui` decoupled from `@wrsi/i18n` — the same pattern `OptionPickerModal`
+already uses. Provider order: `ThemeProvider > ConfirmProvider > ToastProvider > AuthProvider`,
+so every screen (incl. onboarding/auth) can use them and both can read the theme; `SafeAreaProvider`
+stays outermost for the toast's safe-area inset.
+
+**What gets confirmed** (destructive / gives up a spot): delete student·high-school·university·
+counselor·event, delete document, unregister from an event, unregister from a workshop, cancel a
+1:1 booking, remove a university/workshop/1:1 slot from an event (admin), and the onboarding
+exit-and-sign-out. **What does not** (opt-in, instantly reversible, already has visual state):
+register/book, save/unsave a university, save an event note.
+
+**One deliberate exception to "toast, don't Alert":** the admin create-account flow still uses a
+blocking `Alert.alert` to show the generated password — a toast auto-dismisses before the admin
+can copy the credentials. Auth login/sign-up error alerts were also left as native Alerts (out of
+scope for this entity-action branch).
+
+*Verified:* `yarn typecheck` (7/7 workspaces, incl. i18n es/en key-parity enforcement) and
+`yarn test` (unit) pass. No backend/RLS/Edge surface touched, so `test:backend` not required. The
+interactive confirm/toast flows still need an on-device/emulator pass (Maestro is local-only) —
+a documented follow-up, along with adding a component test harness for `@wrsi/ui`.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

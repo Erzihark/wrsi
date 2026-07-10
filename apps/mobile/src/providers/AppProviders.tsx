@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SupabaseProvider } from "@wrsi/api";
-import { ThemeProvider } from "@wrsi/ui";
+import { ConfirmProvider, ThemeProvider, ToastProvider } from "@wrsi/ui";
 import { I18nextProvider } from "react-i18next";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { getLocales } from "expo-localization";
@@ -19,7 +19,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <SupabaseProvider client={supabase}>
           <I18nextProvider i18n={i18n}>
             <ThemeProvider>
-              <AuthProvider>{children}</AuthProvider>
+              <ConfirmProvider>
+                <ToastProvider>
+                  <AuthProvider>{children}</AuthProvider>
+                </ToastProvider>
+              </ConfirmProvider>
             </ThemeProvider>
           </I18nextProvider>
         </SupabaseProvider>

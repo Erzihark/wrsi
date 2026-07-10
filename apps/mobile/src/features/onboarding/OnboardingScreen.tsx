@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, BackHandler, View } from 'react-native';
+import { ActivityIndicator, BackHandler, View } from 'react-native';
 import { Controller, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,9 @@ import {
   SearchSelect,
   Select,
   Text,
+  useConfirm,
   useTheme,
+  useToast,
 } from '@wrsi/ui';
 import { useAuth } from '../../auth/AuthContext';
 import {
@@ -40,6 +42,8 @@ import {
 export function OnboardingScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { signOut } = useAuth();
   const [step, setStep] = useState(0);
 
@@ -54,11 +58,15 @@ export function OnboardingScreen() {
   // straight here), so the phone's back button has nothing to pop by default.
   // On the first step, offer to exit (sign out, back to Login); on later
   // steps, step backward through the wizard instead.
-  function confirmExit() {
-    Alert.alert(t('onboarding.exitConfirmTitle'), t('onboarding.exitConfirmMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('onboarding.exit'), style: 'destructive', onPress: () => void signOut() },
-    ]);
+  async function confirmExit() {
+    const ok = await confirm.confirm({
+      title: t('onboarding.exitConfirmTitle'),
+      message: t('onboarding.exitConfirmMessage'),
+      confirmText: t('onboarding.exit'),
+      cancelText: t('common.cancel'),
+      destructive: true,
+    });
+    if (ok) void signOut();
   }
 
   function handleBack() {
@@ -165,7 +173,7 @@ export function OnboardingScreen() {
         });
         // Success invalidates the student profile → the gate switches to the dashboard.
       } catch (e) {
-        Alert.alert(t('common.error'), (e as Error).message);
+        toast.show({ type: 'error', message: (e as Error).message });
       }
     },
     // If submit-time validation finds an earlier incomplete step, jump to it.
