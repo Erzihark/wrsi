@@ -25,6 +25,8 @@ export { SearchMultiSelect } from './components/SearchMultiSelect';
 export type { SearchMultiSelectProps } from './components/SearchMultiSelect';
 export { DateField } from './components/DateField';
 export type { DateFieldProps } from './components/DateField';
+export { PhoneField } from './components/PhoneField';
+export type { PhoneFieldProps, PhoneCountry } from './components/PhoneField';
 export { TimeField } from './components/TimeField';
 export type { TimeFieldProps } from './components/TimeField';
 export { OptionPickerModal } from './components/OptionPickerModal';

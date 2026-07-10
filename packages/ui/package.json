@@ -7,6 +7,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@wrsi/shared-utils": "workspace:*"
+  },
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
