@@ -5,7 +5,7 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-07-10
 **Current phase:** Phase 1 (MVP) — foundation, onboarding/dashboard, admin CRUD (students/high
 schools/universities/counselors), documents upload, student university directory, the
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
@@ -82,10 +82,8 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
 - Counselor **write** actions (status/notes/tasks) are the stated next milestone but are
   **blocked** on the application-status workflow questions below (which statuses, who changes
   them, backward transitions).
-- Unblocked candidates while that's pending: backend integration/security tests for the events
-  API (`packages/api/src/events.ts`, merged without them), a notifications inbox UI (the
-  `notifications` table/hook/triggers exist but have no surface), and expanding the Maestro E2E
-  slice.
+- Unblocked candidates while that's pending: a notifications inbox UI (the `notifications`
+  table/hook/triggers exist but have no surface), and expanding the Maestro E2E slice.
 
 ## Open items awaiting the client / owner
 
@@ -114,11 +112,10 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
   else a time (not just a date) gets captured.
 - `states_provinces` seed covers the primary study-abroad countries only; extend per ISO
   3166-2 as new destinations come up (the field is optional for unlisted countries).
-- **Testing — expand the E2E slice.** Backend coverage is solid; Maestro currently covers only
-  login-per-role + the onboarding gate. Add flows (and `testID`s) for: full onboarding
-  completion, document upload/delete, admin CRUD (students/high schools/universities),
-  counselor read-only CRM, and events browse/register/workshop/1:1/notes. Backend
-  integration/security tests for the events API (`events.ts`) should be added now that it's
-  merged.
+- **Testing — expand the E2E slice.** Backend coverage is solid (incl. events, see
+  `tests/backend/security/events.test.ts`); Maestro currently covers only login-per-role + the
+  onboarding gate. Add flows (and `testID`s) for: full onboarding completion, document
+  upload/delete, admin CRUD (students/high schools/universities), counselor read-only CRM, and
+  events browse/register/workshop/1:1/notes.
 - **Testing — Maestro in CI.** E2E isn't wired into GitHub Actions yet (needs an Android
   emulator + a built dev app). Add a dedicated workflow when worth the runner cost.
