@@ -10,6 +10,14 @@
 schools/universities/counselors), documents upload, student university directory, the
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
 admin event CRUD) are all built and merged to `master`.
+
+**In review (branch `feat/confirm-dialogs-and-toasts`, not yet merged):** reusable
+`ConfirmProvider`/`useConfirm()` + `ToastProvider`/`useToast()` in `@wrsi/ui` (token-driven,
+mounted in `AppProviders`). Destructive actions (all entity/document/event-sub-entity deletes,
+event/workshop unregister, 1:1 cancel, onboarding exit) now go through a themed confirm; create/
+edit/delete/toggle outcomes report via non-blocking toasts instead of blocking `Alert.alert`.
+The generated-password alert on admin account creation stays a blocking Alert on purpose. See
+DECISIONS.md 2026-07-10.
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap.
 **Full plan:** `~/.claude/plans/i-am-building-this-sunny-lynx.md` (architecture + roadmap).

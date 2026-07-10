@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Linking, View } from 'react-native';
+import { ActivityIndicator, FlatList, Linking, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
 import { File as FsFile } from 'expo-file-system';
@@ -11,7 +11,7 @@ import {
   useDocumentTypes,
   useUploadDocument,
 } from '@wrsi/api';
-import { Badge, Button, Card, Screen, Select, Text, useTheme } from '@wrsi/ui';
+import { Badge, Button, Card, Screen, Select, Text, useConfirm, useTheme, useToast } from '@wrsi/ui';
 import { useAuth } from '../../auth/AuthContext';
 
 function humanSize(bytes?: number | null): string {
@@ -24,6 +24,8 @@ function humanSize(bytes?: number | null): string {
 export function DocumentsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
+  const toast = useToast();
+  const confirm = useConfirm();
   const userId = useAuth().session?.user.id;
 
   const docs = useDocuments(userId);
@@ -53,9 +55,9 @@ export function DocumentsScreen() {
         size: asset.size ?? null,
         typeId,
       });
-      Alert.alert(t('documents.uploaded'));
+      toast.show({ type: 'success', message: t('documents.uploaded') });
     } catch (e) {
-      Alert.alert(t('common.error'), (e as Error).message);
+      toast.show({ type: 'error', message: (e as Error).message });
     }
   }
 
@@ -64,25 +66,25 @@ export function DocumentsScreen() {
       const url = await signedUrl.mutateAsync(storagePath);
       await Linking.openURL(url);
     } catch (e) {
-      Alert.alert(t('common.error'), (e as Error).message);
+      toast.show({ type: 'error', message: (e as Error).message });
     }
   }
 
-  function confirmDelete(id: string, storagePath: string) {
-    Alert.alert(t('documents.deleteConfirmTitle'), t('documents.deleteConfirmMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('documents.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove.mutateAsync({ id, storagePath });
-          } catch (e) {
-            Alert.alert(t('common.error'), (e as Error).message);
-          }
-        },
-      },
-    ]);
+  async function confirmDelete(id: string, storagePath: string) {
+    const ok = await confirm.confirm({
+      title: t('documents.deleteConfirmTitle'),
+      message: t('documents.deleteConfirmMessage'),
+      confirmText: t('documents.delete'),
+      cancelText: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync({ id, storagePath });
+      toast.show({ type: 'success', message: t('documents.deleted') });
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
   }
 
   return (

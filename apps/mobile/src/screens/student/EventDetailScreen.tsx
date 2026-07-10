@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { type RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,7 +19,7 @@ import {
   useToggleWorkshopRegistration,
 } from '@wrsi/api';
 import { formatGeography } from '@wrsi/shared-utils';
-import { Button, Card, Chip, Input, Screen, Text, useTheme } from '@wrsi/ui';
+import { Button, Card, Chip, Input, Screen, Text, useConfirm, useTheme, useToast } from '@wrsi/ui';
 import type { StudentEventsStackParamList } from '../../navigation/types';
 
 function formatTime(iso: string): string {
@@ -46,6 +46,7 @@ function NoteForm({
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const toast = useToast();
   const save = useSaveEventNote();
   const [note, setNote] = useState(existing?.note ?? '');
   const [ranking, setRanking] = useState<number | null>(existing?.ranking ?? null);
@@ -73,9 +74,9 @@ function NoteForm({
               note,
               ranking,
             });
-            Alert.alert(t('events.noteSaved'));
+            toast.show({ type: 'success', message: t('events.noteSaved') });
           } catch (e) {
-            Alert.alert(t('common.error'), (e as Error).message);
+            toast.show({ type: 'error', message: (e as Error).message });
           }
         }}
       />
@@ -86,6 +87,8 @@ function NoteForm({
 export function EventDetailScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { eventId } = useRoute<RouteProp<StudentEventsStackParamList, 'EventDetail'>>().params;
   const spanish = i18n.language.startsWith('es');
 
@@ -116,6 +119,82 @@ export function EventDetailScreen() {
 
   const e = event.data;
 
+  // Registering/booking is opt-in and instantly reversible, so it goes through
+  // without a prompt; giving up a spot (unregister/cancel) is gated behind a
+  // confirm. Every path reports the outcome via a toast.
+  async function onToggleEvent() {
+    if (!studentId) return;
+    if (registered) {
+      const ok = await confirm.confirm({
+        title: t('events.unregisterConfirmTitle'),
+        message: t('events.unregisterConfirmMessage'),
+        confirmText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    try {
+      await toggleEvent.mutateAsync({ studentId, eventId, registered });
+      toast.show({
+        type: 'success',
+        message: registered ? t('events.unregisteredToast') : t('events.registeredToast'),
+      });
+    } catch (err) {
+      toast.show({ type: 'error', message: (err as Error).message });
+    }
+  }
+
+  async function onToggleWorkshop(workshopId: string, isRegistered: boolean) {
+    if (!studentId) return;
+    if (isRegistered) {
+      const ok = await confirm.confirm({
+        title: t('events.workshopUnregisterConfirmTitle'),
+        message: t('events.workshopUnregisterConfirmMessage'),
+        confirmText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    try {
+      await toggleWorkshop.mutateAsync({ studentId, workshopId, eventId, registered: isRegistered });
+      toast.show({
+        type: 'success',
+        message: isRegistered
+          ? t('events.workshopUnregisteredToast')
+          : t('events.workshopRegisteredToast'),
+      });
+    } catch (err) {
+      toast.show({ type: 'error', message: (err as Error).message });
+    }
+  }
+
+  async function onToggleSlot(slotId: string, mine: boolean) {
+    if (!studentId) return;
+    if (mine) {
+      const ok = await confirm.confirm({
+        title: t('events.cancelSlotConfirmTitle'),
+        message: t('events.cancelSlotConfirmMessage'),
+        confirmText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    try {
+      if (mine) {
+        await cancelSlot.mutateAsync({ id: slotId, eventId });
+        toast.show({ type: 'success', message: t('events.slotCancelledToast') });
+      } else {
+        await bookSlot.mutateAsync({ id: slotId, studentId, eventId });
+        toast.show({ type: 'success', message: t('events.slotBookedToast') });
+      }
+    } catch (err) {
+      toast.show({ type: 'error', message: (err as Error).message });
+    }
+  }
+
   const meta = [formatDateRange(e.start_date, e.end_date), formatGeography(e.countries, e.states_provinces, spanish)]
     .filter(Boolean)
     .join(' · ');
@@ -131,9 +210,7 @@ export function EventDetailScreen() {
         title={registered ? t('events.registered') : t('events.register')}
         loading={toggleEvent.isPending}
         disabled={!studentId}
-        onPress={() => {
-          if (studentId) toggleEvent.mutate({ studentId, eventId, registered });
-        }}
+        onPress={onToggleEvent}
       />
 
       <View style={{ marginTop: theme.spacing.md, gap: theme.spacing.sm }}>
@@ -170,19 +247,7 @@ export function EventDetailScreen() {
                   variant={isRegistered ? 'primary' : 'secondary'}
                   title={isRegistered ? t('events.registered') : t('events.register')}
                   disabled={!studentId}
-                  onPress={async () => {
-                    if (!studentId) return;
-                    try {
-                      await toggleWorkshop.mutateAsync({
-                        studentId,
-                        workshopId: w.id,
-                        eventId,
-                        registered: isRegistered,
-                      });
-                    } catch (err) {
-                      Alert.alert(t('common.error'), (err as Error).message);
-                    }
-                  }}
+                  onPress={() => onToggleWorkshop(w.id, isRegistered)}
                 />
               </Card>
             );
@@ -208,18 +273,7 @@ export function EventDetailScreen() {
                   variant={mine ? 'danger' : 'secondary'}
                   title={mine ? t('events.cancel') : free ? t('events.book') : t('events.full')}
                   disabled={!studentId || (!free && !mine)}
-                  onPress={async () => {
-                    if (!studentId) return;
-                    try {
-                      if (mine) {
-                        await cancelSlot.mutateAsync({ id: slot.id, eventId });
-                      } else {
-                        await bookSlot.mutateAsync({ id: slot.id, studentId, eventId });
-                      }
-                    } catch (err) {
-                      Alert.alert(t('common.error'), (err as Error).message);
-                    }
-                  }}
+                  onPress={() => onToggleSlot(slot.id, mine)}
                 />
               </Card>
             );

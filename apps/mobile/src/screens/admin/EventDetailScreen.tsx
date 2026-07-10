@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getMonthNames } from '@wrsi/i18n';
@@ -22,7 +22,20 @@ import {
   useUpdateEvent,
   type EventInsert,
 } from '@wrsi/api';
-import { Button, Card, DateField, Input, Screen, SearchSelect, Select, Text, TimeField, useTheme } from '@wrsi/ui';
+import {
+  Button,
+  Card,
+  DateField,
+  Input,
+  Screen,
+  SearchSelect,
+  Select,
+  Text,
+  TimeField,
+  useConfirm,
+  useTheme,
+  useToast,
+} from '@wrsi/ui';
 import type { AdminEventsStackParamList } from '../../navigation/types';
 
 const EVENT_TYPES = ['fair', 'open_fair_day', 'other'];
@@ -83,6 +96,8 @@ const EMPTY_FORM: FormState = {
 function EventUniversitiesSection({ eventId }: { eventId: string }) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const toast = useToast();
+  const confirm = useConfirm();
   const participating = useEventUniversities(eventId);
   const all = useUniversitiesList();
   const add = useAddEventUniversity();
@@ -93,6 +108,34 @@ function EventUniversitiesSection({ eventId }: { eventId: string }) {
   const options = (all.data ?? [])
     .filter((u) => !participatingIds.has(u.id))
     .map((u) => ({ label: u.name, value: u.id }));
+
+  async function onRemove(universityId: string) {
+    const ok = await confirm.confirm({
+      title: t('events.remove'),
+      message: t('events.removeUniversityConfirmMessage'),
+      confirmText: t('events.remove'),
+      cancelText: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync({ eventId, universityId });
+      toast.show({ type: 'success', message: t('events.universityRemovedToast') });
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
+  }
+
+  async function onAdd() {
+    if (!selected) return;
+    try {
+      await add.mutateAsync({ eventId, universityId: selected });
+      setSelected(null);
+      toast.show({ type: 'success', message: t('events.universityAddedToast') });
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
+  }
 
   return (
     <View style={{ marginTop: theme.spacing.lg, gap: theme.spacing.sm }}>
@@ -107,7 +150,7 @@ function EventUniversitiesSection({ eventId }: { eventId: string }) {
             variant="danger"
             title={t('events.remove')}
             loading={remove.isPending}
-            onPress={() => remove.mutate({ eventId, universityId: u.id })}
+            onPress={() => onRemove(u.id)}
           />
         </Card>
       ))}
@@ -127,11 +170,7 @@ function EventUniversitiesSection({ eventId }: { eventId: string }) {
         title={t('events.addUniversity')}
         loading={add.isPending}
         disabled={!selected}
-        onPress={() => {
-          if (!selected) return;
-          add.mutate({ eventId, universityId: selected });
-          setSelected(null);
-        }}
+        onPress={onAdd}
       />
     </View>
   );
@@ -148,6 +187,8 @@ function EventWorkshopsSection({
 }) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const toast = useToast();
+  const confirm = useConfirm();
   const nowY = new Date().getFullYear();
   const workshops = useEventWorkshops(eventId);
   const universities = useUniversitiesList();
@@ -182,8 +223,26 @@ function EventWorkshopsSection({
       setStartTime('');
       setEndTime('');
       setErrors({});
+      toast.show({ type: 'success', message: t('events.workshopAddedToast') });
     } catch (e) {
-      Alert.alert(t('common.error'), (e as Error).message);
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
+  }
+
+  async function onRemove(workshopId: string) {
+    const ok = await confirm.confirm({
+      title: t('events.remove'),
+      message: t('events.removeWorkshopConfirmMessage'),
+      confirmText: t('events.remove'),
+      cancelText: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync({ id: workshopId, eventId });
+      toast.show({ type: 'success', message: t('events.workshopRemovedToast') });
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
     }
   }
 
@@ -202,7 +261,7 @@ function EventWorkshopsSection({
             variant="danger"
             title={t('events.remove')}
             loading={remove.isPending}
-            onPress={() => remove.mutate({ id: w.id, eventId })}
+            onPress={() => onRemove(w.id)}
           />
         </Card>
       ))}
@@ -276,6 +335,8 @@ function EventOneToOnesSection({
 }) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const toast = useToast();
+  const confirm = useConfirm();
   const nowY = new Date().getFullYear();
   const slots = useOneToOnes(eventId);
   const universities = useUniversitiesList();
@@ -306,8 +367,26 @@ function EventOneToOnesSection({
       setStartTime('');
       setEndTime('');
       setErrors({});
+      toast.show({ type: 'success', message: t('events.slotAddedToast') });
     } catch (e) {
-      Alert.alert(t('common.error'), (e as Error).message);
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
+  }
+
+  async function onRemove(slotId: string) {
+    const ok = await confirm.confirm({
+      title: t('events.remove'),
+      message: t('events.removeSlotConfirmMessage'),
+      confirmText: t('events.remove'),
+      cancelText: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync({ id: slotId, eventId });
+      toast.show({ type: 'success', message: t('events.slotRemovedToast') });
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
     }
   }
 
@@ -323,7 +402,7 @@ function EventOneToOnesSection({
             variant="danger"
             title={t('events.remove')}
             loading={remove.isPending}
-            onPress={() => remove.mutate({ id: slot.id, eventId })}
+            onPress={() => onRemove(slot.id)}
           />
         </Card>
       ))}
@@ -382,6 +461,8 @@ export function EventDetailScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const nav = useNavigation();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { id } = useRoute<RouteProp<AdminEventsStackParamList, 'Detail'>>().params;
   const mode = id ? 'edit' : 'create';
   const spanish = i18n.language.startsWith('es');
@@ -479,36 +560,35 @@ export function EventDetailScreen() {
     try {
       if (mode === 'create') {
         const created = await create.mutateAsync(toPayload(form));
-        Alert.alert(t('admin.created'));
+        toast.show({ type: 'success', message: t('admin.created') });
         // Switch into edit mode so the child sections (universities/workshops/1:1) open.
         nav.setParams({ id: created.id } as never);
       } else {
         await update.mutateAsync(toPayload(form));
-        Alert.alert(t('admin.saved'));
+        toast.show({ type: 'success', message: t('admin.saved') });
       }
     } catch (e) {
-      Alert.alert(t('common.error'), (e as Error).message);
+      toast.show({ type: 'error', message: (e as Error).message });
     }
   }
 
-  function confirmRemove() {
+  async function confirmRemove() {
     if (!id) return;
-    Alert.alert(t('admin.deleteTitle'), t('admin.confirmDelete'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('admin.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove.mutateAsync(id);
-            Alert.alert(t('admin.deleted'));
-            nav.goBack();
-          } catch (e) {
-            Alert.alert(t('common.error'), (e as Error).message);
-          }
-        },
-      },
-    ]);
+    const ok = await confirm.confirm({
+      title: t('admin.deleteTitle'),
+      message: t('admin.confirmDelete'),
+      confirmText: t('admin.delete'),
+      cancelText: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove.mutateAsync(id);
+      toast.show({ type: 'success', message: t('admin.deleted') });
+      nav.goBack();
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
   }
 
   const submitting = create.isPending || update.isPending;
