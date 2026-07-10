@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useUniversitiesList, type UniversityRow } from '@wrsi/api';
 import type { UniversitiesStackParamList } from '../../navigation/types';
+import { useRefetchOnFocus } from '../../lib/useRefetchOnFocus';
 import { EntityListScreen } from './EntityListScreen';
 
 type ListItem = Pick<UniversityRow, 'id' | 'name' | 'website'>;
@@ -13,10 +14,12 @@ export function UniversitiesListScreen() {
   const nav = useNavigation<NativeStackNavigationProp<UniversitiesStackParamList, 'List'>>();
   const [search, setSearch] = useState('');
   const query = useUniversitiesList(search);
+  useRefetchOnFocus(query.refetch);
 
   return (
     <EntityListScreen<ListItem>
       addLabel={t('admin.addUniversity')}
+      addTestID="admin-add-university"
       searchPlaceholder={t('admin.search')}
       emptyText={t('admin.noUniversities')}
       items={query.data}

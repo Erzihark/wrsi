@@ -5,6 +5,8 @@ import { Button, Card, Input, Screen, Text, useTheme } from '@wrsi/ui';
 export interface EntityListScreenProps<Item> {
   /** "＋ Add" button label. */
   addLabel: string;
+  /** testID for the "＋ Add" button (for Maestro E2E). */
+  addTestID?: string;
   searchPlaceholder: string;
   emptyText: string;
   items: Item[] | undefined;
@@ -25,6 +27,7 @@ export interface EntityListScreenProps<Item> {
  */
 export function EntityListScreen<Item>({
   addLabel,
+  addTestID,
   searchPlaceholder,
   emptyText,
   items,
@@ -49,7 +52,7 @@ export function EntityListScreen<Item>({
           onChangeText={onSearchChange}
           autoCapitalize="none"
         />
-        <Button title={addLabel} onPress={onAdd} />
+        <Button title={addLabel} onPress={onAdd} testID={addTestID} />
       </View>
 
       {isLoading ? (

@@ -19,7 +19,7 @@ export function useHighSchoolsList(search?: string) {
   const supabase = useSupabase();
   const term = sanitize(search);
   return useQuery({
-    queryKey: [...queryKeys.highSchools(), term ?? ''],
+    queryKey: [...queryKeys.highSchools(), 'list', term ?? ''],
     queryFn: async () => {
       let query = supabase
         .from('high_schools')

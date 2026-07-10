@@ -24,6 +24,7 @@ import {
   useTheme,
 } from '@wrsi/ui';
 import type { StudentsStackParamList } from '../../navigation/types';
+import { useRefetchOnFocus } from '../../lib/useRefetchOnFocus';
 
 const EMPTY_FILTERS: StudentFilters = {};
 
@@ -46,6 +47,7 @@ export function StudentsListScreen() {
     [filters, search],
   );
   const query = useStudentsList(effectiveFilters);
+  useRefetchOnFocus(query.refetch);
 
   // The view types every column nullable; id is the students PK and never null,
   // so narrow it for keys/navigation.
@@ -118,7 +120,11 @@ export function StudentsListScreen() {
           onChangeText={setSearch}
           autoCapitalize="none"
         />
-        <Button title={t('admin.addStudent')} onPress={() => nav.navigate('StudentDetail', {})} />
+        <Button
+          title={t('admin.addStudent')}
+          onPress={() => nav.navigate('StudentDetail', {})}
+          testID="admin-add-student"
+        />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Button
             variant="ghost"

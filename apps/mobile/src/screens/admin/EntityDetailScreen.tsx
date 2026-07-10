@@ -160,6 +160,7 @@ export function EntityDetailScreen<
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
+            testID="entity-email-input"
           />
           <Input
             label={t('admin.tempPassword')}
@@ -176,6 +177,7 @@ export function EntityDetailScreen<
         title={submitting ? t('onboarding.submitting') : mode === 'create' ? t('admin.create') : t('admin.saveChanges')}
         loading={submitting}
         onPress={save}
+        testID="entity-submit"
       />
 
       {mode === 'edit' && (

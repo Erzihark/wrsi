@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useEventsAdminList } from '@wrsi/api';
 import { formatGeography } from '@wrsi/shared-utils';
 import type { AdminEventsStackParamList } from '../../navigation/types';
+import { useRefetchOnFocus } from '../../lib/useRefetchOnFocus';
 import { EntityListScreen } from './EntityListScreen';
 
 function formatDateRange(start: string | null, end: string | null): string {
@@ -17,11 +18,13 @@ export function EventsListScreen() {
   const nav = useNavigation<NativeStackNavigationProp<AdminEventsStackParamList, 'List'>>();
   const [search, setSearch] = useState('');
   const query = useEventsAdminList(search);
+  useRefetchOnFocus(query.refetch);
   const spanish = i18n.language.startsWith('es');
 
   return (
     <EntityListScreen
       addLabel={t('admin.addEvent')}
+      addTestID="admin-add-event"
       searchPlaceholder={t('admin.search')}
       emptyText={t('admin.noEvents')}
       items={query.data}

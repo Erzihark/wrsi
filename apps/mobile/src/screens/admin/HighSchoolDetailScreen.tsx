@@ -108,6 +108,7 @@ export function HighSchoolDetailScreen() {
           label={t('admin.name')}
           value={form.name}
           onChangeText={(v) => set('name', v)}
+          testID="highschool-name-input"
         />
         <Input
           label={t('admin.contactFirstName')}
