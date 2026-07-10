@@ -11,11 +11,15 @@ schools/universities/counselors), documents upload, student university directory
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
 admin event CRUD) are all built and merged to `master`.
 
-**In review (branch `fix/high-school-dropdown-stale-cache`, not yet merged):** fixes a cache
-key mismatch — after admin-creating a high school, the "assign high school" dropdown on student
-screens stayed stale for up to an hour (the admin list itself was already fine; universities/
-counselors didn't have the bug). Adds `packages/api/src/directory.test.ts` covering the query-key
-contract for all three admin-managed lookup entities. See DECISIONS.md 2026-07-10.
+**In review (branch `fix/high-school-dropdown-stale-cache`, not yet merged):** fixes admin CRUD
+lists not reflecting a create/edit/delete until a full app reload. Root cause: native-stack
+List→Detail keeps the List mounted, so `goBack()` never remounts it and the background
+`invalidateQueries` isn't reflected — affected **all** admin lists (students/high schools/
+universities/counselors/events), not just high schools. Fix: `useRefetchOnFocus` on every admin
+list screen. Also fixes a separate stale "assign high school" dropdown (query-key mismatch in
+`useHighSchools`). Adds `packages/api/src/directory.test.ts` (query-key contract) + a Maestro
+flow `.maestro/admin/high-school-create.yaml` (create → appears in list, no reload) with the
+`testID`s it needs. Focus-refetch + Maestro flow not yet run on-device. See DECISIONS.md 2026-07-10.
 
 **In review (branch `feat/confirm-dialogs-and-toasts`, not yet merged):** reusable
 `ConfirmProvider`/`useConfirm()` + `ToastProvider`/`useToast()` in `@wrsi/ui` (token-driven,
@@ -127,9 +131,10 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
 - `states_provinces` seed covers the primary study-abroad countries only; extend per ISO
   3166-2 as new destinations come up (the field is optional for unlisted countries).
 - **Testing — expand the E2E slice.** Backend coverage is solid (incl. events, see
-  `tests/backend/security/events.test.ts`); Maestro currently covers only login-per-role + the
-  onboarding gate. Add flows (and `testID`s) for: full onboarding completion, document
-  upload/delete, admin CRUD (students/high schools/universities), counselor read-only CRM, and
-  events browse/register/workshop/1:1/notes.
+  `tests/backend/security/events.test.ts`); Maestro covers login-per-role, the onboarding gate,
+  and admin high-school create → appears-in-list (`.maestro/admin/high-school-create.yaml`, the
+  stale-list regression). Still to add (and `testID`s) for: full onboarding completion, document
+  upload/delete, the rest of admin CRUD (students/universities/counselors/events edit+delete),
+  counselor read-only CRM, and events browse/register/workshop/1:1/notes.
 - **Testing — Maestro in CI.** E2E isn't wired into GitHub Actions yet (needs an Android
   emulator + a built dev app). Add a dedicated workflow when worth the runner cost.

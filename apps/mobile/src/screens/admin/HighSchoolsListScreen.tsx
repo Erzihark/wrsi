@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useHighSchoolsList, type HighSchoolRow } from '@wrsi/api';
 import { fullName } from '@wrsi/shared-utils';
 import type { HighSchoolsStackParamList } from '../../navigation/types';
+import { useRefetchOnFocus } from '../../lib/useRefetchOnFocus';
 import { EntityListScreen } from './EntityListScreen';
 
 type ListItem = Pick<
@@ -17,10 +18,12 @@ export function HighSchoolsListScreen() {
   const nav = useNavigation<NativeStackNavigationProp<HighSchoolsStackParamList, 'List'>>();
   const [search, setSearch] = useState('');
   const query = useHighSchoolsList(search);
+  useRefetchOnFocus(query.refetch);
 
   return (
     <EntityListScreen<ListItem>
       addLabel={t('admin.addHighSchool')}
+      addTestID="admin-add-highschool"
       searchPlaceholder={t('admin.search')}
       emptyText={t('admin.noHighSchools')}
       items={query.data}

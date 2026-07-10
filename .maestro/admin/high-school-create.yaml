@@ -1,0 +1,47 @@
+# Admin creates a high school and it appears in the list immediately (no app
+# reload). Regression guard for the stale-list bug: the List screen stays mounted
+# under the create Detail screen, so returning to it must refetch on focus.
+#
+# Prereqs: dev build on a running emulator + local Supabase freshly `db reset`
+# (seeded admin account admin@wrsi.dev / password123). See docs/TESTING.md.
+appId: com.wxstudy.wrsi
+tags:
+  - admin
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"
+
+# Unique per run so re-runs don't collide on the auth email / clutter the list.
+- evalScript: ${output.stamp = Date.now()}
+
+- tapOn:
+    id: "admin-tab-highschools"
+- tapOn:
+    id: "admin-add-highschool"
+
+- tapOn:
+    id: "entity-email-input"
+- inputText: "e2e-hs-${output.stamp}@wrsi.dev"
+- hideKeyboard
+- tapOn:
+    id: "highschool-name-input"
+- inputText: "E2E Prepa ${output.stamp}"
+- hideKeyboard
+
+- tapOn:
+    id: "entity-submit"
+
+# The create flow shows a blocking alert with the generated credentials; dismiss
+# it (RN's default single-button Alert is labelled "OK").
+- tapOn: "OK"
+
+# Back on the list: the newly created high school must be visible without any
+# manual reload. This is the assertion that fails if the list doesn't refresh.
+- assertVisible: "E2E Prepa ${output.stamp}"

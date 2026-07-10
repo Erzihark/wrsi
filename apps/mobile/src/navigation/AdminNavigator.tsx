@@ -138,7 +138,7 @@ export function AdminNavigator() {
       <Tab.Screen
         name="HighSchools"
         component={HighSchoolsManagement}
-        options={{ title: t('admin.highSchools') }}
+        options={{ title: t('admin.highSchools'), tabBarButtonTestID: 'admin-tab-highschools' }}
       />
       <Tab.Screen
         name="Universities"

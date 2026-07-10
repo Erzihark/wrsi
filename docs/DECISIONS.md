@@ -370,29 +370,41 @@ scope for this entity-action branch).
 interactive confirm/toast flows still need an on-device/emulator pass (Maestro is local-only) —
 a documented follow-up, along with adding a component test harness for `@wrsi/ui`.
 
-- **2026-07-10 — Fix: new high schools didn't appear in dropdowns after admin create (branch
-  `fix/high-school-dropdown-stale-cache`).** `useHighSchools()` (`packages/api/src/lookups.ts`,
-  used by the "assign high school" picker on student screens) keyed its cache under
-  `queryKeys.lookup('high_schools')`, a different top-level TanStack key than
-  `queryKeys.highSchools()` — the key `useCreateEntity`/`useUpdateHighSchool`/`useDeleteEntity`
-  actually invalidate. So after creating (or editing) a high school, the admin CRUD list
-  (`HighSchoolsListScreen`, which uses `useHighSchoolsList` and *does* share the key) refreshed
-  immediately, but the dropdown used elsewhere to assign/filter students by high school stayed
-  stale for up to an hour (`ONE_HOUR` staleTime). Universities never had this split (`useUniversities`
-  in `hooks.ts` already shares `queryKeys.universities()` with the admin list), which is why only
-  high schools showed the bug. Fixed by pointing `useHighSchools()` at `queryKeys.highSchools()`
-  (mirroring how `useCounselors()` already shares `queryKeys.lookup('counselors')` with its admin
-  list) and adding a `'list'` segment to `useHighSchoolsList`'s key so the two don't collide.
-  Audited every other admin-managed entity (universities, counselors, students) for the same
-  split-key pattern — none found. Added `packages/api/src/directory.test.ts`, which calls the
-  real hooks (via mocked `useQuery`/`useSupabase`) and asserts `listKey(entityType)` is a valid
-  TanStack partial-match prefix of both the admin-list and lookup-hook query keys, for all three
-  entity types that have both — this would have caught the regression and fails if any of them
-  drift again. *Verified:* confirmed the new test fails when the bug is reintroduced (and only
-  the high-school case fails) and passes with the fix; `yarn typecheck` (all workspaces) and
-  `yarn test` pass. No backend/RLS/Edge surface touched, so `test:backend` not required; not
-  reproduced on-device (would need the emulator + dev build) but the query-key mechanism is
-  fully exercised by the new unit test.
+- **2026-07-10 — Fix: newly-created directory rows didn't appear in admin lists until a full
+  app reload (branch `fix/high-school-dropdown-stale-cache`).** Reported for high schools:
+  create one → return to the High Schools tab → it isn't there → only a full Expo/JS reload
+  shows it. **Root cause (the real one — an earlier pass misdiagnosed this as list-fine /
+  dropdown-only):** every admin section is a native stack `List → Detail`. Pushing the create
+  `Detail` screen keeps the `List` screen *mounted* underneath (react-navigation native-stack +
+  react-native-screens freeze), so `goBack()` never remounts it — `refetchOnMount` never fires,
+  and the `useCreateEntity` `onSuccess` `invalidateQueries` on a frozen/detached screen isn't
+  reliably reflected. Net effect: the list keeps showing stale data until the whole JS bundle
+  reloads. This affected **all** admin CRUD lists (students, high schools, universities,
+  counselors, events) equally — the same List→Detail shape — not just high schools; the
+  reporter's "universities seemed fine" was luck of timing, not different code. **Fix:** added
+  `apps/mobile/src/lib/useRefetchOnFocus.ts` (refetches on `useFocusEffect`, skipping the first
+  focus so we don't double-fetch on mount) and applied it to all five admin list screens. Screen
+  *focus* is a navigation event independent of mount/freeze, so returning from any create/edit/
+  delete now refetches the list. **Also fixed a real second bug found along the way:**
+  `useHighSchools()` (`packages/api/src/lookups.ts`, the "assign high school" dropdown on student
+  screens, which you *don't* navigate back to so focus-refetch can't help it) keyed under
+  `queryKeys.lookup('high_schools')` — a different top-level key than the
+  `queryKeys.highSchools()` that `useCreateEntity`/`useUpdateHighSchool`/`useDeleteEntity`
+  invalidate — so that dropdown stayed stale up to an hour (`ONE_HOUR` staleTime). Pointed it at
+  `queryKeys.highSchools()` (mirroring how `useCounselors()` shares `queryKeys.lookup('counselors')`
+  with its admin list) and added a `'list'` segment to `useHighSchoolsList`'s key so the two
+  don't collide. Audited universities/counselors/students for the same split-key pattern — none
+  found. **Tests:** `packages/api/src/directory.test.ts` calls the real hooks (mocked
+  `useQuery`/`useSupabase`) and asserts `listKey(entityType)` is a valid TanStack partial-match
+  prefix of both the admin-list and lookup-hook keys for all three admin-managed lookup entities
+  (guards the dropdown key contract). `.maestro/admin/high-school-create.yaml` drives the real
+  UX: admin logs in, creates a high school, and asserts it's visible in the list with no reload —
+  the flow that reproduces the reported bug (needs added `testID`s on the tab/add/email/name/
+  submit controls). *Verified:* `yarn typecheck` (all 9 packages) + `yarn test` (unit) green;
+  the dropdown-key regression was confirmed to fail the unit test when reintroduced. The
+  focus-refetch fix and the Maestro flow are **not** yet run on-device (no local emulator/dev
+  build in this session) — Maestro is local-only; that on-device pass is the remaining
+  verification step.
 
 ## Key decisions (for context)
 

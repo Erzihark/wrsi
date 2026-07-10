@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useCounselorsList, type CounselorRow } from '@wrsi/api';
 import { fullName } from '@wrsi/shared-utils';
 import type { CounselorsStackParamList } from '../../navigation/types';
+import { useRefetchOnFocus } from '../../lib/useRefetchOnFocus';
 import { EntityListScreen } from './EntityListScreen';
 
 type ListItem = Pick<CounselorRow, 'id' | 'first_name' | 'last_name' | 'phone'>;
@@ -14,10 +15,12 @@ export function CounselorsListScreen() {
   const nav = useNavigation<NativeStackNavigationProp<CounselorsStackParamList, 'List'>>();
   const [search, setSearch] = useState('');
   const query = useCounselorsList(search);
+  useRefetchOnFocus(query.refetch);
 
   return (
     <EntityListScreen<ListItem>
       addLabel={t('admin.addCounselor')}
+      addTestID="admin-add-counselor"
       searchPlaceholder={t('admin.search')}
       emptyText={t('admin.noCounselors')}
       items={query.data}
