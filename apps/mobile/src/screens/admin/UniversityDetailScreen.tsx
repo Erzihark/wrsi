@@ -1,5 +1,7 @@
 import { type RouteProp, useRoute } from '@react-navigation/native';
+import { Controller, type Control } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 import {
   useCountries,
   useCreateEntity,
@@ -11,22 +13,24 @@ import {
   useUpdateUniversity,
   type UniversityUpdate,
 } from '@wrsi/api';
-import { Input, Select } from '@wrsi/ui';
+import { imageUrlField, requiredString, webUrlField } from '@wrsi/shared-utils';
 import type { UniversitiesStackParamList } from '../../navigation/types';
 import { CountryStateSelect } from '../../components/CountryStateSelect';
-import { EntityDetailScreen, type SetField } from './EntityDetailScreen';
+import { FormInput, FormSelect } from '../../components/form';
+import { EntityDetailScreen } from './EntityDetailScreen';
 
+const schema = z.object({
+  name: requiredString(),
+  website: webUrlField(),
+  description: z.string(),
+  requirements: z.string(),
+  logo_url: imageUrlField(),
+  currency_id: z.string().nullable(),
+  state_province_id: z.string().nullable(),
+  status_id: z.string().nullable(),
+});
 // `type` (not `interface`) so it satisfies `Form extends Record<string, unknown>`.
-type FormState = {
-  name: string;
-  website: string;
-  description: string;
-  requirements: string;
-  logo_url: string;
-  currency_id: string | null;
-  state_province_id: string | null;
-  status_id: string | null;
-}
+type FormState = z.infer<typeof schema>;
 
 const EMPTY_FORM: FormState = {
   name: '',
@@ -73,11 +77,6 @@ export function UniversityDetailScreen() {
   const currencyOptions = (currencies.data ?? []).map((c) => ({ label: c.code, value: c.id }));
   const statusOptions = (statuses.data ?? []).map((s) => ({ label: s.name, value: s.id }));
 
-  function validate(form: FormState): string | null {
-    if (!form.name.trim()) return t('validation.required');
-    return null;
-  }
-
   function toPayload(form: FormState): UniversityUpdate {
     return {
       name: form.name.trim(),
@@ -91,57 +90,44 @@ export function UniversityDetailScreen() {
     };
   }
 
-  function renderFields(form: FormState, set: SetField<FormState>) {
+  function renderFields(control: Control<FormState>) {
     return (
       <>
-        <Input
-          label={t('admin.name')}
-          value={form.name}
-          onChangeText={(v) => set('name', v)}
-        />
-        <Input
+        <FormInput control={control} name="name" label={t('admin.name')} />
+        <FormInput
+          control={control}
+          name="website"
           label={t('admin.website')}
           keyboardType="url"
           autoCapitalize="none"
-          value={form.website}
-          onChangeText={(v) => set('website', v)}
         />
-        <Input
-          label={t('admin.description')}
-          multiline
-          value={form.description}
-          onChangeText={(v) => set('description', v)}
-        />
-        <Input
+        <FormInput control={control} name="description" label={t('admin.description')} multiline />
+        <FormInput
+          control={control}
+          name="requirements"
           label={t('admin.requirements')}
           multiline
-          value={form.requirements}
-          onChangeText={(v) => set('requirements', v)}
         />
-        <Input
+        <FormInput
+          control={control}
+          name="logo_url"
           label={t('admin.logoUrl')}
           autoCapitalize="none"
-          value={form.logo_url}
-          onChangeText={(v) => set('logo_url', v)}
         />
-        <Select
-          label={t('onboarding.currency')}
-          options={currencyOptions}
-          value={form.currency_id}
-          onChange={(v) => set('currency_id', v)}
+        <FormSelect control={control} name="currency_id" label={t('onboarding.currency')} options={currencyOptions} />
+        <Controller
+          control={control}
+          name="state_province_id"
+          render={({ field }) => (
+            <CountryStateSelect
+              countries={countries.data ?? []}
+              states={states.data ?? []}
+              value={field.value}
+              onChange={field.onChange}
+            />
+          )}
         />
-        <CountryStateSelect
-          countries={countries.data ?? []}
-          states={states.data ?? []}
-          value={form.state_province_id}
-          onChange={(v) => set('state_province_id', v)}
-        />
-        <Select
-          label={t('admin.status')}
-          options={statusOptions}
-          value={form.status_id}
-          onChange={(v) => set('status_id', v)}
-        />
+        <FormSelect control={control} name="status_id" label={t('admin.status')} options={statusOptions} />
       </>
     );
   }
@@ -150,10 +136,10 @@ export function UniversityDetailScreen() {
     <EntityDetailScreen
       mode={mode}
       title={mode === 'create' ? t('admin.addUniversity') : t('admin.editUniversity')}
+      schema={schema}
       emptyForm={EMPTY_FORM}
       initialForm={initialForm}
       optionsReady={optionsReady}
-      validate={validate}
       toPayload={toPayload}
       create={create}
       update={update}

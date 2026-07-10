@@ -7,10 +7,15 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@wrsi/shared-utils": "workspace:*",
+    "country-flag-icons": "^1.5.13"
+  },
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-safe-area-context": "*"
+    "react-native-safe-area-context": "*",
+    "react-native-svg": "*"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

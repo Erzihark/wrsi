@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { emptyPhone, phoneField } from '@wrsi/shared-utils';
 
 // Error messages are i18n KEYS — translate at render time with t(message).
 const REQUIRED = 'validation.required';
@@ -29,15 +30,7 @@ export const onboardingSchema = z.object({
     .min(1, 'validation.invalidDate')
     .regex(isoDate, 'validation.invalidDate')
     .refine(isPlausibleBirthDate, 'validation.birthDateRange'),
-  phone_country_id: requiredId,
-  phone_number: z
-    .string()
-    .trim()
-    .min(1, REQUIRED)
-    .refine(
-      (v) => /^[0-9]{6,12}$/.test(v.replace(/[^0-9]/g, '')),
-      'validation.phoneInvalid',
-    ),
+  phone: phoneField(),
   parent_or_guardian_name: z.string().trim().min(1, REQUIRED),
   country_id: requiredId,
   passport_country_ids: z.array(z.string()).min(1, AT_LEAST_ONE),
@@ -80,8 +73,7 @@ export const onboardingDefaults: OnboardingFormInput = {
   first_name: '',
   last_name: '',
   birth_date: '',
-  phone_country_id: null,
-  phone_number: '',
+  phone: emptyPhone(),
   parent_or_guardian_name: '',
   country_id: null,
   passport_country_ids: [],
@@ -105,8 +97,7 @@ export const STEP_FIELDS: (keyof OnboardingFormInput)[][] = [
     'first_name',
     'last_name',
     'birth_date',
-    'phone_country_id',
-    'phone_number',
+    'phone',
     'parent_or_guardian_name',
     'country_id',
     'passport_country_ids',

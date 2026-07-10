@@ -28,6 +28,7 @@ import {
   useToast,
 } from '@wrsi/ui';
 import { useAuth } from '../../auth/AuthContext';
+import { FormPhoneField } from '../../components/form';
 import {
   BUDGET_OPTIONS,
   CEFR_OPTIONS,
@@ -122,13 +123,6 @@ export function OnboardingScreen() {
     label: (isEs ? c.name_es : null) ?? c.name,
     value: c.id,
   }));
-  // Dial-code options: "México (+52)".
-  const dialOptions = countries.data
-    .filter((c) => c.calling_code)
-    .map((c) => ({
-      label: `${(isEs ? c.name_es : null) ?? c.name} (${c.calling_code})`,
-      value: c.id,
-    }));
   const fieldOptions = opt(fields.data);
   const levelOptions = opt(levels.data);
   const planOptions = opt(plans.data);
@@ -142,15 +136,12 @@ export function OnboardingScreen() {
 
   const submit = form.handleSubmit(
     async (values) => {
-      // Compose E.164-style phone: selected country's dial code + local digits.
-      const dialCode =
-        countries.data?.find((c) => c.id === values.phone_country_id)?.calling_code ?? '';
-      const fullPhone = `${dialCode}${values.phone_number.replace(/[^0-9]/g, '')}`;
       const p_profile = {
         first_name: values.first_name,
         last_name: values.last_name,
         birth_date: values.birth_date,
-        phone_number: fullPhone,
+        // Validated required + valid, so e164 is always present here.
+        phone_number: values.phone.e164 ?? '',
         parent_or_guardian_name: values.parent_or_guardian_name,
         country_id: values.country_id,
         highest_education_level_id: values.highest_education_level_id,
@@ -258,33 +249,16 @@ export function OnboardingScreen() {
               />
             )}
           />
-          <Controller
+          <FormPhoneField
             control={form.control}
-            name="phone_country_id"
-            render={({ field, fieldState }) => (
-              <SearchSelect
-                label={t('onboarding.phoneCountry')}
-                options={dialOptions}
-                value={field.value}
-                onChange={field.onChange}
-                error={errText(fieldState.error?.message)}
-                {...picker}
-              />
-            )}
-          />
-          <Controller
-            control={form.control}
-            name="phone_number"
-            render={({ field, fieldState }) => (
-              <Input
-                label={t('onboarding.phone')}
-                keyboardType="phone-pad"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                error={errText(fieldState.error?.message)}
-              />
-            )}
+            name="phone"
+            label={t('onboarding.phone')}
+            countries={countries.data}
+            spanish={isEs}
+            placeholder={t('onboarding.phone')}
+            countryPickerTitle={t('onboarding.phoneCountry')}
+            searchPlaceholder={picker.searchPlaceholder}
+            noResultsText={picker.noResultsText}
           />
           <Controller
             control={form.control}
@@ -513,6 +487,7 @@ export function OnboardingScreen() {
             <Button
               title={complete.isPending ? t('onboarding.submitting') : t('common.submit')}
               loading={complete.isPending}
+              disabled={!form.formState.isValid || complete.isPending}
               onPress={submit}
             />
           )}

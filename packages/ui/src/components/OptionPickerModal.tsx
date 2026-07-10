@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   FlatList,
   Modal,
@@ -29,6 +29,8 @@ export interface OptionPickerModalProps<T extends string | number> {
   doneText?: string;
   /** Multi-select keeps the modal open on selection and shows a Done button. */
   multi?: boolean;
+  /** Optional leading content per row (e.g. a flag), rendered before the label. */
+  renderLeading?: (value: T) => ReactNode;
 }
 
 /**
@@ -46,6 +48,7 @@ export function OptionPickerModal<T extends string | number>({
   noResultsText = 'No results',
   doneText = 'Done',
   multi = false,
+  renderLeading,
 }: OptionPickerModalProps<T>) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -130,18 +133,30 @@ export function OptionPickerModal<T extends string | number>({
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: t.spacing.sm,
                   paddingVertical: t.spacing.md,
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <Text
+                <View
                   style={{
-                    color: isSelected ? t.color.primary : t.color.text,
-                    fontWeight: isSelected ? t.fontWeight.semibold : t.fontWeight.regular,
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: t.spacing.sm,
                   }}
                 >
-                  {item.label}
-                </Text>
+                  {renderLeading ? renderLeading(item.value) : null}
+                  <Text
+                    style={{
+                      flexShrink: 1,
+                      color: isSelected ? t.color.primary : t.color.text,
+                      fontWeight: isSelected ? t.fontWeight.semibold : t.fontWeight.regular,
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
                 {isSelected ? (
                   <Text style={{ color: t.color.primary, fontWeight: t.fontWeight.bold }}>✓</Text>
                 ) : null}

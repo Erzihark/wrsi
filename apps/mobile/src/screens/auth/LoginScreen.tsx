@@ -2,50 +2,66 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { useSupabase } from '@wrsi/api';
-import { Screen, Text, Input, Button } from '@wrsi/ui';
+import { emailField, requiredString } from '@wrsi/shared-utils';
+import { Screen, Text, Button } from '@wrsi/ui';
 import type { AuthStackParamList } from '../../navigation/types';
+import { FormInput } from '../../components/form';
+
+const schema = z.object({ email: emailField(), password: requiredString() });
+type FormState = z.infer<typeof schema>;
 
 export function LoginScreen() {
   const supabase = useSupabase();
   const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList, 'Login'>>();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin() {
+  const form = useForm<FormState>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: '', password: '' },
+    mode: 'onTouched',
+  });
+
+  const onSubmit = async ({ email, password }: FormState) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
     setLoading(false);
     if (error) Alert.alert(t('common.error'), error.message);
-  }
+  };
 
   return (
     <Screen>
       <Text variant="heading">WX Study</Text>
-      <Input
+      <FormInput
+        control={form.control}
+        name="email"
         testID="login-email"
         label={t('auth.email')}
         autoCapitalize="none"
         keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
       />
-      <Input
+      <FormInput
+        control={form.control}
+        name="password"
         testID="login-password"
         label={t('auth.password')}
         secureTextEntry
-        value={password}
-        onChangeText={setPassword}
       />
       <Button
         testID="login-submit"
         title={t('auth.login')}
         loading={loading}
-        onPress={handleLogin}
+        disabled={!form.formState.isValid || loading}
+        onPress={form.handleSubmit(onSubmit)}
       />
       <Button
         variant="ghost"

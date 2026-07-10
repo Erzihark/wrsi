@@ -8,6 +8,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "libphonenumber-js": "^1.11.0",
+    "zod": "^3.23.8"
+  },
   "devDependencies": {
     "@wrsi/typescript-config": "workspace:*",
     "typescript": "~6.0.3",

@@ -45,6 +45,7 @@ supabase/
   config.toml
 docs/
   PROGRESS.md        # handoff log / current status
+  VALIDATION.md      # form validation standard (RHF + zod)
 ```
 
 ## Prerequisites
@@ -227,9 +228,10 @@ psql "<staging-db-url>" -f supabase/seed.sql -f supabase/seeds/staging.sql
 Staging accounts use `@staging.wrsi.dev` emails with password `Staging123!` (listed in
 `supabase/seeds/staging.sql`).
 
-**Phone-number convention:** any phone field in a form must be preceded by a country
-dial-code selector (fed from `countries.calling_code`); numbers are stored as
-`+<code><digits>` (E.164-style).
+**Phone-number convention:** use the `PhoneField` primitive (`@wrsi/ui`) — a dial-code
+dropdown (fed from `countries.calling_code`/`iso_code`) plus a number input that formats
+as-you-type and validates against the selected country's real numbering rules
+(`libphonenumber-js`). Numbers are stored as E.164 (`+<code><digits>`).
 
 ## Working with the database
 
@@ -254,6 +256,9 @@ come from the `user_roles` join table (a signup trigger mirrors `auth.users` int
   catalog keyed by `entity_type`.
 - **UI:** screens use the wrapped primitives from `@wrsi/ui` (never raw React Native
   components). Restyle the whole app from `packages/ui/src/theme/tokens.ts`.
+- **Forms & validation:** react-hook-form + zod, real-time, submit disabled until valid.
+  Build fields with the `apps/mobile/src/components/form` wrappers and compose schemas from
+  the `@wrsi/shared-utils` builders. Full standard in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 - **Navigation:** React Navigation only (no file-based routing).
 - **i18n:** all user-facing strings live in `packages/i18n`; Spanish is the default.
 - **Git:** never leave finished work uncommitted; scoped commits with a clear _why_.

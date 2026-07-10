@@ -1,5 +1,7 @@
 import type { Enums } from '@wrsi/shared-types';
 
+export * from './validation';
+
 /**
  * Normalize a name/email for duplicate detection: trim, lowercase, strip accents.
  * Used by the Monday.com import dedup logic.
