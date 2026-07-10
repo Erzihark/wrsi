@@ -406,6 +406,51 @@ a documented follow-up, along with adding a component test harness for `@wrsi/ui
   build in this session) — Maestro is local-only; that on-device pass is the remaining
   verification step.
 
+## 2026-07-10 — Form validation standard (RHF + zod, phone & URL)
+
+Branched `feat/form-validation-standards` off `master`. The forms had drifted into three
+different validation styles: onboarding used react-hook-form + zod with per-field errors; the
+admin entity forms used a homegrown `validate() → string` that fired a single toast **on submit
+only**; the event form used a homegrown error-map, also submit-only. No form disabled its
+submit button while invalid. Phone was a bare, unvalidated text box everywhere except
+onboarding (which only had a loose `6–12 digits` check and no formatting); URL fields
+(`website`, `logo_url`) were entirely unchecked.
+
+**Decision (all three "recommended" options, confirmed with the user):** unify on
+**react-hook-form + zod** as the single standard; use **`libphonenumber-js`** for real
+per-country phone validity + as-you-type formatting; roll out to **every** form.
+
+**Shared foundation:**
+- `@wrsi/shared-utils/validation.ts` — pure predicates (`isEmail`/`isWebUrl`/`isImageUrl`,
+  image URL requires an image extension), phone helpers (`makePhoneValue`/`parsePhone`/
+  `formatPhoneAsYouType`, `PhoneValue` state shape), and reusable zod builders
+  (`requiredString`, `emailField`, `webUrlField`, `imageUrlField`, `numericField`,
+  `phoneField`/`phoneFieldOptional`). Unit-tested (`validation.test.ts`, 11 cases).
+- `@wrsi/ui` `PhoneField` — dial-code dropdown (reuses `OptionPickerModal`) + a number input
+  that formats as-you-type and emits a `PhoneValue` carrying E.164 + `isValid`.
+- `apps/mobile/src/components/form` — RHF-bound wrappers (`FormInput`, `FormSelect`,
+  `FormSearchSelect`, `FormMultiSelect`, `FormSearchMultiSelect`, `FormDateField`,
+  `FormPhoneField`) that own the `Controller` binding + i18n error translation.
+- `docs/VALIDATION.md` — the written standard + a new-form checklist.
+
+**Rollout:** `EntityDetailScreen` reworked onto RHF (owns the profile form + a credentials
+sub-form; submit disabled until both valid). University/Counselor/High School/Student forms now
+declare zod schemas and render via the wrappers; Counselor/High School/Student gained the
+dial-code phone dropdown they lacked, and University `website`/`logo_url` now validate as
+URL/image-URL. Onboarding adopted `PhoneField` (persists composed E.164) with a gated submit.
+The event main form moved to RHF; its workshop/1:1 slot adders now disable the Add button live.
+Login/SignUp validate email (and sign-up password length) with gated submit.
+
+**Bug fixed in passing:** the edit-mode `form.reset` seeding in `EntityDetailScreen` /
+`EventDetailScreen` is now guarded by a ref — `initialForm`/`record.data` change identity on
+re-render/refetch, so an unguarded effect would reset the form and wipe in-progress edits.
+
+*Verified:* `yarn turbo run typecheck` (all packages) + `yarn turbo run test` (unit) green;
+new phone/URL/email logic covered by `shared-utils` unit tests. **Not** run: the mobile
+emulator / Maestro E2E layer (no local dev build in this session) — that on-device pass
+(especially the PhoneField interaction and disabled-submit behavior) is the remaining
+verification step.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web
