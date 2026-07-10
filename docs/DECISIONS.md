@@ -370,6 +370,30 @@ scope for this entity-action branch).
 interactive confirm/toast flows still need an on-device/emulator pass (Maestro is local-only) —
 a documented follow-up, along with adding a component test harness for `@wrsi/ui`.
 
+- **2026-07-10 — Fix: new high schools didn't appear in dropdowns after admin create (branch
+  `fix/high-school-dropdown-stale-cache`).** `useHighSchools()` (`packages/api/src/lookups.ts`,
+  used by the "assign high school" picker on student screens) keyed its cache under
+  `queryKeys.lookup('high_schools')`, a different top-level TanStack key than
+  `queryKeys.highSchools()` — the key `useCreateEntity`/`useUpdateHighSchool`/`useDeleteEntity`
+  actually invalidate. So after creating (or editing) a high school, the admin CRUD list
+  (`HighSchoolsListScreen`, which uses `useHighSchoolsList` and *does* share the key) refreshed
+  immediately, but the dropdown used elsewhere to assign/filter students by high school stayed
+  stale for up to an hour (`ONE_HOUR` staleTime). Universities never had this split (`useUniversities`
+  in `hooks.ts` already shares `queryKeys.universities()` with the admin list), which is why only
+  high schools showed the bug. Fixed by pointing `useHighSchools()` at `queryKeys.highSchools()`
+  (mirroring how `useCounselors()` already shares `queryKeys.lookup('counselors')` with its admin
+  list) and adding a `'list'` segment to `useHighSchoolsList`'s key so the two don't collide.
+  Audited every other admin-managed entity (universities, counselors, students) for the same
+  split-key pattern — none found. Added `packages/api/src/directory.test.ts`, which calls the
+  real hooks (via mocked `useQuery`/`useSupabase`) and asserts `listKey(entityType)` is a valid
+  TanStack partial-match prefix of both the admin-list and lookup-hook query keys, for all three
+  entity types that have both — this would have caught the regression and fails if any of them
+  drift again. *Verified:* confirmed the new test fails when the bug is reintroduced (and only
+  the high-school case fails) and passes with the fix; `yarn typecheck` (all workspaces) and
+  `yarn test` pass. No backend/RLS/Edge surface touched, so `test:backend` not required; not
+  reproduced on-device (would need the emulator + dev build) but the query-key mechanism is
+  fully exercised by the new unit test.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

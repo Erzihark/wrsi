@@ -21,7 +21,7 @@ export interface CreateEntityResult {
 }
 
 /** Which list cache to refresh after a create/delete of a given entity type. */
-function listKey(entityType: EntityType) {
+export function listKey(entityType: EntityType) {
   switch (entityType) {
     case 'student':
       return queryKeys.lookup('students-directory');

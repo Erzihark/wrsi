@@ -11,6 +11,12 @@ schools/universities/counselors), documents upload, student university directory
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
 admin event CRUD) are all built and merged to `master`.
 
+**In review (branch `fix/high-school-dropdown-stale-cache`, not yet merged):** fixes a cache
+key mismatch — after admin-creating a high school, the "assign high school" dropdown on student
+screens stayed stale for up to an hour (the admin list itself was already fine; universities/
+counselors didn't have the bug). Adds `packages/api/src/directory.test.ts` covering the query-key
+contract for all three admin-managed lookup entities. See DECISIONS.md 2026-07-10.
+
 **In review (branch `feat/confirm-dialogs-and-toasts`, not yet merged):** reusable
 `ConfirmProvider`/`useConfirm()` + `ToastProvider`/`useToast()` in `@wrsi/ui` (token-driven,
 mounted in `AppProviders`). Destructive actions (all entity/document/event-sub-entity deletes,

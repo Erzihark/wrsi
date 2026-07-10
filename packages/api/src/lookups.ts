@@ -133,11 +133,16 @@ export function useCounselors() {
   });
 }
 
-/** High schools (prepas), for the CRM's "high school" filter/field. */
+/**
+ * High schools (prepas), for the CRM's "high school" filter/field. Shares the
+ * `highSchools()` key base with the admin list/create/update/delete hooks in
+ * directory.ts + entities.ts so writes there also refresh this dropdown
+ * (mirrors the `lookup('counselors')` sharing below).
+ */
 export function useHighSchools() {
   const supabase = useSupabase();
   return useQuery({
-    queryKey: queryKeys.lookup('high_schools'),
+    queryKey: queryKeys.highSchools(),
     staleTime: ONE_HOUR,
     queryFn: async () => {
       const { data, error } = await supabase
