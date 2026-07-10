@@ -445,11 +445,23 @@ Login/SignUp validate email (and sign-up password length) with gated submit.
 `EventDetailScreen` is now guarded by a ref — `initialForm`/`record.data` change identity on
 re-render/refetch, so an unguarded effect would reset the form and wipe in-progress edits.
 
+**Flag icons on the phone extension selector (same branch, follow-up).** Added a `CountryFlag`
+to the `PhoneField` dial-code trigger + each picker row. Rejected two approaches: **flag emoji**
+(don't render on most Android system fonts — this also prompted the new "iOS + Android parity"
+rule in CLAUDE.md, committed to `master`), and **`react-native-country-flag`** (turned out to
+fetch from `flagcdn.com` at runtime — an external-service coupling, no offline). Chose
+**bundled SVG**: a `CountryFlag` primitive in `@wrsi/ui` using `country-flag-icons`
+(`string/3x2` SVG strings) + `react-native-svg`, rendering offline with no third-party request.
+`OptionPickerModal` gained an optional `renderLeading(value)` slot (existing callers untouched).
+*Trade-off:* `react-native-svg` is a native module, so a **new EAS dev build is required** before
+flags render on device.
+
 *Verified:* `yarn turbo run typecheck` (all packages) + `yarn turbo run test` (unit) green;
-new phone/URL/email logic covered by `shared-utils` unit tests. **Not** run: the mobile
-emulator / Maestro E2E layer (no local dev build in this session) — that on-device pass
-(especially the PhoneField interaction and disabled-submit behavior) is the remaining
-verification step.
+new phone/URL/email logic covered by `shared-utils` unit tests; confirmed all **235** seed
+countries resolve to a bundled flag (no blanks). **Not** run: the mobile emulator / Maestro E2E
+layer (no local dev build in this session) — that on-device pass (PhoneField interaction,
+disabled-submit behavior, and the SVG flags, which need the react-native-svg dev build) is the
+remaining verification step.
 
 ## Key decisions (for context)
 

@@ -20,9 +20,14 @@ formatting + per-country validity), and RHF-bound field wrappers in
 `apps/mobile/src/components/form`. Converted: onboarding, all 4 admin entity forms
 (via the reworked `EntityDetailScreen`), the event form (+ live-gated workshop/1:1 adders), and
 auth Login/SignUp. URL fields now validate (University `logo_url` must be an image URL); phone
-fields everywhere now have the country extension dropdown + real validation + formatting.
-Standard documented in [`docs/VALIDATION.md`](VALIDATION.md). Typecheck + unit tests green;
-mobile emulator/Maestro layer not run (no dev build here). See DECISIONS.md 2026-07-10.
+fields everywhere now have the country extension dropdown + real validation + formatting, with
+**bundled offline flag icons** on the dial-code trigger and picker rows (`CountryFlag` in
+`@wrsi/ui` = `country-flag-icons` SVGs + `react-native-svg`; emoji flags were rejected because
+they don't render on Android). Standard documented in [`docs/VALIDATION.md`](VALIDATION.md).
+**Adds a native module (`react-native-svg` 15.15.4) → a new EAS dev build is required before it
+renders on device.** Typecheck + unit tests green (incl. a check that all 235 seed countries
+have a flag); mobile emulator/Maestro layer not run (no dev build here). See DECISIONS.md
+2026-07-10.
 
 **In review (branch `fix/high-school-dropdown-stale-cache`, not yet merged):** fixes admin CRUD
 lists not reflecting a create/edit/delete until a full app reload. Root cause: native-stack
