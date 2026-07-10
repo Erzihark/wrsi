@@ -146,6 +146,8 @@ export const en = {
     emailInvalid: "Enter a valid email address",
     urlInvalid: "Enter a valid URL (https://…)",
     imageUrlInvalid: "The URL must point to an image (.png, .jpg, .webp…)",
+    passwordMin: "Password must be at least 6 characters",
+    amountInvalid: "Enter a valid amount",
     gradeRange: "Grade must be between 0 and 100",
     startDateRequired: "A start date is required",
     endBeforeStart: "The end date can't be before the start date",

@@ -149,6 +149,8 @@ export const es: TranslationResource = {
     emailInvalid: 'Ingresa un correo electrónico válido',
     urlInvalid: 'Ingresa una URL válida (https://…)',
     imageUrlInvalid: 'La URL debe apuntar a una imagen (.png, .jpg, .webp…)',
+    passwordMin: 'La contraseña debe tener al menos 6 caracteres',
+    amountInvalid: 'Ingresa un monto válido',
     gradeRange: 'El promedio debe estar entre 0 y 100',
     startDateRequired: 'Se requiere una fecha de inicio',
     endBeforeStart: 'La fecha de fin no puede ser anterior a la de inicio',

@@ -163,6 +163,21 @@ export function imageUrlField(required = false) {
     .refine((v) => (v.length === 0 ? !required : isImageUrl(v)), VALIDATION_MSG.imageUrl);
 }
 
+/**
+ * Numeric text field (inputs hold strings). Empty is allowed unless `required`;
+ * a typed value must be a finite number within `[min, max]`.
+ */
+export function numericField(
+  { min = -Infinity, max = Infinity, required = false } = {},
+  message: string = VALIDATION_MSG.required,
+) {
+  return z.string().trim().refine((v) => {
+    if (v.length === 0) return !required;
+    const n = Number(v);
+    return Number.isFinite(n) && n >= min && n <= max;
+  }, message);
+}
+
 /** Required phone: a country must be picked and the number valid for it. */
 export function phoneField() {
   return z.custom<PhoneValue>().superRefine((val, ctx) => {

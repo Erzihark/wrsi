@@ -1,8 +1,13 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useForm, type Control, type DefaultValues, type Resolver } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Screen, Text, useConfirm, useTheme, useToast } from '@wrsi/ui';
+import { emailField } from '@wrsi/shared-utils';
+import { Button, Screen, Text, useConfirm, useTheme, useToast } from '@wrsi/ui';
+import { FormInput } from '../../components/form';
 
 /** A mutation-like object (matches TanStack `useMutation` results). */
 interface Mutation<TArgs, TResult = unknown> {
@@ -10,7 +15,15 @@ interface Mutation<TArgs, TResult = unknown> {
   isPending: boolean;
 }
 
-export type SetField<Form> = <K extends keyof Form>(key: K, value: Form[K]) => void;
+/** Login credentials collected when provisioning a new entity account. */
+const credentialsSchema = z.object({
+  email: emailField(),
+  // Optional: blank = server generates one. If typed, enforce a sane minimum.
+  password: z
+    .string()
+    .refine((v) => v.length === 0 || v.length >= 6, 'validation.passwordMin'),
+});
+type Credentials = z.infer<typeof credentialsSchema>;
 
 export interface EntityDetailScreenProps<
   Form extends Record<string, unknown>,
@@ -19,14 +32,14 @@ export interface EntityDetailScreenProps<
   mode: 'create' | 'edit';
   /** Screen heading. */
   title: string;
-  /** Blank form used in create mode. */
+  /** zod schema validating the form (drives real-time errors + submit gating). */
+  schema: z.ZodType<unknown, z.ZodTypeDef, Form>;
+  /** Blank form used in create mode / as default values. */
   emptyForm: Form;
   /** Edit mode: the loaded record mapped to a form, or `undefined` while loading. */
   initialForm?: Form;
   /** Whether every lookup this form needs has loaded. */
   optionsReady: boolean;
-  /** Return an error message to block submit, or `null` when valid. */
-  validate?: (form: Form) => string | null;
   /** Map the form to the entity's profile columns (used for both create + update). */
   toPayload: (form: Form) => Payload;
   /** `useCreateEntity(type)` result (create mode). */
@@ -37,16 +50,18 @@ export interface EntityDetailScreenProps<
   remove: Mutation<string>;
   /** The record id (edit mode) — required to update/delete. */
   entityId?: string;
-  /** Entity-specific field inputs. */
-  renderFields: (form: Form, set: SetField<Form>) => ReactNode;
+  /** Entity-specific field inputs, bound to the form via `control`. */
+  renderFields: (control: Control<Form>) => ReactNode;
 }
 
 /**
- * Shared scaffold for the admin create/edit/delete screens. Owns the form state,
- * the loading gate, the create-vs-edit save branch, and the delete-with-confirm
- * flow, so each entity only supplies its fields + payload mapping. Create/delete
- * go through Edge Functions (they provision/remove the backing auth user); update
- * is a direct RLS-guarded write.
+ * Shared scaffold for the admin create/edit/delete screens. Owns a
+ * react-hook-form instance (validated by the entity's zod `schema`), the
+ * loading gate, the create-vs-edit save branch, and the delete-with-confirm
+ * flow, so each entity only supplies its fields + payload mapping. Submit is
+ * disabled until the form (and, in create mode, the credentials) are valid.
+ * Create/delete go through Edge Functions (they provision/remove the backing
+ * auth user); update is a direct RLS-guarded write.
  */
 export function EntityDetailScreen<
   Form extends Record<string, unknown>,
@@ -54,10 +69,10 @@ export function EntityDetailScreen<
 >({
   mode,
   title,
+  schema,
   emptyForm,
   initialForm,
   optionsReady,
-  validate,
   toPayload,
   create,
   update,
@@ -71,17 +86,29 @@ export function EntityDetailScreen<
   const toast = useToast();
   const confirm = useConfirm();
 
-  const [form, setForm] = useState<Form | null>(mode === 'create' ? emptyForm : null);
-  // Login credentials for the provisioned account (create mode only).
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const form = useForm<Form>({
+    resolver: zodResolver(schema) as Resolver<Form>,
+    defaultValues: emptyForm as DefaultValues<Form>,
+    mode: 'onTouched',
+  });
+  const creds = useForm<Credentials>({
+    resolver: zodResolver(credentialsSchema),
+    defaultValues: { email: '', password: '' },
+    mode: 'onTouched',
+  });
 
+  // Edit mode: once the record loads, seed the form and compute validity so the
+  // submit button reflects whether the existing data passes the schema.
+  const loaded = mode === 'edit' && initialForm ? initialForm : null;
   useEffect(() => {
-    if (mode === 'edit' && initialForm && !form) setForm(initialForm);
-  }, [mode, initialForm, form]);
+    if (loaded) {
+      form.reset(loaded as DefaultValues<Form>);
+      void form.trigger();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
 
-  const ready = optionsReady && form;
-  if (!ready) {
+  if (!optionsReady || (mode === 'edit' && !initialForm)) {
     return (
       <Screen>
         <ActivityIndicator color={theme.color.primary} />
@@ -89,26 +116,14 @@ export function EntityDetailScreen<
     );
   }
 
-  const set: SetField<Form> = (key, value) =>
-    setForm((f) => (f ? { ...f, [key]: value } : f));
-
-  async function save() {
-    if (!form) return;
-    const validationError = validate?.(form);
-    if (validationError) {
-      toast.show({ type: 'error', message: validationError });
-      return;
-    }
+  const onSubmit = async (values: Form) => {
     try {
       if (mode === 'create') {
-        if (!email.trim()) {
-          toast.show({ type: 'error', message: t('admin.emailRequired') });
-          return;
-        }
+        const { email, password } = creds.getValues();
         const result = await create.mutateAsync({
           email: email.trim(),
           password: password.trim() || undefined,
-          profile: toPayload(form),
+          profile: toPayload(values),
         });
         // Surface the (possibly generated) password in a blocking alert — a toast
         // would auto-dismiss before the admin can read/copy the credentials.
@@ -118,13 +133,19 @@ export function EntityDetailScreen<
         );
         nav.goBack();
       } else {
-        await update.mutateAsync(toPayload(form));
+        await update.mutateAsync(toPayload(values));
         toast.show({ type: 'success', message: t('admin.saved') });
         nav.goBack();
       }
     } catch (e) {
       toast.show({ type: 'error', message: (e as Error).message });
     }
+  };
+
+  async function save() {
+    // In create mode both forms must pass; handleSubmit re-validates the profile.
+    if (mode === 'create' && !(await creds.trigger())) return;
+    await form.handleSubmit(onSubmit)();
   }
 
   async function confirmRemove() {
@@ -147,6 +168,8 @@ export function EntityDetailScreen<
   }
 
   const submitting = create.isPending || update.isPending;
+  const canSubmit =
+    form.formState.isValid && (mode === 'edit' || creds.formState.isValid) && !submitting;
 
   return (
     <Screen scroll>
@@ -154,28 +177,29 @@ export function EntityDetailScreen<
 
       {mode === 'create' && (
         <>
-          <Input
+          <FormInput
+            control={creds.control}
+            name="email"
             label={t('admin.email')}
             keyboardType="email-address"
             autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
             testID="entity-email-input"
           />
-          <Input
+          <FormInput
+            control={creds.control}
+            name="password"
             label={t('admin.tempPassword')}
             autoCapitalize="none"
-            value={password}
-            onChangeText={setPassword}
           />
         </>
       )}
 
-      {renderFields(form, set)}
+      {renderFields(form.control)}
 
       <Button
         title={submitting ? t('onboarding.submitting') : mode === 'create' ? t('admin.create') : t('admin.saveChanges')}
         loading={submitting}
+        disabled={!canSubmit}
         onPress={save}
         testID="entity-submit"
       />

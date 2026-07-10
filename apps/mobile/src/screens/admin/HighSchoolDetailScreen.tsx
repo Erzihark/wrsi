@@ -1,6 +1,8 @@
 import { View } from 'react-native';
 import { type RouteProp, useRoute } from '@react-navigation/native';
+import { Controller, type Control } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 import {
   useCountries,
   useCreateEntity,
@@ -13,29 +15,38 @@ import {
   useUpdateHighSchool,
   type HighSchoolUpdate,
 } from '@wrsi/api';
-import { Input, Select, useTheme } from '@wrsi/ui';
+import {
+  emptyPhone,
+  numericField,
+  parsePhone,
+  phoneFieldOptional,
+  requiredString,
+} from '@wrsi/shared-utils';
+import { useTheme } from '@wrsi/ui';
 import type { HighSchoolsStackParamList } from '../../navigation/types';
 import { CountryStateSelect } from '../../components/CountryStateSelect';
-import { EntityDetailScreen, type SetField } from './EntityDetailScreen';
+import { FormInput, FormPhoneField, FormSelect } from '../../components/form';
+import { EntityDetailScreen } from './EntityDetailScreen';
 
+const schema = z.object({
+  name: requiredString(),
+  contact_first_name: z.string(),
+  contact_last_name: z.string(),
+  phone: phoneFieldOptional(),
+  monthly_cost: numericField({ min: 0 }, 'validation.amountInvalid'),
+  monthly_cost_currency_id: z.string().nullable(),
+  education_model_id: z.string().nullable(),
+  state_province_id: z.string().nullable(),
+  status_id: z.string().nullable(),
+});
 // `type` (not `interface`) so it satisfies `Form extends Record<string, unknown>`.
-type FormState = {
-  name: string;
-  contact_first_name: string;
-  contact_last_name: string;
-  phone_number: string;
-  monthly_cost: string;
-  monthly_cost_currency_id: string | null;
-  education_model_id: string | null;
-  state_province_id: string | null;
-  status_id: string | null;
-}
+type FormState = z.infer<typeof schema>;
 
 const EMPTY_FORM: FormState = {
   name: '',
   contact_first_name: '',
   contact_last_name: '',
-  phone_number: '',
+  phone: emptyPhone(),
   monthly_cost: '',
   monthly_cost_currency_id: null,
   education_model_id: null,
@@ -44,7 +55,7 @@ const EMPTY_FORM: FormState = {
 };
 
 export function HighSchoolDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const { id } = useRoute<RouteProp<HighSchoolsStackParamList, 'Detail'>>().params;
   const mode = id ? 'edit' : 'create';
@@ -63,12 +74,15 @@ export function HighSchoolDetailScreen() {
     countries.data && currencies.data && models.data && states.data && statuses.data,
   );
 
+  const isoToId = (iso: string) =>
+    countries.data?.find((c) => c.iso_code === iso)?.id ?? null;
+
   const initialForm: FormState | undefined = record.data
     ? {
         name: record.data.name,
         contact_first_name: record.data.contact_first_name ?? '',
         contact_last_name: record.data.contact_last_name ?? '',
-        phone_number: record.data.phone_number ?? '',
+        phone: parsePhone(record.data.phone_number, isoToId),
         monthly_cost:
           record.data.monthly_cost != null ? String(record.data.monthly_cost) : '',
         monthly_cost_currency_id: record.data.monthly_cost_currency_id,
@@ -82,17 +96,12 @@ export function HighSchoolDetailScreen() {
   const modelOptions = (models.data ?? []).map((m) => ({ label: m.name, value: m.id }));
   const statusOptions = (statuses.data ?? []).map((s) => ({ label: s.name, value: s.id }));
 
-  function validate(form: FormState): string | null {
-    if (!form.name.trim()) return t('validation.required');
-    return null;
-  }
-
   function toPayload(form: FormState): HighSchoolUpdate {
     return {
       name: form.name.trim(),
       contact_first_name: form.contact_first_name.trim() || null,
       contact_last_name: form.contact_last_name.trim() || null,
-      phone_number: form.phone_number.trim() || null,
+      phone_number: form.phone.e164,
       monthly_cost: form.monthly_cost ? Number(form.monthly_cost) : null,
       monthly_cost_currency_id: form.monthly_cost_currency_id,
       education_model_id: form.education_model_id,
@@ -101,67 +110,60 @@ export function HighSchoolDetailScreen() {
     };
   }
 
-  function renderFields(form: FormState, set: SetField<FormState>) {
+  function renderFields(control: Control<FormState>) {
     return (
       <>
-        <Input
-          label={t('admin.name')}
-          value={form.name}
-          onChangeText={(v) => set('name', v)}
-          testID="highschool-name-input"
-        />
-        <Input
-          label={t('admin.contactFirstName')}
-          value={form.contact_first_name}
-          onChangeText={(v) => set('contact_first_name', v)}
-        />
-        <Input
-          label={t('admin.contactLastName')}
-          value={form.contact_last_name}
-          onChangeText={(v) => set('contact_last_name', v)}
-        />
-        <Input
+        <FormInput control={control} name="name" label={t('admin.name')} testID="highschool-name-input" />
+        <FormInput control={control} name="contact_first_name" label={t('admin.contactFirstName')} />
+        <FormInput control={control} name="contact_last_name" label={t('admin.contactLastName')} />
+        <FormPhoneField
+          control={control}
+          name="phone"
           label={t('admin.phone')}
-          keyboardType="phone-pad"
-          value={form.phone_number}
-          onChangeText={(v) => set('phone_number', v)}
+          countries={countries.data ?? []}
+          spanish={i18n.language.startsWith('es')}
+          placeholder={t('admin.phone')}
+          countryPickerTitle={t('onboarding.phoneCountry')}
+          searchPlaceholder={t('picker.search')}
+          noResultsText={t('picker.noResults')}
         />
         <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
           <View style={{ flex: 2 }}>
-            <Input
+            <FormInput
+              control={control}
+              name="monthly_cost"
               label={t('admin.monthlyCost')}
               keyboardType="numeric"
-              value={form.monthly_cost}
-              onChangeText={(v) => set('monthly_cost', v)}
             />
           </View>
           <View style={{ flex: 1 }}>
-            <Select
+            <FormSelect
+              control={control}
+              name="monthly_cost_currency_id"
               label={t('onboarding.currency')}
               options={currencyOptions}
-              value={form.monthly_cost_currency_id}
-              onChange={(v) => set('monthly_cost_currency_id', v)}
             />
           </View>
         </View>
-        <Select
+        <FormSelect
+          control={control}
+          name="education_model_id"
           label={t('admin.educationModel')}
           options={modelOptions}
-          value={form.education_model_id}
-          onChange={(v) => set('education_model_id', v)}
         />
-        <CountryStateSelect
-          countries={countries.data ?? []}
-          states={states.data ?? []}
-          value={form.state_province_id}
-          onChange={(v) => set('state_province_id', v)}
+        <Controller
+          control={control}
+          name="state_province_id"
+          render={({ field }) => (
+            <CountryStateSelect
+              countries={countries.data ?? []}
+              states={states.data ?? []}
+              value={field.value}
+              onChange={field.onChange}
+            />
+          )}
         />
-        <Select
-          label={t('admin.status')}
-          options={statusOptions}
-          value={form.status_id}
-          onChange={(v) => set('status_id', v)}
-        />
+        <FormSelect control={control} name="status_id" label={t('admin.status')} options={statusOptions} />
       </>
     );
   }
@@ -170,10 +172,10 @@ export function HighSchoolDetailScreen() {
     <EntityDetailScreen
       mode={mode}
       title={mode === 'create' ? t('admin.addHighSchool') : t('admin.editHighSchool')}
+      schema={schema}
       emptyForm={EMPTY_FORM}
       initialForm={initialForm}
       optionsReady={optionsReady}
-      validate={validate}
       toPayload={toPayload}
       create={create}
       update={update}
