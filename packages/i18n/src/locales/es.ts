@@ -213,8 +213,8 @@ export const es: TranslationResource = {
   universities: {
     search: 'Buscar universidades…',
     empty: 'No se encontraron universidades',
-    save: '♡ Guardar',
-    saved: '♥ Guardada',
+    save: 'Guardar',
+    saved: 'Guardada',
     visitWebsite: 'Visitar sitio web',
     requirements: 'Requisitos',
     programs: 'Programas',

@@ -463,6 +463,48 @@ layer (no local dev build in this session) — that on-device pass (PhoneField i
 disabled-submit behavior, and the SVG flags, which need the react-native-svg dev build) is the
 remaining verification step.
 
+## 2026-07-10 — Platform-parity audit (branch `fix/android-ios-parity-audit`)
+
+**Context:** the flag-emoji incident (see the validation entry above) produced the CLAUDE.md
+"iOS + Android parity" rule; this pass audited the whole codebase for the same class of
+problems. Checked: Unicode/emoji glyphs in UI strings, `shadow*` vs `elevation`, keyboard
+handling, date/time/file pickers, platform-only APIs (`ActionSheetIOS`, haptics, blur), and
+`Platform.OS` branches (there were none).
+
+**Found + fixed (2 real issues):**
+
+1. **iOS keyboard covered inputs on scrollable forms.** `Screen` had no keyboard handling;
+   Android was fine only because Expo defaults `softwareKeyboardLayoutMode` to `resize`
+   (window shrinks, focused field scrolls into view), while iOS never resizes — on long forms
+   (onboarding, admin entity/event forms) the keyboard hid the lower fields. Fix: the scroll
+   variant of `Screen` now sets `automaticallyAdjustKeyboardInsets` on iOS (the iOS-native
+   ScrollView mechanism; explicit no-op on Android where `adjustResize` already handles it) —
+   each OS uses its own standard per the parity rule. Non-scroll screens keep inputs near the
+   top (login/sign-up, list search bars) and needed no change.
+2. **Glyphs with emoji variants in UI text.** `♥`/`♡` (U+2665/U+2661) were baked into the
+   `universities.save`/`saved` i18n strings, and Toast's info icon was `ℹ` (U+2139). These
+   have Unicode *emoji* presentation variants, so Android's font fallback routes them to the
+   color-emoji font on many devices — they render as colored emoji that ignore the text color
+   (and differ from iOS). Same failure class as the flag emoji. Fix: new bundled SVG icon set
+   `packages/ui/src/components/icons.tsx` (`CheckIcon`/`CloseIcon`/`InfoIcon`/`HeartIcon`,
+   `react-native-svg` — already a dep, so **no new dev build needed**). Toast now renders SVG
+   icons for all three types; `Button` gained an optional `icon(color)` render prop (receives
+   the variant's foreground color) and `SaveUniversityButton` passes a filled/outline
+   `HeartIcon`, with the hearts stripped from both locales (presentation no longer lives in
+   translation strings).
+
+**Verified safe (no action):** text-presentation-only symbols `✓ ✕ ▾ ▸ ‹ · … —` (no emoji
+variant; covered by both platforms' text fonts) — kept in `OptionPickerModal`, selects, chips,
+and list separators. Toast already paired iOS `shadow*` with Android `elevation`; `DateField`/
+`TimeField` are custom cross-platform dropdowns (no native picker divergence);
+`expo-document-picker` + `Linking.openURL` are cross-platform. **The working rule:** a glyph in
+UI text is safe only if it has no emoji variant; anything heart/info/flag-like becomes a
+bundled SVG in `packages/ui/src/components/icons.tsx`.
+
+*Verified:* `yarn typecheck` (7 packages) + `yarn test` (31 unit tests) green. **Not** run:
+on-device iOS/Android passes (no dev build in this session) — the keyboard-inset behavior on
+an iOS device and the SVG icon rendering on both platforms are the remaining verification.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

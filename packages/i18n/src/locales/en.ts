@@ -210,8 +210,8 @@ export const en = {
   universities: {
     search: "Search universities…",
     empty: "No universities found",
-    save: "♡ Save",
-    saved: "♥ Saved",
+    save: "Save",
+    saved: "Saved",
     visitWebsite: "Visit website",
     requirements: "Requirements",
     programs: "Programs",

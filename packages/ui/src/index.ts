@@ -37,3 +37,5 @@ export { ToastProvider, useToast } from './components/Toast';
 export type { ToastContextValue, ToastOptions, ToastType } from './components/Toast';
 export { ConfirmProvider, useConfirm } from './components/ConfirmDialog';
 export type { ConfirmContextValue, ConfirmOptions } from './components/ConfirmDialog';
+export { CheckIcon, CloseIcon, InfoIcon, HeartIcon } from './components/icons';
+export type { IconProps } from './components/icons';
