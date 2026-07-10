@@ -4,7 +4,7 @@ import {
   useMyUniversityInterests,
   useToggleUniversityInterest,
 } from '@wrsi/api';
-import { Button } from '@wrsi/ui';
+import { Button, HeartIcon } from '@wrsi/ui';
 
 /**
  * Save/unsave toggle for a university. Self-contained (reads the current
@@ -24,6 +24,7 @@ export function SaveUniversityButton({ universityId }: { universityId: string })
     <Button
       variant={saved ? 'primary' : 'secondary'}
       title={saved ? t('universities.saved') : t('universities.save')}
+      icon={(color) => <HeartIcon filled={saved} color={color} />}
       loading={toggle.isPending}
       disabled={!studentId}
       onPress={() => {

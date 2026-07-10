@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -12,6 +13,12 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
   title: string;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   loading?: boolean;
+  /**
+   * Optional leading icon (receives the same foreground color the title uses:
+   * `primaryText` on primary/danger, `text` otherwise). Prefer an SVG icon over
+   * a glyph inside `title` — glyphs with emoji variants break on Android.
+   */
+  icon?: (color: string) => ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -19,6 +26,7 @@ export function Button({
   title,
   variant = 'primary',
   loading = false,
+  icon,
   disabled,
   style,
   ...rest
@@ -46,6 +54,8 @@ export function Button({
           paddingVertical: t.spacing.md,
           paddingHorizontal: t.spacing.lg,
           borderRadius: t.radius.md,
+          flexDirection: 'row',
+          gap: t.spacing.xs,
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: variant === 'ghost' ? 0 : 1,
@@ -64,7 +74,10 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={fg} />
       ) : (
-        <Text style={{ color: fg, fontWeight: t.fontWeight.semibold }}>{title}</Text>
+        <>
+          {icon ? icon(fg) : null}
+          <Text style={{ color: fg, fontWeight: t.fontWeight.semibold }}>{title}</Text>
+        </>
       )}
     </Pressable>
   );

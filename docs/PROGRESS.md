@@ -11,6 +11,17 @@ schools/universities/counselors), documents upload, student university directory
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
 admin event CRUD) are all built and merged to `master`.
 
+**In review (branch `fix/android-ios-parity-audit`, not yet merged):** codebase-wide audit for
+the CLAUDE.md iOS+Android parity rule (prompted by the flag-emoji incident). Two fixes: (1)
+`Screen`'s scroll variant now sets `automaticallyAdjustKeyboardInsets` on iOS so long forms
+(onboarding, admin entity/event) don't hide fields behind the keyboard — Android already had
+`adjustResize`; (2) glyphs with emoji variants (`♥`/`♡` in the university save/saved strings,
+`ℹ` in Toast) render as colored emoji via Android's font fallback → replaced with bundled SVG
+icons (`packages/ui/src/components/icons.tsx`; `react-native-svg` already a dep, **no new dev
+build needed**). `Button` gained an `icon(color)` prop. Rule of thumb: text-only symbols
+(`✓ ✕ ▾ ·`) are safe in strings; anything with an emoji variant becomes an SVG icon. Typecheck
++ unit green; on-device iOS/Android pass not run. See DECISIONS.md 2026-07-10.
+
 **In review (branch `feat/form-validation-standards`, not yet merged):** establishes one
 validation standard across every form — react-hook-form + zod, real-time (`mode: onTouched`),
 with the submit button disabled until the form is valid. New shared kit in `@wrsi/shared-utils`

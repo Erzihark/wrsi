@@ -57,9 +57,13 @@ The mobile app ships on **both iOS and Android** — every feature must work on 
 non-negotiable, not a "nice to have":
 
 1. **Never ship something that only works on one platform.** Before choosing an approach, check
-   it renders/behaves on both. Common traps: flag/other emoji (do **not** render on most Android
-   system fonts), platform-only native APIs, haptics, blur/shadow, date/file pickers, keyboard
-   avoidance, and share sheets.
+   it renders/behaves on both. Common traps: flag/other emoji and **any glyph with a Unicode
+   emoji variant** (flags, ♥ U+2665, ℹ U+2139 — Android's font fallback renders these as colored
+   emoji that ignore text color; use the bundled SVG icons in
+   `packages/ui/src/components/icons.tsx` instead; text-presentation-only symbols like ✓ ✕ ▾ are
+   fine), platform-only native APIs, haptics, blur/shadow (pair iOS `shadow*` with Android
+   `elevation`), date/file pickers, keyboard avoidance (Android auto-resizes for the keyboard,
+   iOS needs explicit insets — `Screen scroll` handles this), and share sheets.
 2. **When a single cross-platform implementation genuinely isn't possible, don't degrade one
    platform — branch and use each OS's native standard.** Use `Platform.OS` / `Platform.select`
    or a `Component.ios.tsx` / `Component.android.tsx` split so each platform gets the idiomatic

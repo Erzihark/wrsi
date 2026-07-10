@@ -12,6 +12,7 @@ import { Animated, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { Text } from './Text';
+import { CheckIcon, CloseIcon, InfoIcon } from './icons';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -107,7 +108,9 @@ function ToastView({
       : toast.type === 'error'
         ? t.color.danger
         : t.color.primary;
-  const icon = toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ';
+  // SVG icons, not text glyphs: ℹ (U+2139) has an emoji variant and renders as
+  // a colored emoji on many Android devices, ignoring the accent color.
+  const Icon = toast.type === 'success' ? CheckIcon : toast.type === 'error' ? CloseIcon : InfoIcon;
 
   return (
     // box-none lets touches fall through everywhere except the toast pill itself.
@@ -144,7 +147,7 @@ function ToastView({
             elevation: 6,
           }}
         >
-          <Text style={{ color: accent, fontWeight: t.fontWeight.bold }}>{icon}</Text>
+          <Icon size={18} color={accent} />
           <Text style={{ color: t.color.background, flexShrink: 1 }}>{toast.message}</Text>
         </Pressable>
       </Animated.View>

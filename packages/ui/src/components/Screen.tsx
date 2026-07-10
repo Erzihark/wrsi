@@ -1,4 +1,4 @@
-import { ScrollView, View, type ViewProps } from 'react-native';
+import { Platform, ScrollView, View, type ViewProps } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 
 export interface ScreenProps extends ViewProps {
@@ -16,6 +16,9 @@ export function Screen({ scroll = false, style, children, ...rest }: ScreenProps
         style={{ flex: 1, backgroundColor: t.color.background }}
         contentContainerStyle={[padding, style]}
         keyboardShouldPersistTaps="handled"
+        // iOS needs explicit keyboard insets so focused fields on long forms
+        // stay visible; Android already resizes the window (adjustResize).
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         {...rest}
       >
         {children}
