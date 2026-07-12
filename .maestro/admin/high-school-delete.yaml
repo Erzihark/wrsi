@@ -5,8 +5,9 @@
 #
 # Self-contained: creates a fresh high school, then deletes it.
 #
-# Prereqs: dev build on a running emulator + local Supabase freshly `db reset`
-# (seeded admin account admin@wrsi.dev / password123). See docs/TESTING.md.
+# Prereqs & device-verified conventions: see high-school-create.yaml. In short:
+# run against a standalone build; the form is long (scrollUntilVisible before
+# submit/delete); react-hook-form needs a field blur before submit enables.
 appId: com.wxstudy.wrsi
 tags:
   - admin
@@ -39,6 +40,14 @@ tags:
 - inputText: "E2E Prepa ${output.stamp}"
 - hideKeyboard
 - tapOn:
+    id: "entity-email-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
     id: "entity-submit"
 # The create flow shows a blocking alert with the generated credentials; dismiss
 # it (RN's default single-button Alert is labelled "OK").
@@ -50,11 +59,16 @@ tags:
 # button (same id on every row) is unambiguous.
 - tapOn:
     id: "admin-highschool-search"
-- inputText: "E2E Prepa ${output.stamp}"
+- inputText: "${output.stamp}"
 - hideKeyboard
 - tapOn:
     id: "highschool-edit"
 
+- scrollUntilVisible:
+    element:
+      id: "entity-delete"
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: "entity-delete"
 # The themed ConfirmProvider dialog (not a native Alert) gates the destructive

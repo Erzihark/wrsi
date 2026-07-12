@@ -505,6 +505,50 @@ bundled SVG in `packages/ui/src/components/icons.tsx`.
 on-device iOS/Android passes (no dev build in this session) — the keyboard-inset behavior on
 an iOS device and the SVG icon rendering on both platforms are the remaining verification.
 
+## 2026-07-12 — Admin high-school CRUD E2E, device-verified (branch `test/expand-e2e-coverage`)
+
+Expanded the Maestro slice from create-only to the full admin high-school **create / edit /
+delete** cycle, and — for the first time — **ran the flows on a physical Android device against
+the live local Supabase stack**. What shipped:
+
+- New flows `.maestro/admin/high-school-{edit,delete}.yaml` (create was already there), each
+  self-contained (creates its own row) and each guarding the stale-list focus-refetch on its
+  path. Delete also exercises the `ConfirmProvider` dialog + the delete-entity Edge Function.
+- Supporting `testID`s (reusable, not locale-fragile text): `confirm-dialog-{confirm,cancel}`
+  on the shared `ConfirmDialog`, `entity-delete` on `EntityDetailScreen`, generic
+  `searchTestID`/`editTestID` on `EntityListScreen` (wired into `HighSchoolsListScreen`), and
+  `highschool-contact-first-input` (added during device verification — see below).
+
+**Device-run conventions discovered** (each was a real failure on the device, now baked into the
+flows + documented in TESTING.md):
+1. *Long form* — `entity-submit`/`entity-delete` sit below the fold; `tapOn` doesn't auto-scroll,
+   so the flows `scrollUntilVisible` first.
+2. *RHF onTouched gating* — the submit button stays disabled until a field blurs; adb `inputText`
+   + `hideKeyboard` don't fire a blur, so the flows tap another field to trigger validation.
+3. *Pre-filled text is unreliable to edit* — tapping a populated field lands the cursor
+   mid-string, so both append and erase corrupt the value (observed: `E2E Editada
+   178388440898208982`). The edit flow now sets the **empty** contact first name and verifies it
+   in the list subtitle instead of mutating the name.
+
+**Environment (Windows) — how it was run, for reproducibility:** Maestro CLI runs in WSL2
+(Ubuntu-20.04 had to be converted from WSL1). The physical phone is an OPPO/ColorOS device: adb
+`pm clear` (Maestro's `clearState`) is blocked until ColorOS Developer Options → "Disable
+permission monitoring" is enabled. WSL2→Windows-host networking was blocked (a Bitdefender
+uninstall left the Windows Firewall rule store corrupted — `netsh advfirewall reset` + reboot were
+the user's fix). We sidestepped host networking entirely with **adb over WiFi for Maestro control
++ `adb reverse` over USB** to tunnel Metro (8081) and Supabase (54321) to the phone's `localhost`;
+`apps/mobile/.env` was pointed at `http://localhost:54321` for the run and restored afterward.
+Because the installed build is a **dev client** (clearState → Expo launcher), the on-device run
+used `openLink: wrsi://expo-development-client/?url=http://localhost:8081` in place of the flows'
+`launchApp: clearState` + login preamble (session persists across JS reloads → lands logged-in).
+
+**Verification:** `yarn typecheck` + `yarn test` green. The full create→edit→delete cycle **passed
+end-to-end on the physical device** (every step COMPLETED, incl. the confirm dialog and the
+stale-list refetch on all three paths). The committed flows keep the `launchApp: clearState` +
+login preamble for a standalone/preview build (CI/emulator); that exact preamble was **not** run
+on the dev build (clearState is incompatible with it), though its two halves were verified
+separately (the `login-*` flows pass; the CRUD body passed via `openLink`).
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

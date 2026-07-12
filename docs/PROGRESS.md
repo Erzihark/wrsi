@@ -149,10 +149,14 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
   (`.maestro/admin/high-school-{create,edit,delete}.yaml`) — each also guarding the stale-list
   refetch on its path; delete additionally covers the themed confirm dialog + delete-entity Edge
   Function. Added generic `searchTestID`/`editTestID` on the shared `EntityListScreen` + fixed
-  `confirm-dialog-{confirm,cancel}`/`entity-delete` testIDs, so extending edit/delete flows to
-  universities/counselors/students is now mostly wiring those props in. Still to add (and
-  `testID`s) for: full onboarding completion, document upload/delete, the rest of admin CRUD
-  (students/universities/counselors/events edit+delete), counselor read-only CRM, and events
-  browse/register/workshop/1:1/notes. **Not yet run on a device/emulator** (no dev build here).
+  `confirm-dialog-{confirm,cancel}`/`entity-delete`/`highschool-contact-first-input` testIDs, so
+  extending edit/delete flows to universities/counselors/students is now mostly wiring those props
+  in. **The high-school cycle is device-verified** (physical Android, live local stack, 2026-07-12
+  — see DECISIONS.md), which baked three conventions into every admin-form flow: `scrollUntilVisible`
+  before submit/delete (long form), tap a field to blur so RHF `onTouched` enables submit, and
+  edit an *empty* field (contact name) rather than mutating pre-filled text (cursor lands
+  mid-string and corrupts it). Still to add (and `testID`s) for: full onboarding completion,
+  document upload/delete, the rest of admin CRUD (students/universities/counselors/events
+  edit+delete), counselor read-only CRM, and events browse/register/workshop/1:1/notes.
 - **Testing — Maestro in CI.** E2E isn't wired into GitHub Actions yet (needs an Android
   emulator + a built dev app). Add a dedicated workflow when worth the runner cost.

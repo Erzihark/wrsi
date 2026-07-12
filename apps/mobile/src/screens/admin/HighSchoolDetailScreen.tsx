@@ -114,7 +114,7 @@ export function HighSchoolDetailScreen() {
     return (
       <>
         <FormInput control={control} name="name" label={t('admin.name')} testID="highschool-name-input" />
-        <FormInput control={control} name="contact_first_name" label={t('admin.contactFirstName')} />
+        <FormInput control={control} name="contact_first_name" label={t('admin.contactFirstName')} testID="highschool-contact-first-input" />
         <FormInput control={control} name="contact_last_name" label={t('admin.contactLastName')} />
         <FormPhoneField
           control={control}

@@ -116,15 +116,37 @@ profile-less student (`.maestro/student/onboarding-gate.yaml`); and the full adm
 **create / edit / delete** cycle (`.maestro/admin/high-school-{create,edit,delete}.yaml`) —
 each a self-contained flow that also guards the stale-list refetch on its respective
 create/update/delete path, and delete additionally exercises the themed confirm dialog and the
-delete-entity Edge Function. These rely on `testID`s: `login-email` / `login-password` /
-`login-submit`; the role tab ids `admin-tab-students` / `student-tab-dashboard` /
-`counselor-tab-students`; `onboarding-screen`; the admin high-school ids `admin-tab-highschools`
-/ `admin-add-highschool` / `admin-highschool-search` / `highschool-edit` /
-`highschool-name-input`; the shared entity-form ids `entity-email-input` / `entity-submit` /
-`entity-delete`; and the confirm-dialog ids `confirm-dialog-confirm` / `confirm-dialog-cancel`.
-The `searchTestID` / `editTestID` props on the shared `EntityListScreen` are generic — wire
-them into the university/counselor/student list screens to extend edit/delete flows to those
-entities.
+delete-entity Edge Function. **The high-school create/edit/delete cycle is device-verified**
+(physical Android, 2026-07-12 — see DECISIONS.md). These rely on `testID`s: `login-email` /
+`login-password` / `login-submit`; the role tab ids `admin-tab-students` /
+`student-tab-dashboard` / `counselor-tab-students`; `onboarding-screen`; the admin high-school
+ids `admin-tab-highschools` / `admin-add-highschool` / `admin-highschool-search` /
+`highschool-edit` / `highschool-name-input` / `highschool-contact-first-input`; the shared
+entity-form ids `entity-email-input` / `entity-submit` / `entity-delete`; and the confirm-dialog
+ids `confirm-dialog-confirm` / `confirm-dialog-cancel`. The `searchTestID` / `editTestID` props
+on the shared `EntityListScreen` are generic — wire them into the university/counselor/student
+list screens to extend edit/delete flows to those entities.
+
+**Device-verified flow conventions** (learned running the CRUD cycle on a physical device; apply
+to every new admin-form flow):
+- The entity form is longer than the viewport → `scrollUntilVisible` the `entity-submit` /
+  `entity-delete` button before tapping it (`tapOn` does **not** auto-scroll).
+- Forms use react-hook-form `onTouched` validation, so the submit button stays **disabled until a
+  field blurs**. adb `inputText` + `hideKeyboard` don't fire a blur — after filling the last
+  field, `tapOn` another field to trigger validation and enable submit.
+- **Don't edit pre-filled text fields** (append/erase): tapping a populated field lands the cursor
+  mid-string, corrupting the value. To verify an *edit*, populate an **empty** field instead (the
+  high-school edit flow sets the contact first name and checks it in the list subtitle).
+
+**Running against a local dev-client build (what we have installed):** a `developmentClient`
+build ships no JS bundle and `clearState` drops it to the Expo launcher, so the committed flows'
+`launchApp: clearState` preamble needs a *standalone* (preview) build. To exercise flows against
+the **dev** build + Metro instead: start Metro, then (a) if the device can't reach the PC over
+the LAN, tunnel over USB — `adb reverse tcp:8081 tcp:8081` and `adb reverse tcp:54321 tcp:54321`,
+set `EXPO_PUBLIC_SUPABASE_URL=http://localhost:54321` in `apps/mobile/.env`, restart Metro — and
+(b) replace the `launchApp: clearState` + login preamble with
+`openLink: wrsi://expo-development-client/?url=http://localhost:8081` (the session persists across
+JS reloads, so it lands logged-in). This is how the 2026-07-12 device verification was run.
 
 **Extending E2E** (the incremental next step): add a `testID` to the element a new flow needs
 (the `@wrsi/ui` `Button`/`Input`/`Screen` primitives already forward `testID`), then add a
