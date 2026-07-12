@@ -11,7 +11,15 @@ schools/universities/counselors), documents upload, student university directory
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
 admin event CRUD) are all built and merged to `master`.
 
-**All recently-in-review branches are now merged to `master`** (PRs merged via GitHub UI; local
+**In review:** `docs/api-documentation` — API contract index ([`docs/API.md`](API.md), one row
+per `@wrsi/api` hook), hand-authored [`docs/openapi.yaml`](openapi.yaml) for the 2 Edge
+Functions + 2 client-called RPCs (browse via `yarn docs:api` → Scalar), a `docs-coverage`
+unit test that fails when an exported hook has no API.md row, and a new CLAUDE.md
+**"API changes (REQUIRED)"** checklist agents must follow on every data-layer change
+(migration → gen:types → hook+JSDoc → docs → tests → logs). Groundwork for the wave of API
+changes expected once the app designer's designs arrive.
+
+**All previously-in-review branches are merged to `master`** (PRs merged via GitHub UI; local
 branches cleaned up). What landed since the last handoff:
 
 - **`fix/android-ios-parity-audit`** — codebase-wide audit for the CLAUDE.md iOS+Android parity

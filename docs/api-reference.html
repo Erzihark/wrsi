@@ -1,0 +1,20 @@
+<!doctype html>
+<!-- Human-browsable Scalar rendering of openapi.yaml (same directory).
+     Serve with `yarn docs:api` from the repo root, then open
+     http://localhost:3000/api-reference.html — opening as file:// won't work
+     (the spec is fetched over HTTP). Needs internet for the Scalar CDN bundle.
+     Why not @scalar/cli: it requires Node >= 24; this repo runs Node 22. -->
+<html>
+  <head>
+    <title>WRSI API reference</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    <script>
+      Scalar.createApiReference('#app', { url: './openapi.yaml' });
+    </script>
+  </body>
+</html>

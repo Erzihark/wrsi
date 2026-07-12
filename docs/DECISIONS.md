@@ -549,6 +549,40 @@ login preamble for a standalone/preview build (CI/emulator); that exact preamble
 on the dev build (clearState is incompatible with it), though its two halves were verified
 separately (the `login-*` flows pass; the CRUD body passed via `openLink`).
 
+## 2026-07-12 — API documentation + "API changes" workflow rules (branch `docs/api-documentation`)
+
+Groundwork for the API-change wave expected once the app designer delivers: agent-first API
+docs + a binding checklist. The project has **no hand-written REST server** (PostgREST + RLS
+via `@wrsi/api` hooks, 2 Edge Functions, 2 client-called RPCs), so "API docs" here means:
+
+- **`docs/API.md`** — a hand-maintained **contract index**: one table row per exported hook
+  (operation, cache key/invalidations, auth & RLS) per domain file, mirroring
+  `packages/api/src`. Behavior prose deliberately stays in each hook's JSDoc — API.md rows
+  are what an agent reads to plan a change without opening every file.
+- **`docs/openapi.yaml`** — hand-authored OpenAPI 3.1 for the hand-written surface only
+  (`create-entity`, `delete-entity`, `complete_student_onboarding`, `is_admin`). Explicitly
+  **not** a snapshot of the generated 48-table PostgREST spec — RLS + generated types are
+  the source of truth there, and the snapshot would be churn-heavy noise.
+- **Scalar rendering with zero committed deps** — `yarn docs:api` runs `yarn dlx serve docs`;
+  `docs/api-reference.html` loads the `@scalar/api-reference` CDN bundle against the local
+  `openapi.yaml`. Chose this over `@scalar/cli` because the CLI (both v2 and v1.9.9)
+  requires Node ≥ 24 and this environment runs Node 22; over TypeDoc/codegen because a
+  dependency-free markdown index can hold the cross-cutting columns (invalidation graph,
+  RLS) generated output can't.
+- **Sync gate as a unit test, not CI plumbing** — `packages/api/src/docs-coverage.test.ts`
+  asserts every `export function use*` in the domain files appears in `docs/API.md`; runs in
+  the existing `yarn test` layer CI already gates. Presence-only by design (content
+  freshness is the checklist's job) so the gate can't flake.
+- **CLAUDE.md "API changes (REQUIRED)"** — the ordered checklist for any data-layer change:
+  migration → `db reset` → `gen:types` → hook + JSDoc (keys via `queryKeys.ts`, mutations
+  invalidate) → API.md row (+ openapi.yaml if Edge/RPC) → `tests/backend` → run layers →
+  PROGRESS/DECISIONS.
+
+**Verification:** `yarn typecheck` + `yarn test` green (docs-coverage adds 10 tests covering
+all 62 hooks across 9 domain files). Scalar page served and rendered: sidebar shows both
+Edge Function operations, the rpc group, and Models with no spec-parse errors.
+`yarn test:backend` not run — no DB/API behavior changed (docs + a filesystem-only unit test).
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

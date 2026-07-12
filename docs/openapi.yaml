@@ -1,0 +1,292 @@
+openapi: 3.1.0
+info:
+  title: WRSI custom endpoints (Edge Functions + client-called RPCs)
+  version: 1.0.0
+  description: |
+    Only the **hand-written** API surface of WRSI: the two Supabase Edge Functions
+    and the two RPCs the mobile client calls. All table CRUD goes through
+    PostgREST + Row Level Security via the typed TanStack Query hooks in
+    `packages/api` — see `docs/API.md` for that contract index. This spec is
+    deliberately **not** a snapshot of the generated PostgREST spec (48 tables);
+    RLS policies + the generated types in
+    `packages/shared-types/src/database.types.ts` are the source of truth there.
+
+    **Auth:** every request needs a Supabase JWT as `Authorization: Bearer <jwt>`
+    **and** the project `apikey` header (the anon key). The `@wrsi/api` hooks and
+    `supabase-js` add both automatically.
+
+    Browse this document with `yarn docs:api` (Scalar). Keep it in sync per the
+    "API changes" section of `CLAUDE.md`.
+servers:
+  - url: http://127.0.0.1:54321
+    description: Local Supabase stack (`yarn supabase start`; Edge Functions need `yarn supabase functions serve`)
+security:
+  - bearerAuth: []
+tags:
+  - name: edge-functions
+    description: Deno Edge Functions in `supabase/functions/` (admin-only, service-role operations)
+  - name: rpc
+    description: Postgres functions called via PostgREST `/rest/v1/rpc/` (supabase-js `.rpc()`)
+paths:
+  /functions/v1/create-entity:
+    post:
+      tags: [edge-functions]
+      operationId: createEntity
+      summary: Provision an auth user + profile row for a student / high school / university / counselor
+      description: |
+        Admin-only (checked server-side via the `is_admin()` RPC — same predicate the
+        RLS policies use). Creates a confirmed auth user with the given email; the
+        `on_auth_user_created` trigger mirrors it into `public.users` with the default
+        `student` role, which the function swaps for the correct portal role for
+        non-student entity types. Then inserts the profile row from an allow-listed
+        subset of `profile` (see `supabase/functions/_shared/entities.ts`
+        `ENTITY_CONFIG` for the per-entityType column allow-list; unknown keys are
+        silently dropped). If anything after user creation fails, the auth user is
+        deleted (no orphan logins).
+
+        Wrapped by the `useCreateEntity` hook (`packages/api/src/entities.ts`).
+        Source: `supabase/functions/create-entity/index.ts`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntityRequest'
+      responses:
+        '201':
+          description: Entity created. Echoes the password so an admin can hand off credentials (server-generated temp password when none was supplied).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEntityResult'
+        '400':
+          description: Invalid JSON body / unknown entityType / missing email / auth-user creation or profile insert failed (rolled back)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Missing Authorization header
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Caller is not an admin
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '405':
+          description: Method not allowed (POST only)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: The is_admin() check itself errored
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /functions/v1/delete-entity:
+    post:
+      tags: [edge-functions]
+      operationId: deleteEntity
+      summary: Delete an entity and its backing auth user
+      description: |
+        Admin-only. Looks up the entity row's `user_id` and deletes the **auth user**;
+        the `ON DELETE CASCADE` on `<table>.user_id` removes the entity row and all of
+        its children. Uses the service role, which is why this can't live in the client.
+
+        Wrapped by the `useDeleteEntity` hook (`packages/api/src/entities.ts`).
+        Source: `supabase/functions/delete-entity/index.ts`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEntityRequest'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean, const: true }
+        '400':
+          description: Invalid JSON body / unknown entityType / missing id / auth-user deletion failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Missing Authorization header
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Caller is not an admin
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: No entity row with that id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '405':
+          description: Method not allowed (POST only)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: The is_admin() check itself errored
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /rest/v1/rpc/complete_student_onboarding:
+    post:
+      tags: [rpc]
+      operationId: completeStudentOnboarding
+      summary: Atomically write the calling student's onboarding profile + interests
+      description: |
+        Called via `supabase.rpc('complete_student_onboarding', args)` — wrapped by the
+        `useCompleteOnboarding` hook (`packages/api/src/onboarding.ts`). Runs as the
+        caller (student); upserts the student's profile row and replaces the interest
+        join rows in one transaction, then stamps `onboarding_completed_at`.
+
+        Server-side validation raises Postgres errors (errcode 23514 → PostgREST 400)
+        for: blank `first_name` / `last_name` / `parent_or_guardian_name`, invalid
+        phone, missing `country_id` / `highest_education_level_id` /
+        `financial_plan_id` / `budget_currency_id` / `desired_intake_term`, cefr_level
+        outside A1–C2, and out-of-range grade / budget / years. Definition:
+        `supabase/migrations/20260703000002_onboarding_validation.sql` (latest).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteOnboardingArgs'
+      responses:
+        '200':
+          description: The updated `students` row (see `Database['public']['Functions']['complete_student_onboarding']['Returns']`)
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Full students row incl. `onboarding_completed_at`
+        '400':
+          description: Validation failure (PostgREST error body, not the `{error}` shape)
+  /rest/v1/rpc/is_admin:
+    post:
+      tags: [rpc]
+      operationId: isAdmin
+      summary: Is the calling user an admin / super-admin?
+      description: |
+        The same SQL predicate the RLS policies use. Called by the Edge Functions'
+        `requireAdmin` guard (`supabase/functions/_shared/admin-guard.ts`) with the
+        caller's JWT; not currently called directly from app code. Definition:
+        `supabase/migrations/20260701000008_auth_and_functions.sql`.
+      responses:
+        '200':
+          description: Whether the caller is an admin
+          content:
+            application/json:
+              schema: { type: boolean }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase user JWT. The `apikey` header (anon key) is also required on every request.
+  schemas:
+    Error:
+      type: object
+      description: Error shape returned by the Edge Functions (`_shared/cors.ts` `json()`); unwrapped client-side by `functionErrorMessage()` in `packages/api/src/entities.ts`. RPC/PostgREST errors use PostgREST's own error body instead.
+      required: [error]
+      properties:
+        error:
+          type: string
+    CreateEntityRequest:
+      type: object
+      required: [entityType, email]
+      properties:
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        email:
+          type: string
+          format: email
+          description: Login email for the provisioned auth user (must be unique in auth)
+        password:
+          type: string
+          minLength: 6
+          description: Optional. When omitted (or under 6 chars) the server generates a temp password and returns it in the response.
+        profile:
+          type: object
+          additionalProperties: true
+          description: |
+            Profile columns for the entity row. Allow-listed per entityType
+            (`ENTITY_CONFIG` in `supabase/functions/_shared/entities.ts`); keys outside
+            the list are silently dropped:
+            - **student** → `students`: first_name, last_name, birth_date, phone_number,
+              parent_or_guardian_name, country_id, counselor_id, high_school_id,
+              highest_education_level_id, financial_plan_id, budget_currency_id,
+              average_grade, cefr_level, budget, desired_intake_term,
+              desired_intake_year, expected_graduation_year
+            - **high_school** → `high_schools`: name, contact_first_name,
+              contact_last_name, phone_number, monthly_cost, monthly_cost_currency_id,
+              education_model_id, state_province_id, status_id
+            - **university** → `universities`: name, description, requirements,
+              logo_url, website, currency_id, state_province_id, status_id
+            - **counselor** → `counselors`: first_name, last_name, phone
+    CreateEntityResult:
+      type: object
+      required: [id, email, password]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: id of the new entity row (not the auth user id)
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          description: The password that was set — supplied or server-generated temp
+    DeleteEntityRequest:
+      type: object
+      required: [entityType, id]
+      properties:
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        id:
+          type: string
+          format: uuid
+          description: id of the entity row (its `user_id` auth user is deleted; row goes via CASCADE)
+    EntityType:
+      type: string
+      enum: [student, high_school, university, counselor]
+    CompleteOnboardingArgs:
+      type: object
+      required: [p_profile]
+      description: Mirrors `Database['public']['Functions']['complete_student_onboarding']['Args']` in `packages/shared-types/src/database.types.ts` (`CompleteOnboardingArgs` in `packages/api/src/onboarding.ts`).
+      properties:
+        p_profile:
+          type: object
+          description: |
+            JSON profile. Required keys: first_name, last_name, parent_or_guardian_name,
+            phone_number, birth_date, country_id, highest_education_level_id,
+            financial_plan_id, budget_currency_id, desired_intake_term. Optional/validated:
+            average_grade, cefr_level (A1–C2), budget, desired_intake_year,
+            expected_graduation_year, counselor_id, high_school_id.
+        p_country_interest_ids:
+          type: array
+          items: { type: string, format: uuid }
+        p_field_ids:
+          type: array
+          items: { type: string, format: uuid }
+        p_intended_level_ids:
+          type: array
+          items: { type: string, format: uuid }
+        p_passport_country_ids:
+          type: array
+          items: { type: string, format: uuid }
