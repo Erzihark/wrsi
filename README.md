@@ -186,6 +186,7 @@ through your firewall.
 | `yarn supabase start` / `stop` / `status` | Manage the local Supabase stack                       |
 | `yarn supabase db reset`                  | Recreate the DB and re-apply all migrations + seed    |
 | `yarn gen:types`   | Regenerate DB types from the local schema             |
+| `yarn docs:api`    | Serve the API reference (Scalar) — open http://localhost:3000/api-reference.html; contract index in [`docs/API.md`](docs/API.md) |
 | `yarn workspace @wrsi/mobile start`       | Start the Expo dev server                             |
 
 ## Environments & test data

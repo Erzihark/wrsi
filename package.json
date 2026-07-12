@@ -13,6 +13,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:backend": "yarn workspace @wrsi/backend-tests test:integration",
+    "docs:api": "yarn dlx serve docs",
     "gen:types": "supabase gen types typescript --local --schema public > packages/shared-types/src/database.types.ts"
   },
   "devDependencies": {

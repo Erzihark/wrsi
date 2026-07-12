@@ -51,6 +51,32 @@ integration/security/edge** (Vitest, `tests/backend`, live local stack) · **mob
 (Maestro, `.maestro`, emulator + dev build). CI (`.github/workflows/ci.yml`) gates
 typecheck + unit + backend on every push/PR; Maestro E2E is local-only for now.
 
+## API changes (REQUIRED — the checklist for any data-layer change)
+
+The API surface = PostgREST + RLS via the `@wrsi/api` hooks, 2 Edge Functions, and 2
+client-called RPCs. The contract index is [`docs/API.md`](docs/API.md) (one row per hook)
+plus [`docs/openapi.yaml`](docs/openapi.yaml) (Edge Functions/RPCs — browse with
+`yarn docs:api` → http://localhost:3000/api-reference.html). **Read the relevant
+`docs/API.md` domain section before changing an API.** On every API change, in order:
+
+1. **Schema:** new migration in `supabase/migrations` (never edit applied ones) →
+   `yarn supabase db reset` → `yarn gen:types` → commit
+   `packages/shared-types/src/database.types.ts`.
+2. **Hook:** add/update in the matching `packages/api/src` domain file, with JSDoc stating
+   what it reads/writes, RLS behavior, and any trigger interaction. Cache keys only via
+   `queryKeys.ts`; mutations must invalidate the affected keys (see the key-sharing notes
+   in API.md's Conventions).
+3. **Docs:** update the hook's row in `docs/API.md` — `packages/api/src/docs-coverage.test.ts`
+   fails the unit suite if an exported hook has no row. A new/changed Edge Function or
+   client-called RPC also needs its `docs/openapi.yaml` path updated.
+4. **Tests:** update/add `tests/backend` coverage (integration + RLS/security; `edge/` for
+   Edge Functions) and any unit tests, per `docs/TESTING.md`.
+5. **Run:** `yarn typecheck` + `yarn test`; `yarn test:backend` if DB/RLS/Edge touched.
+6. **Log:** `PROGRESS.md` status line; `DECISIONS.md` entry if the contract changed shape.
+
+A new Edge Function or RPC without an `openapi.yaml` path, or an exported hook without an
+`API.md` row, is not "done".
+
 ## Platform support (REQUIRED: iOS + Android parity)
 
 The mobile app ships on **both iOS and Android** — every feature must work on **both**. This is
@@ -99,6 +125,8 @@ Keep the project self-documenting so any session can resume without re-explainin
 
 - **`README.md`** — developer-facing guide (stack, setup, commands, conventions). Keep it current as the project changes.
 - **`docs/PROGRESS.md`** — the short handoff log. **Read it first** when starting work, and **update it at the end of every meaningful session**: current status, env gotchas, and the next milestone. Newest status at the top. Keep it short (see Session hygiene above).
+- **`docs/API.md`** + **`docs/openapi.yaml`** — the API contract index (hooks / Edge
+  Functions + RPCs). Update in the same change that alters the API — see "API changes" above.
 - **`docs/DECISIONS.md`** — the full dated decision log with verification write-ups. Append a new dated entry here when you ship something; don't grow `PROGRESS.md` with historical detail. Read on demand (not every session) when you need the reasoning behind a past change.
 - Update `README.md` + `PROGRESS.md` as part of the same change that alters behavior/structure — don't defer docs to "later".
 
