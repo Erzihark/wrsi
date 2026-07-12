@@ -2,8 +2,19 @@
 # reload). Regression guard for the stale-list bug: the List screen stays mounted
 # under the create Detail screen, so returning to it must refetch on focus.
 #
-# Prereqs: dev build on a running emulator + local Supabase freshly `db reset`
-# (seeded admin account admin@wrsi.dev / password123). See docs/TESTING.md.
+# Prereqs: standalone build (JS bundled) on a running emulator/device + local
+# Supabase freshly `db reset` (seeded admin account admin@wrsi.dev / password123).
+# See docs/TESTING.md. NOTE: on a *dev-client* build, clearState drops to the Expo
+# launcher; run these against a preview/standalone build, or drive the dev client
+# via a deep link (see docs/TESTING.md "Running on a dev build").
+#
+# Device-verified conventions baked in below (learned running this on a physical
+# device — see DECISIONS.md 2026-07-12):
+#   - The entity form is long: the submit/delete buttons are below the fold, so
+#     scrollUntilVisible before tapping them.
+#   - The form uses react-hook-form onTouched validation; the submit button stays
+#     disabled until a field blurs. adb text entry + hideKeyboard don't fire blur,
+#     so tap another field afterwards to trigger validation and enable submit.
 appId: com.wxstudy.wrsi
 tags:
   - admin
@@ -34,7 +45,17 @@ tags:
     id: "highschool-name-input"
 - inputText: "E2E Prepa ${output.stamp}"
 - hideKeyboard
+# Blur the name field (tap another field) so react-hook-form validates and the
+# submit button enables — without this the tap below is a no-op on a disabled button.
+- tapOn:
+    id: "entity-email-input"
+- hideKeyboard
 
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: "entity-submit"
 

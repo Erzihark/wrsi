@@ -1,0 +1,93 @@
+# Admin edits an existing high school and the change shows in the list
+# immediately (no app reload). Regression guard for the stale-list bug on the
+# *update* path: like create, the List stays mounted under the Detail screen, so
+# returning after a save must refetch on focus.
+#
+# Self-contained: creates a fresh high school, then edits it, so it doesn't
+# depend on any particular seed row surviving prior runs.
+#
+# Prereqs & device-verified conventions: see high-school-create.yaml. In short:
+# run against a standalone build; the form is long (scrollUntilVisible before
+# submit); react-hook-form needs a field blur before submit enables.
+#
+# The edit sets the (empty) contact first name rather than mutating the name.
+# Editing pre-filled text via adb is unreliable — tapping a populated field puts
+# the cursor mid-string, so append/erase corrupt the value. An empty field types
+# cleanly, and the contact name surfaces in the list subtitle for verification.
+appId: com.wxstudy.wrsi
+tags:
+  - admin
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"
+
+# Unique per run so re-runs don't collide on the auth email / clutter the list.
+- evalScript: ${output.stamp = Date.now()}
+
+- tapOn:
+    id: "admin-tab-highschools"
+
+# --- Create the high school we're going to edit ---
+- tapOn:
+    id: "admin-add-highschool"
+- tapOn:
+    id: "entity-email-input"
+- inputText: "e2e-hs-edit-${output.stamp}@wrsi.dev"
+- hideKeyboard
+- tapOn:
+    id: "highschool-name-input"
+- inputText: "E2E Prepa ${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "entity-email-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+# The create flow shows a blocking alert with the generated credentials; dismiss
+# it (RN's default single-button Alert is labelled "OK").
+- tapOn: "OK"
+- assertVisible: "E2E Prepa ${output.stamp}"
+
+# --- Edit it ---
+# Filter the list to the single row we just created (search matches the name) so
+# the shared per-row Edit button (same id on every row) is unambiguous.
+- tapOn:
+    id: "admin-highschool-search"
+- inputText: "${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "highschool-edit"
+
+# Fill the empty contact first name (types cleanly), then blur it so the form
+# revalidates and the submit button stays enabled.
+- tapOn:
+    id: "highschool-contact-first-input"
+- inputText: "Contacto ${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "highschool-name-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+
+# Back on the (still search-filtered) list: the edited row's subtitle now shows
+# the contact name, without any manual reload. The name still contains the stamp,
+# so the row stays under the active filter.
+- assertVisible: "Contacto ${output.stamp}"

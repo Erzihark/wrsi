@@ -108,6 +108,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   variant="secondary"
                   title={pending?.cancelText ?? 'Cancel'}
                   onPress={() => settle(false)}
+                  testID="confirm-dialog-cancel"
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -115,6 +116,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   variant={pending?.destructive ? 'danger' : 'primary'}
                   title={pending?.confirmText ?? 'Confirm'}
                   onPress={() => settle(true)}
+                  testID="confirm-dialog-confirm"
                 />
               </View>
             </View>

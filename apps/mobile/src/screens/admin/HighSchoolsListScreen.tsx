@@ -24,6 +24,8 @@ export function HighSchoolsListScreen() {
     <EntityListScreen<ListItem>
       addLabel={t('admin.addHighSchool')}
       addTestID="admin-add-highschool"
+      searchTestID="admin-highschool-search"
+      editTestID="highschool-edit"
       searchPlaceholder={t('admin.search')}
       emptyText={t('admin.noHighSchools')}
       items={query.data}

@@ -108,21 +108,126 @@ maestro test .maestro --include-tags auth    # just the login flows
 
 App id (both platforms): `com.wxstudy.wrsi`.
 
+### Runbook: this Windows machine + physical Android phone (dev-client build)
+
+Repeatable step-by-step for running Maestro against the **installed dev-client build** on the
+user's physical phone, from a clean start each time. (One-time environment setup — WSL2 Maestro
+install, the ColorOS toggle — is a prerequisite and is covered separately below this runbook.)
+
+1. **Start the backend** (Windows PowerShell, repo root):
+   ```powershell
+   yarn supabase start          # if not already running: yarn supabase status to check
+   yarn supabase db reset       # optional — only if you need a clean DB for this run
+   ```
+2. **Set `apps/mobile/.env`** to point at `localhost` (not the LAN IP — we tunnel over USB):
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=http://localhost:54321
+   ```
+   (Keep the anon key line as-is. **Remember to revert this to the LAN IP,
+   `http://192.168.100.9:54321`, when done** — the LAN IP is what a from-scratch dev-build launch
+   via `npx expo start --host lan` expects.)
+3. **Start Metro** (Windows PowerShell, repo root):
+   ```powershell
+   yarn workspace @wrsi/mobile start
+   ```
+   Wait for `Waiting on http://localhost:8081` in its output.
+4. **Connect the phone** — USB cable plugged in, then set up both tunnels (Windows PowerShell,
+   with `platform-tools` on PATH):
+   ```powershell
+   adb devices                       # confirm the phone shows as "device", not "unauthorized"
+   adb reverse tcp:8081 tcp:8081      # tunnels Metro to the phone's localhost:8081
+   adb reverse tcp:54321 tcp:54321    # tunnels Supabase to the phone's localhost:54321
+   ```
+5. **For Maestro itself to reach the phone**, connect over WiFi from WSL2 (Maestro runs in WSL2,
+   which cannot see USB devices or the Windows adb server — see "Environment notes" below):
+   ```powershell
+   # one-time per boot: put the phone's adbd into TCP mode via the USB connection
+   adb tcpip 5555
+   ```
+   ```bash
+   # from WSL2 — find the phone's WiFi IP first (Settings > About phone > Status, or
+   # `adb -s <usb-serial> shell ip -f inet addr show wlan0` from Windows), then:
+   adb connect <phone-wifi-ip>:5555
+   adb devices                        # should show "<ip>:5555   device" (not "unauthorized" —
+                                       # approve the "Allow wireless debugging?" prompt on the phone if it appears)
+   ```
+6. **Load the app** pointing at the tunneled Metro (from WSL2, or Windows adb targeting the WiFi
+   serial):
+   ```bash
+   adb -s <phone-wifi-ip>:5555 shell am start -a android.intent.action.VIEW \
+     -d 'wrsi://expo-development-client/?url=http://localhost:8081'
+   ```
+   Wait for the bundle to load (watch Metro's log for `Android Bundled ... modules`).
+7. **Run a flow.** Because the installed build is a dev client, `launchApp: clearState` (the
+   committed flows' preamble) drops back to the Expo launcher instead of the app — so for a
+   dev-client run, use a copy of the flow with the preamble swapped for the `openLink` from step 6
+   (the session persists across JS reloads, so it lands logged-in — skip the login steps too):
+   ```bash
+   maestro test path/to/your-flow.yaml
+   ```
+8. **Clean up** when done: revert `apps/mobile/.env` to the LAN IP, and optionally
+   `adb reverse --remove-all` / stop Metro.
+
+**Environment notes (why these specific steps):**
+- Maestro CLI only runs on macOS/Linux, hence WSL2 on this Windows box (Ubuntu-20.04, converted
+  from WSL1 — `wsl --set-version Ubuntu-20.04 2`).
+- WSL2 cannot reach the Windows host or the phone's LAN IP directly on this machine (a past
+  Bitdefender uninstall left the Windows Firewall rule store corrupted — `netsh advfirewall
+  reset` + a reboot are the fix if this changes/breaks again). adb-over-WiFi (step 5) and
+  `adb reverse` over USB (step 4) both route around that: WiFi adb goes phone-to-phone-IP
+  directly, and `adb reverse` is set up from the *Windows* adb (which has USB access), tunneling
+  Metro/Supabase to the phone's own `localhost` — nothing has to cross the WSL2/Windows boundary
+  except Maestro's own control connection to the phone's WiFi IP.
+- ColorOS (this phone's OEM Android skin) blocks `pm clear` (Maestro's `clearState`) by default:
+  Developer Options → **"Disable permission monitoring"** must be ON.
+- See [DECISIONS.md 2026-07-12](DECISIONS.md) for the original device-verification session this
+  runbook was extracted from, including the exact failures each step avoids.
+
 ### What's covered / conventions
 
 Runnable today: login as each role lands on the correct experience
-(`.maestro/auth/login-{admin,counselor,student}.yaml`) and the onboarding gate for a
-profile-less student (`.maestro/student/onboarding-gate.yaml`). These rely on `testID`s:
-`login-email` / `login-password` / `login-submit`, the role tab ids
-`admin-tab-students` / `student-tab-dashboard` / `counselor-tab-students`, and
-`onboarding-screen`.
+(`.maestro/auth/login-{admin,counselor,student}.yaml`); the onboarding gate for a
+profile-less student (`.maestro/student/onboarding-gate.yaml`); and the full admin high-school
+**create / edit / delete** cycle (`.maestro/admin/high-school-{create,edit,delete}.yaml`) —
+each a self-contained flow that also guards the stale-list refetch on its respective
+create/update/delete path, and delete additionally exercises the themed confirm dialog and the
+delete-entity Edge Function. **The high-school create/edit/delete cycle is device-verified**
+(physical Android, 2026-07-12 — see DECISIONS.md). These rely on `testID`s: `login-email` /
+`login-password` / `login-submit`; the role tab ids `admin-tab-students` /
+`student-tab-dashboard` / `counselor-tab-students`; `onboarding-screen`; the admin high-school
+ids `admin-tab-highschools` / `admin-add-highschool` / `admin-highschool-search` /
+`highschool-edit` / `highschool-name-input` / `highschool-contact-first-input`; the shared
+entity-form ids `entity-email-input` / `entity-submit` / `entity-delete`; and the confirm-dialog
+ids `confirm-dialog-confirm` / `confirm-dialog-cancel`. The `searchTestID` / `editTestID` props
+on the shared `EntityListScreen` are generic — wire them into the university/counselor/student
+list screens to extend edit/delete flows to those entities.
+
+**Device-verified flow conventions** (learned running the CRUD cycle on a physical device; apply
+to every new admin-form flow):
+- The entity form is longer than the viewport → `scrollUntilVisible` the `entity-submit` /
+  `entity-delete` button before tapping it (`tapOn` does **not** auto-scroll).
+- Forms use react-hook-form `onTouched` validation, so the submit button stays **disabled until a
+  field blurs**. adb `inputText` + `hideKeyboard` don't fire a blur — after filling the last
+  field, `tapOn` another field to trigger validation and enable submit.
+- **Don't edit pre-filled text fields** (append/erase): tapping a populated field lands the cursor
+  mid-string, corrupting the value. To verify an *edit*, populate an **empty** field instead (the
+  high-school edit flow sets the contact first name and checks it in the list subtitle).
+
+**Running against a local dev-client build** (what's installed on this machine's physical test
+phone): a `developmentClient` build ships no JS bundle and `clearState` drops it to the Expo
+launcher, so the committed flows' `launchApp: clearState` preamble needs a *standalone* (preview)
+build instead. See the step-by-step **"Runbook: this Windows machine + physical Android phone"**
+above for the exact repeatable procedure (Metro, `adb reverse` tunnels, `openLink` in place of
+`clearState`).
 
 **Extending E2E** (the incremental next step): add a `testID` to the element a new flow needs
 (the `@wrsi/ui` `Button`/`Input`/`Screen` primitives already forward `testID`), then add a
 flow. Prefer `testID`s over visible text — UI copy is i18n'd (Spanish default), so text
-selectors are locale-fragile. Deferred flows to add next: full onboarding completion, document
-upload/delete, admin student/high-school/university CRUD, counselor read-only CRM, and (once
-the events branch merges) the events browse/register/workshop/1:1/notes flow.
+selectors are locale-fragile. To target one row in a list whose per-row controls share an id,
+filter the list via its search box first (as the high-school edit/delete flows do). Deferred
+flows to add next: full onboarding completion, document upload/delete, the rest of admin CRUD
+(students/universities/counselors/events edit+delete), counselor read-only CRM, and the events
+browse/register/workshop/1:1/notes flow.
 
 Maestro E2E is **not** in CI yet (it needs an emulator + built app). That's a tracked
 follow-up; for now run it locally for UI-affecting changes.

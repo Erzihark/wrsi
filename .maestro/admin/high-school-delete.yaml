@@ -1,0 +1,82 @@
+# Admin deletes a high school: it goes through the themed confirm dialog, reports
+# a toast, and disappears from the list immediately (no app reload). Covers the
+# freshly-shipped ConfirmProvider + delete-entity Edge Function + the stale-list
+# refetch on the *delete* path — none of which had E2E coverage.
+#
+# Self-contained: creates a fresh high school, then deletes it.
+#
+# Prereqs & device-verified conventions: see high-school-create.yaml. In short:
+# run against a standalone build; the form is long (scrollUntilVisible before
+# submit/delete); react-hook-form needs a field blur before submit enables.
+appId: com.wxstudy.wrsi
+tags:
+  - admin
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"
+
+# Unique per run so re-runs don't collide on the auth email / clutter the list.
+- evalScript: ${output.stamp = Date.now()}
+
+- tapOn:
+    id: "admin-tab-highschools"
+
+# --- Create the high school we're going to delete ---
+- tapOn:
+    id: "admin-add-highschool"
+- tapOn:
+    id: "entity-email-input"
+- inputText: "e2e-hs-del-${output.stamp}@wrsi.dev"
+- hideKeyboard
+- tapOn:
+    id: "highschool-name-input"
+- inputText: "E2E Prepa ${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "entity-email-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+# The create flow shows a blocking alert with the generated credentials; dismiss
+# it (RN's default single-button Alert is labelled "OK").
+- tapOn: "OK"
+- assertVisible: "E2E Prepa ${output.stamp}"
+
+# --- Delete it ---
+# Filter the list to the single row we just created so the shared per-row Edit
+# button (same id on every row) is unambiguous.
+- tapOn:
+    id: "admin-highschool-search"
+- inputText: "${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "highschool-edit"
+
+- scrollUntilVisible:
+    element:
+      id: "entity-delete"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-delete"
+# The themed ConfirmProvider dialog (not a native Alert) gates the destructive
+# action; confirm it.
+- tapOn:
+    id: "confirm-dialog-confirm"
+
+# Back on the (still search-filtered) list: the row must be gone without any
+# manual reload. With the filter still applied to the deleted name, the list is
+# now empty for that term.
+- assertNotVisible: "E2E Prepa ${output.stamp}"
