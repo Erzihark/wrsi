@@ -7,6 +7,11 @@ export interface EntityListScreenProps<Item> {
   addLabel: string;
   /** testID for the "＋ Add" button (for Maestro E2E). */
   addTestID?: string;
+  /** testID for the name-search input (for Maestro E2E). */
+  searchTestID?: string;
+  /** testID for each row's "Edit" button (for Maestro E2E). Filter the list to
+   *  one row via search first, since all rows share this id. */
+  editTestID?: string;
   searchPlaceholder: string;
   emptyText: string;
   items: Item[] | undefined;
@@ -28,6 +33,8 @@ export interface EntityListScreenProps<Item> {
 export function EntityListScreen<Item>({
   addLabel,
   addTestID,
+  searchTestID,
+  editTestID,
   searchPlaceholder,
   emptyText,
   items,
@@ -51,6 +58,7 @@ export function EntityListScreen<Item>({
           value={search}
           onChangeText={onSearchChange}
           autoCapitalize="none"
+          testID={searchTestID}
         />
         <Button title={addLabel} onPress={onAdd} testID={addTestID} />
       </View>
@@ -73,6 +81,7 @@ export function EntityListScreen<Item>({
                   variant="secondary"
                   title={t('admin.edit')}
                   onPress={() => onPressItem(item)}
+                  testID={editTestID}
                 />
               </Card>
             );

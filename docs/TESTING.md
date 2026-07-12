@@ -111,18 +111,29 @@ App id (both platforms): `com.wxstudy.wrsi`.
 ### What's covered / conventions
 
 Runnable today: login as each role lands on the correct experience
-(`.maestro/auth/login-{admin,counselor,student}.yaml`) and the onboarding gate for a
-profile-less student (`.maestro/student/onboarding-gate.yaml`). These rely on `testID`s:
-`login-email` / `login-password` / `login-submit`, the role tab ids
-`admin-tab-students` / `student-tab-dashboard` / `counselor-tab-students`, and
-`onboarding-screen`.
+(`.maestro/auth/login-{admin,counselor,student}.yaml`); the onboarding gate for a
+profile-less student (`.maestro/student/onboarding-gate.yaml`); and the full admin high-school
+**create / edit / delete** cycle (`.maestro/admin/high-school-{create,edit,delete}.yaml`) —
+each a self-contained flow that also guards the stale-list refetch on its respective
+create/update/delete path, and delete additionally exercises the themed confirm dialog and the
+delete-entity Edge Function. These rely on `testID`s: `login-email` / `login-password` /
+`login-submit`; the role tab ids `admin-tab-students` / `student-tab-dashboard` /
+`counselor-tab-students`; `onboarding-screen`; the admin high-school ids `admin-tab-highschools`
+/ `admin-add-highschool` / `admin-highschool-search` / `highschool-edit` /
+`highschool-name-input`; the shared entity-form ids `entity-email-input` / `entity-submit` /
+`entity-delete`; and the confirm-dialog ids `confirm-dialog-confirm` / `confirm-dialog-cancel`.
+The `searchTestID` / `editTestID` props on the shared `EntityListScreen` are generic — wire
+them into the university/counselor/student list screens to extend edit/delete flows to those
+entities.
 
 **Extending E2E** (the incremental next step): add a `testID` to the element a new flow needs
 (the `@wrsi/ui` `Button`/`Input`/`Screen` primitives already forward `testID`), then add a
 flow. Prefer `testID`s over visible text — UI copy is i18n'd (Spanish default), so text
-selectors are locale-fragile. Deferred flows to add next: full onboarding completion, document
-upload/delete, admin student/high-school/university CRUD, counselor read-only CRM, and (once
-the events branch merges) the events browse/register/workshop/1:1/notes flow.
+selectors are locale-fragile. To target one row in a list whose per-row controls share an id,
+filter the list via its search box first (as the high-school edit/delete flows do). Deferred
+flows to add next: full onboarding completion, document upload/delete, the rest of admin CRUD
+(students/universities/counselors/events edit+delete), counselor read-only CRM, and the events
+browse/register/workshop/1:1/notes flow.
 
 Maestro E2E is **not** in CI yet (it needs an emulator + built app). That's a tracked
 follow-up; for now run it locally for UI-affecting changes.

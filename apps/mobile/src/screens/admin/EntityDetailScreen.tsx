@@ -213,6 +213,7 @@ export function EntityDetailScreen<
           loading={remove.isPending}
           onPress={confirmRemove}
           style={{ marginTop: theme.spacing.sm }}
+          testID="entity-delete"
         />
       )}
     </Screen>

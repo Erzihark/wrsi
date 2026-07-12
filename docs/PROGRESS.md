@@ -5,58 +5,42 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-12
 **Current phase:** Phase 1 (MVP) — foundation, onboarding/dashboard, admin CRUD (students/high
 schools/universities/counselors), documents upload, student university directory, the
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
 admin event CRUD) are all built and merged to `master`.
 
-**In review (branch `fix/android-ios-parity-audit`, not yet merged):** codebase-wide audit for
-the CLAUDE.md iOS+Android parity rule (prompted by the flag-emoji incident). Two fixes: (1)
-`Screen`'s scroll variant now sets `automaticallyAdjustKeyboardInsets` on iOS so long forms
-(onboarding, admin entity/event) don't hide fields behind the keyboard — Android already had
-`adjustResize`; (2) glyphs with emoji variants (`♥`/`♡` in the university save/saved strings,
-`ℹ` in Toast) render as colored emoji via Android's font fallback → replaced with bundled SVG
-icons (`packages/ui/src/components/icons.tsx`; `react-native-svg` already a dep, **no new dev
-build needed**). `Button` gained an `icon(color)` prop. Rule of thumb: text-only symbols
-(`✓ ✕ ▾ ·`) are safe in strings; anything with an emoji variant becomes an SVG icon. Typecheck
-+ unit green; on-device iOS/Android pass not run. See DECISIONS.md 2026-07-10.
+**All recently-in-review branches are now merged to `master`** (PRs merged via GitHub UI; local
+branches cleaned up). What landed since the last handoff:
 
-**In review (branch `feat/form-validation-standards`, not yet merged):** establishes one
-validation standard across every form — react-hook-form + zod, real-time (`mode: onTouched`),
-with the submit button disabled until the form is valid. New shared kit in `@wrsi/shared-utils`
-(url/image-url/email predicates + `libphonenumber-js` phone helpers + zod field builders,
-unit-tested), a `PhoneField` primitive in `@wrsi/ui` (dial-code dropdown + as-you-type
-formatting + per-country validity), and RHF-bound field wrappers in
-`apps/mobile/src/components/form`. Converted: onboarding, all 4 admin entity forms
-(via the reworked `EntityDetailScreen`), the event form (+ live-gated workshop/1:1 adders), and
-auth Login/SignUp. URL fields now validate (University `logo_url` must be an image URL); phone
-fields everywhere now have the country extension dropdown + real validation + formatting, with
-**bundled offline flag icons** on the dial-code trigger and picker rows (`CountryFlag` in
-`@wrsi/ui` = `country-flag-icons` SVGs + `react-native-svg`; emoji flags were rejected because
-they don't render on Android). Standard documented in [`docs/VALIDATION.md`](VALIDATION.md).
-**Adds a native module (`react-native-svg` 15.15.4) → a new EAS dev build is required before it
-renders on device.** Typecheck + unit tests green (incl. a check that all 235 seed countries
-have a flag); mobile emulator/Maestro layer not run (no dev build here). See DECISIONS.md
-2026-07-10.
+- **`fix/android-ios-parity-audit`** — codebase-wide audit for the CLAUDE.md iOS+Android parity
+  rule (prompted by the flag-emoji incident). (1) `Screen`'s scroll variant now sets
+  `automaticallyAdjustKeyboardInsets` on iOS so long forms don't hide fields behind the keyboard;
+  (2) glyphs with emoji variants (`♥`/`♡`, `ℹ`) → bundled SVG icons in
+  `packages/ui/src/components/icons.tsx`. `Button` gained an `icon(color)` prop. Rule of thumb:
+  text-only symbols (`✓ ✕ ▾ ·`) are safe in strings; anything with an emoji variant becomes an
+  SVG icon. On-device iOS/Android pass not run.
+- **`feat/form-validation-standards`** — one validation standard across every form: react-hook-form
+  + zod, real-time (`mode: onTouched`), submit disabled until valid. Shared kit in
+  `@wrsi/shared-utils` (url/image-url/email predicates + `libphonenumber-js` helpers + zod field
+  builders), a `PhoneField` primitive + RHF field wrappers in `apps/mobile/src/components/form`.
+  Converted: onboarding, all 4 admin entity forms, the event form, and auth Login/SignUp. Bundled
+  offline flag icons (`CountryFlag` in `@wrsi/ui`). Standard in [`docs/VALIDATION.md`](VALIDATION.md).
+  **Added a native module (`react-native-svg` 15.15.4) → a new EAS dev build is required before it
+  renders on device.** Mobile emulator/Maestro layer not run.
+- **`fix/high-school-dropdown-stale-cache`** — admin CRUD lists not reflecting create/edit/delete
+  until a full reload (native-stack keeps the List mounted, so `goBack()` never remounts it).
+  Fix: `useRefetchOnFocus` on every admin list; also fixed a stale "assign high school" dropdown
+  (query-key mismatch in `useHighSchools`). Adds `packages/api/src/directory.test.ts` + Maestro
+  flow `.maestro/admin/high-school-create.yaml`. Not yet run on-device. See [[native-stack-list-refetch]].
+- **`feat/confirm-dialogs-and-toasts`** — `ConfirmProvider`/`useConfirm()` + `ToastProvider`/
+  `useToast()` in `@wrsi/ui` (mounted in `AppProviders`). Destructive actions go through a themed
+  confirm; create/edit/delete/toggle outcomes report via non-blocking toasts. The generated-password
+  alert on admin account creation stays a blocking Alert on purpose.
 
-**In review (branch `fix/high-school-dropdown-stale-cache`, not yet merged):** fixes admin CRUD
-lists not reflecting a create/edit/delete until a full app reload. Root cause: native-stack
-List→Detail keeps the List mounted, so `goBack()` never remounts it and the background
-`invalidateQueries` isn't reflected — affected **all** admin lists (students/high schools/
-universities/counselors/events), not just high schools. Fix: `useRefetchOnFocus` on every admin
-list screen. Also fixes a separate stale "assign high school" dropdown (query-key mismatch in
-`useHighSchools`). Adds `packages/api/src/directory.test.ts` (query-key contract) + a Maestro
-flow `.maestro/admin/high-school-create.yaml` (create → appears in list, no reload) with the
-`testID`s it needs. Focus-refetch + Maestro flow not yet run on-device. See DECISIONS.md 2026-07-10.
+See DECISIONS.md 2026-07-10 for the full write-ups.
 
-**In review (branch `feat/confirm-dialogs-and-toasts`, not yet merged):** reusable
-`ConfirmProvider`/`useConfirm()` + `ToastProvider`/`useToast()` in `@wrsi/ui` (token-driven,
-mounted in `AppProviders`). Destructive actions (all entity/document/event-sub-entity deletes,
-event/workshop unregister, 1:1 cancel, onboarding exit) now go through a themed confirm; create/
-edit/delete/toggle outcomes report via non-blocking toasts instead of blocking `Alert.alert`.
-The generated-password alert on admin account creation stays a blocking Alert on purpose. See
-DECISIONS.md 2026-07-10.
 **Client requirements (read this first if context was cleared):** `docs/REQUIREMENTS.md` —
 the original client brief, feature list, and their phased roadmap.
 **Full plan:** `~/.claude/plans/i-am-building-this-sunny-lynx.md` (architecture + roadmap).
@@ -161,9 +145,14 @@ emulator + dev build; run in WSL2 on Windows). CI (`.github/workflows/ci.yml`) g
   3166-2 as new destinations come up (the field is optional for unlisted countries).
 - **Testing — expand the E2E slice.** Backend coverage is solid (incl. events, see
   `tests/backend/security/events.test.ts`); Maestro covers login-per-role, the onboarding gate,
-  and admin high-school create → appears-in-list (`.maestro/admin/high-school-create.yaml`, the
-  stale-list regression). Still to add (and `testID`s) for: full onboarding completion, document
-  upload/delete, the rest of admin CRUD (students/universities/counselors/events edit+delete),
-  counselor read-only CRM, and events browse/register/workshop/1:1/notes.
+  and the full admin high-school **create / edit / delete** cycle
+  (`.maestro/admin/high-school-{create,edit,delete}.yaml`) — each also guarding the stale-list
+  refetch on its path; delete additionally covers the themed confirm dialog + delete-entity Edge
+  Function. Added generic `searchTestID`/`editTestID` on the shared `EntityListScreen` + fixed
+  `confirm-dialog-{confirm,cancel}`/`entity-delete` testIDs, so extending edit/delete flows to
+  universities/counselors/students is now mostly wiring those props in. Still to add (and
+  `testID`s) for: full onboarding completion, document upload/delete, the rest of admin CRUD
+  (students/universities/counselors/events edit+delete), counselor read-only CRM, and events
+  browse/register/workshop/1:1/notes. **Not yet run on a device/emulator** (no dev build here).
 - **Testing — Maestro in CI.** E2E isn't wired into GitHub Actions yet (needs an Android
   emulator + a built dev app). Add a dedicated workflow when worth the runner cost.

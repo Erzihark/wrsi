@@ -1,0 +1,71 @@
+# Admin edits an existing high school and the new name shows in the list
+# immediately (no app reload). Regression guard for the stale-list bug on the
+# *update* path: like create, the List stays mounted under the Detail screen, so
+# returning after a save must refetch on focus.
+#
+# Self-contained: creates a fresh high school, then edits it, so it doesn't
+# depend on any particular seed row surviving prior runs.
+#
+# Prereqs: dev build on a running emulator + local Supabase freshly `db reset`
+# (seeded admin account admin@wrsi.dev / password123). See docs/TESTING.md.
+appId: com.wxstudy.wrsi
+tags:
+  - admin
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"
+
+# Unique per run so re-runs don't collide on the auth email / clutter the list.
+- evalScript: ${output.stamp = Date.now()}
+
+- tapOn:
+    id: "admin-tab-highschools"
+
+# --- Create the high school we're going to edit ---
+- tapOn:
+    id: "admin-add-highschool"
+- tapOn:
+    id: "entity-email-input"
+- inputText: "e2e-hs-edit-${output.stamp}@wrsi.dev"
+- hideKeyboard
+- tapOn:
+    id: "highschool-name-input"
+- inputText: "E2E Prepa ${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "entity-submit"
+# The create flow shows a blocking alert with the generated credentials; dismiss
+# it (RN's default single-button Alert is labelled "OK").
+- tapOn: "OK"
+- assertVisible: "E2E Prepa ${output.stamp}"
+
+# --- Edit it ---
+# Filter the list to the single row we just created so the shared per-row Edit
+# button (same id on every row) is unambiguous.
+- tapOn:
+    id: "admin-highschool-search"
+- inputText: "E2E Prepa ${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "highschool-edit"
+
+# Append a suffix rather than clearing (Maestro types at the cursor); the name
+# stays non-empty so the form is valid and the submit button stays enabled.
+- tapOn:
+    id: "highschool-name-input"
+- inputText: " EDITED"
+- hideKeyboard
+- tapOn:
+    id: "entity-submit"
+
+# Back on the (still search-filtered) list: the edited name must be visible
+# without any manual reload. The original stamp is a prefix of the new name, so
+# it still matches the active `%E2E Prepa <stamp>%` filter.
+- assertVisible: "E2E Prepa ${output.stamp} EDITED"
