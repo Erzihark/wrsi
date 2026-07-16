@@ -5,19 +5,25 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-12
+**Last updated:** 2026-07-16
 **Current phase:** Phase 1 (MVP) — foundation, onboarding/dashboard, admin CRUD (students/high
 schools/universities/counselors), documents upload, student university directory, the
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +
-admin event CRUD) are all built and merged to `master`.
+admin event CRUD) are all built and merged to `master`. **The designer's student-dashboard
+design arrived** — implementation planned as 4 sequential PRs (backend → UI kit → home/nav →
+profile/apps); plan in `~/.claude/plans/i-finally-was-given-snappy-charm.md`.
 
-**In review:** `docs/api-documentation` — API contract index ([`docs/API.md`](API.md), one row
-per `@wrsi/api` hook), hand-authored [`docs/openapi.yaml`](openapi.yaml) for the 2 Edge
-Functions + 2 client-called RPCs (browse via `yarn docs:api` → Scalar), a `docs-coverage`
-unit test that fails when an exported hook has no API.md row, and a new CLAUDE.md
-**"API changes (REQUIRED)"** checklist agents must follow on every data-layer change
-(migration → gen:types → hook+JSDoc → docs → tests → logs). Groundwork for the wave of API
-changes expected once the app designer's designs arrive.
+**In review:** `feat/student-home-backend` — **PR 1 of 4** for the student-home redesign.
+Events gain `image_url`/`start_time`/`end_time` (+ `location` formalized as venue) with the
+admin event form updated; `students`/`counselors` gain `photo_url` + a public `avatars`
+Storage bucket (own-folder-or-admin writes); new `update_student_profile` RPC (onboarding's
+validation, but UPDATE-only and **no** status/onboarding side effects); new hooks
+`useMyCounselor`, `useMyApplications`, `useUnreadNotificationsCount`,
+`useMark(All)NotificationRead`, `useUploadMyAvatar`, `useUploadCounselorPhoto`,
+`useUpdateMyStudentProfile`, `useMyStudentInterestSelections`; dashboard display helpers in
+`@wrsi/shared-utils` (`computeProfileCompletion`, `computeJourneyProgress`,
+`selectNextUpcomingEvent`, date/time formatting, `waChatUrl`). Layers run: typecheck + unit
+(incl. docs-coverage) + backend (all green); no UI change yet, so no device pass.
 
 **All previously-in-review branches are merged to `master`** (PRs merged via GitHub UI; local
 branches cleaned up). What landed since the last handoff:

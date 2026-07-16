@@ -183,13 +183,15 @@ begin
     (s1, u_s1, 'Upload lorem transcript', 'Lorem ipsum dolor sit amet.', current_date + 7, 'open'),
     (s1, u_counselor, 'Review ipsum essay', 'Consectetur adipiscing elit.', current_date + 3, 'in_progress');
 
-  insert into public.events (id, title, description, country_id, state_province_id, event_type, start_date, end_date, registration_deadline)
+  insert into public.events (id, title, description, country_id, state_province_id, event_type, start_date, end_date, registration_deadline,
+                             location, image_url, start_time, end_time)
   values (ev1, 'Feria Lorem ' || (extract(year from now())::int + 1), 'Lorem ipsum education fair.',
           (select id from public.countries where iso_code = 'MX'),
           (select sp.id from public.states_provinces sp
              join public.countries c on c.id = sp.country_id
              where c.iso_code = 'MX' and sp.name = 'Quintana Roo'),
-          'fair', current_date + 60, current_date + 64, now() + interval '45 days')
+          'fair', current_date + 60, current_date + 64, now() + interval '45 days',
+          'Universidad Lorem Ipsum', 'https://picsum.photos/seed/wrsi-event/800/600.jpg', '09:00', '16:00')
   on conflict (id) do nothing;
   insert into public.event_universities (university_id, event_id) values (un1, ev1), (un2, ev1) on conflict do nothing;
   insert into public.workshops (id, event_id, university_id, title, start_time, end_time) values

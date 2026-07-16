@@ -175,9 +175,10 @@ begin
     (s1, u_s1, 'Upload transcript', 'Latest school transcript, PDF.', current_date + 7, 'open'),
     (s1, u_counselor, 'Review motivation essay', 'First draft attached in Drive.', current_date + 3, 'in_progress');
 
-  insert into public.events (id, title, description, location, event_type, start_date, end_date, registration_deadline)
+  insert into public.events (id, title, description, location, event_type, start_date, end_date, registration_deadline, image_url, start_time, end_time)
   values (ev1, 'Feria WX Study ' || (extract(year from now())::int + 1), 'Annual education fair with partner universities.',
-          'Centro de Convenciones, Cancún', 'fair', current_date + 60, current_date + 64, now() + interval '45 days')
+          'Centro de Convenciones, Cancún', 'fair', current_date + 60, current_date + 64, now() + interval '45 days',
+          'https://picsum.photos/seed/wrsi-event/800/600.jpg', '09:00', '16:00')
   on conflict (id) do nothing;
   insert into public.event_universities (university_id, event_id) values (un1, ev1), (un2, ev1) on conflict do nothing;
   insert into public.workshops (id, event_id, university_id, title, start_time, end_time) values

@@ -1,6 +1,11 @@
 import type { Enums } from '@wrsi/shared-types';
 
 export * from './validation';
+export * from './profileCompletion';
+export * from './journey';
+export * from './eventsDisplay';
+export * from './greeting';
+export * from './whatsapp';
 
 /**
  * Normalize a name/email for duplicate detection: trim, lowercase, strip accents.

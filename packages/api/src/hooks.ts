@@ -127,3 +127,82 @@ export function useNotifications() {
     },
   });
 }
+
+/**
+ * Unread-notification count for the header bell badge. A `head: true` count
+ * query (no rows transferred), served by the partial unread index. Refreshed
+ * by the mark-read mutations; RLS scopes it to the signed-in user.
+ */
+export function useUnreadNotificationsCount() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.notificationsUnread,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_read', false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
+/** Mark one of the signed-in user's notifications read (RLS: owner update only). */
+export function useMarkNotificationRead() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', notificationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // `notifications` is a prefix of `notificationsUnread`, so this refreshes both.
+      void qc.invalidateQueries({ queryKey: queryKeys.notifications });
+    },
+  });
+}
+
+/** Mark all of the signed-in user's unread notifications read. */
+export function useMarkAllNotificationsRead() {
+  const supabase = useSupabase();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('is_read', false);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.notifications });
+    },
+  });
+}
+
+/**
+ * The signed-in student's assigned counselor (or null when unassigned), for the
+ * dashboard counselor card + Consejero tab. Reads the student's own row (RLS:
+ * self) with the counselor embedded via students.counselor_id; counselor rows
+ * are readable by all authenticated users. `phone` doubles as the WhatsApp
+ * number for the "Abrir chat" deep link.
+ */
+export function useMyCounselor() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.myCounselor,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('students')
+        .select('counselor:counselors(id, first_name, last_name, phone, photo_url)')
+        .maybeSingle();
+      if (error) throw error;
+      return data?.counselor ?? null;
+    },
+  });
+}

@@ -234,6 +234,7 @@ export type Database = {
           id: string
           last_name: string
           phone: string | null
+          photo_url: string | null
           updated_at: string
           user_id: string
         }
@@ -243,6 +244,7 @@ export type Database = {
           id?: string
           last_name: string
           phone?: string | null
+          photo_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -252,6 +254,7 @@ export type Database = {
           id?: string
           last_name?: string
           phone?: string | null
+          photo_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -557,11 +560,14 @@ export type Database = {
           created_at: string
           description: string | null
           end_date: string | null
+          end_time: string | null
           event_type: string | null
           id: string
+          image_url: string | null
           location: string | null
           registration_deadline: string | null
           start_date: string | null
+          start_time: string | null
           state_province_id: string | null
           title: string
           updated_at: string
@@ -571,11 +577,14 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_date?: string | null
+          end_time?: string | null
           event_type?: string | null
           id?: string
+          image_url?: string | null
           location?: string | null
           registration_deadline?: string | null
           start_date?: string | null
+          start_time?: string | null
           state_province_id?: string | null
           title: string
           updated_at?: string
@@ -585,11 +594,14 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_date?: string | null
+          end_time?: string | null
           event_type?: string | null
           id?: string
+          image_url?: string | null
           location?: string | null
           registration_deadline?: string | null
           start_date?: string | null
+          start_time?: string | null
           state_province_id?: string | null
           title?: string
           updated_at?: string
@@ -1505,6 +1517,7 @@ export type Database = {
           onboarding_completed_at: string | null
           parent_or_guardian_name: string | null
           phone_number: string | null
+          photo_url: string | null
           updated_at: string
           user_id: string
         }
@@ -1531,6 +1544,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           parent_or_guardian_name?: string | null
           phone_number?: string | null
+          photo_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1557,6 +1571,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           parent_or_guardian_name?: string | null
           phone_number?: string | null
+          photo_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2083,6 +2098,7 @@ export type Database = {
           onboarding_completed_at: string | null
           parent_or_guardian_name: string | null
           phone_number: string | null
+          photo_url: string | null
           updated_at: string
           user_id: string
         }
@@ -2103,6 +2119,46 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_counselor_of: { Args: { p_student_id: string }; Returns: boolean }
       is_service_context: { Args: never; Returns: boolean }
+      update_student_profile: {
+        Args: {
+          p_country_interest_ids?: string[]
+          p_field_ids?: string[]
+          p_intended_level_ids?: string[]
+          p_passport_country_ids?: string[]
+          p_profile: Json
+        }
+        Returns: {
+          average_grade: number | null
+          birth_date: string | null
+          budget: number | null
+          budget_currency_id: string | null
+          cefr_level: string | null
+          counselor_id: string | null
+          country_id: string | null
+          created_at: string
+          desired_intake_term: Database["public"]["Enums"]["intake_term"] | null
+          desired_intake_year: number | null
+          expected_graduation_year: number | null
+          financial_plan_id: string | null
+          first_name: string
+          high_school_id: string | null
+          highest_education_level_id: string | null
+          id: string
+          last_name: string
+          onboarding_completed_at: string | null
+          parent_or_guardian_name: string | null
+          phone_number: string | null
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "students"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       device_platform: "ios" | "android" | "web"
