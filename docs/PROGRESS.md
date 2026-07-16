@@ -13,17 +13,30 @@ admin event CRUD) are all built and merged to `master`. **The designer's student
 design arrived** — implementation planned as 4 sequential PRs (backend → UI kit → home/nav →
 profile/apps); plan in `~/.claude/plans/i-finally-was-given-snappy-charm.md`.
 
-**In review:** `feat/student-home-backend` — **PR 1 of 4** for the student-home redesign.
-Events gain `image_url`/`start_time`/`end_time` (+ `location` formalized as venue) with the
-admin event form updated; `students`/`counselors` gain `photo_url` + a public `avatars`
-Storage bucket (own-folder-or-admin writes); new `update_student_profile` RPC (onboarding's
-validation, but UPDATE-only and **no** status/onboarding side effects); new hooks
-`useMyCounselor`, `useMyApplications`, `useUnreadNotificationsCount`,
-`useMark(All)NotificationRead`, `useUploadMyAvatar`, `useUploadCounselorPhoto`,
-`useUpdateMyStudentProfile`, `useMyStudentInterestSelections`; dashboard display helpers in
-`@wrsi/shared-utils` (`computeProfileCompletion`, `computeJourneyProgress`,
-`selectNextUpcomingEvent`, date/time formatting, `waChatUrl`). Layers run: typecheck + unit
-(incl. docs-coverage) + backend (all green); no UI change yet, so no device pass.
+**Merged:** `feat/student-home-backend` — **PR 1 of 4** (student-home redesign). Events gain
+`image_url`/`start_time`/`end_time` (+ `location` formalized as venue) with the admin event
+form updated; `students`/`counselors` gain `photo_url` + a public `avatars` bucket; new
+`update_student_profile` RPC (onboarding's validation, UPDATE-only, **no** status/onboarding
+side effects); new hooks (`useMyCounselor`, `useMyApplications`,
+`useUnreadNotificationsCount`, `useMark(All)NotificationRead`, `useUploadMyAvatar`,
+`useUploadCounselorPhoto`, `useUpdateMyStudentProfile`, `useMyStudentInterestSelections`);
+dashboard display helpers in `@wrsi/shared-utils`.
+
+**In review:** `feat/ui-brand-foundation` — **PR 2 of 4** (UI kit, `packages/ui` only, no
+behavior change). Brand recolored **app-wide** to orange: `tokens.color.primary` → `#f97316`,
++ `primaryDark #ea580c` (pressed / small text — white-on-orange is only ~2.8:1) + `primarySoft
+#fff7ed` (tinted surfaces). This restyles **every** experience (auth/admin/counselor buttons &
+links go orange) — intended, it's the one-file design-swap mechanism. New primitives:
+`ProgressBar`, `ProgressRing` (svg, centered slot), `Avatar` (initials fallback + badge slot),
+`IconTile`, `Carousel` (paging ScrollView + dots, no new deps), `SectionHeader`. 18 new SVG
+icons in `icons.tsx` (Home/Bell/Person/Chevron/Calendar/Clock/MapPin/GraduationCap/FileText/
+Folder/Camera/Play/Shield/Mail/Users/Book/Target/Chat + WhatsApp/Instagram/TikTok/LinkedIn/
+YouTube brand marks). Verified: `yarn typecheck` green (incl. mobile — recolor broke no types).
+**Not yet rendered on device** — nothing consumes these until PR 3 wires them into screens.
+
+**Next:** PR 3 (nav restructure → 5 tabs + Home/Notifications/Counselor screens), PR 4
+(Profile/Applications + photo upload + the profile-screen new fields — see the second design's
+schema in the plan file `~/.claude/plans/i-finally-was-given-snappy-charm.md`).
 
 **All previously-in-review branches are merged to `master`** (PRs merged via GitHub UI; local
 branches cleaned up). What landed since the last handoff:

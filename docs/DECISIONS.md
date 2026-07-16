@@ -646,6 +646,38 @@ notifications owner-only mark-read + scoped unread count, avatars bucket policie
 columns admin-write/student-read, and the RPC's no-status-append + validation + no-profile
 + unauthenticated paths). No UI change in this PR, so no device pass.
 
+## 2026-07-16 — Student-home redesign, PR 2: UI kit + orange brand (branch `feat/ui-brand-foundation`)
+
+`packages/ui`-only, no behavior/screen changes — the visual foundation PR 3/4 consume.
+
+**Brand recolor is app-wide, by design.** `tokens.color.primary` `#4f46e5` → **`#f97316`**;
+added `primaryDark #ea580c` and `primarySoft #fff7ed`. Because every experience reads
+`t.color.primary`, this restyles auth, admin, and counselor screens too — that's the intended
+one-file design-swap the tokens file was built for, not a regression. Contrast note: white on
+`#f97316` is ~2.8:1 (fine for large CTAs, too low for small text), so `primaryDark` is the
+token for pressed states and small text on white; `primarySoft` backs badges/selected rows/
+icon-tile squares.
+
+**New primitives** (all themed via `useTheme`): `ProgressBar` (journey bar), `ProgressRing`
+(svg arc from 12 o'clock, centered content slot — the completion ring), `Avatar` (remote photo
+with 2-letter initials fallback on `primarySoft` + a corner badge slot for the camera/WhatsApp
+overlays), `IconTile` (quick-access tile), `Carousel` (paging `ScrollView` + dot indicators;
+page width measured via `onLayout` not `Dimensions`, so it's correct inside padded containers;
+no new dependency, identical on both platforms), `SectionHeader` (title + optional "Ver todos ›").
+
+**18 new SVG icons** added to `icons.tsx` following the existing stroke convention (1.75
+stroke, rounded caps): Home, Bell, Person, ChevronRight, ArrowLeft, Calendar, Clock, MapPin,
+GraduationCap, FileText, Folder, Camera, Play, Shield, Mail, Users, Book, Target, Chat, plus
+solid-fill brand marks WhatsApp/Instagram/TikTok/LinkedIn/YouTube. Rationale unchanged from the
+parity audit: glyphs with emoji variants render as color emoji on Android, so every icon is a
+bundled SVG that honors `color`.
+
+**Verified:** `yarn typecheck` green across all packages incl. `@wrsi/mobile` (the recolor
+touched no types — colors are referenced by token key). **Not exercised on device**: nothing
+in the app renders these components yet (PR 3 mounts them), and this box can't run a local
+Expo build (repo path has a space; EAS dev build needed). On-device visual check happens when
+PR 3 wires the components into the dashboard.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

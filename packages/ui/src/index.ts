@@ -11,6 +11,18 @@ export type { InputProps } from './components/Input';
 export { Card } from './components/Card';
 export { Badge } from './components/Badge';
 export type { BadgeProps } from './components/Badge';
+export { ProgressBar } from './components/ProgressBar';
+export type { ProgressBarProps } from './components/ProgressBar';
+export { ProgressRing } from './components/ProgressRing';
+export type { ProgressRingProps } from './components/ProgressRing';
+export { Avatar } from './components/Avatar';
+export type { AvatarProps } from './components/Avatar';
+export { IconTile } from './components/IconTile';
+export type { IconTileProps } from './components/IconTile';
+export { Carousel } from './components/Carousel';
+export type { CarouselProps } from './components/Carousel';
+export { SectionHeader } from './components/SectionHeader';
+export type { SectionHeaderProps } from './components/SectionHeader';
 export { Screen } from './components/Screen';
 export type { ScreenProps } from './components/Screen';
 export { Chip } from './components/Chip';
@@ -37,5 +49,34 @@ export { ToastProvider, useToast } from './components/Toast';
 export type { ToastContextValue, ToastOptions, ToastType } from './components/Toast';
 export { ConfirmProvider, useConfirm } from './components/ConfirmDialog';
 export type { ConfirmContextValue, ConfirmOptions } from './components/ConfirmDialog';
-export { CheckIcon, CloseIcon, InfoIcon, HeartIcon } from './components/icons';
+export {
+  CheckIcon,
+  CloseIcon,
+  InfoIcon,
+  HeartIcon,
+  HomeIcon,
+  BellIcon,
+  PersonIcon,
+  ChevronRightIcon,
+  ArrowLeftIcon,
+  CalendarIcon,
+  ClockIcon,
+  MapPinIcon,
+  GraduationCapIcon,
+  FileTextIcon,
+  FolderIcon,
+  CameraIcon,
+  PlayIcon,
+  ShieldIcon,
+  MailIcon,
+  UsersIcon,
+  BookIcon,
+  TargetIcon,
+  ChatIcon,
+  WhatsAppIcon,
+  InstagramIcon,
+  TikTokIcon,
+  LinkedInIcon,
+  YouTubeIcon,
+} from './components/icons';
 export type { IconProps } from './components/icons';
