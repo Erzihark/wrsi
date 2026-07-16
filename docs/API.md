@@ -85,6 +85,37 @@ side effects.
 |---|---|---|---|
 | `useUpdateMyStudentProfile()` | RPC `update_student_profile` (atomic profile UPDATE + interest-table replace; server-side validation) — see [openapi.yaml](openapi.yaml) | invalidates `myStudent` + `myInterestSelections` | student (runs as caller; errors if no profile row) |
 | `useMyStudentInterestSelections(studentId)` | SELECT the 4 interest join tables → id arrays (edit-form prefill) | `myInterestSelections` | self (RLS-filtered) |
+| `useMyProfileCompletion()` | Derived — composes `useMyStudentProfile` + `useMyLanguageExams` + `useMyReferences` through `computeProfileCompletion` | no key of its own (reads `myStudent`, `myLanguageExams`, `myReferences`) | self (RLS-filtered) |
+
+`useMyProfileCompletion` is the only supported way to read the metric: two of the
+six sections (`english`, `extras`) depend on child-table rows, so calling
+`computeProfileCompletion` with the `students` row alone under-reports.
+
+## References — `packages/api/src/references.ts`
+
+The profile screen's "Personas extra (Referencias / Recomendaciones)" — 0..N
+contacts per student. Written directly against the table rather than through the
+profile RPC: each row has its own fields, so the uuid[]-replace pattern the
+interest tables use doesn't fit.
+
+| Hook | Operation | Query key / invalidates | Auth & RLS |
+|---|---|---|---|
+| `useMyReferences()` | SELECT `student_references` ordered by `created_at` | `myReferences` | self + assigned counselor + admin (`can_access_student`) |
+| `useSaveReference()` | INSERT (no `id`) or UPDATE (with `id`) one reference | invalidates `myReferences` | same |
+| `useDeleteReference()` | DELETE by id | invalidates `myReferences` | same |
+
+## Language exams — `packages/api/src/languageExams.ts`
+
+The profile screen's "Nivel de inglés" row (`Avanzado (C1) – IELTS 7.0`): the
+CEFR band is `students.cefr_level`; the exam + score live in the pre-existing
+`student_language_exams`, keyed by `(student_id, language_exam_id)`.
+
+| Hook | Operation | Query key / invalidates | Auth & RLS |
+|---|---|---|---|
+| `useLanguageExams()` | SELECT the `language_exams` catalog + language name | `lookup('language_exams')`, 1h `staleTime` | all authenticated (reference data) |
+| `useMyLanguageExams()` | SELECT the student's exam results + embedded catalog row | `myLanguageExams` | self + assigned counselor + admin (`can_access_student`) |
+| `useSaveMyLanguageExam()` | UPSERT on `(student_id, language_exam_id)` — re-saving an exam updates its score | invalidates `myLanguageExams` | same |
+| `useDeleteMyLanguageExam()` | DELETE by `(student_id, language_exam_id)` | invalidates `myLanguageExams` | same |
 
 ## Lookups — `packages/api/src/lookups.ts`
 
@@ -223,5 +254,5 @@ Full specs in [`docs/openapi.yaml`](openapi.yaml) (`yarn docs:api` to browse).
 | `POST /functions/v1/create-entity` | Edge Function | `useCreateEntity` | admin-only; provisions auth user + role + profile row; per-type column allow-list in `supabase/functions/_shared/entities.ts` |
 | `POST /functions/v1/delete-entity` | Edge Function | `useDeleteEntity` | admin-only; deletes auth user, row via CASCADE |
 | `POST /rest/v1/rpc/complete_student_onboarding` | RPC | `useCompleteOnboarding` | validation in `supabase/migrations/20260703000002_onboarding_validation.sql` |
-| `POST /rest/v1/rpc/update_student_profile` | RPC | `useUpdateMyStudentProfile` | same validation as onboarding; UPDATE-only, no status/onboarding side effects (`supabase/migrations/20260716000001_student_home.sql`) |
+| `POST /rest/v1/rpc/update_student_profile` | RPC | `useUpdateMyStudentProfile` | same validation as onboarding; UPDATE-only, no status/onboarding side effects. Introduced in `20260716000001_student_home.sql`, replaced in `20260716000003_student_profile_fields.sql` to carry the guardian phone, consent, and personal notes |
 | `POST /rest/v1/rpc/is_admin` | RPC | (Edge Function guard only) | same predicate the RLS policies use |

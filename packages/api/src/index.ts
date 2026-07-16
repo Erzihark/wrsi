@@ -17,8 +17,21 @@ export {
 export { useMyApplications } from './applications';
 export { useUploadMyAvatar, useUploadCounselorPhoto } from './avatars';
 export type { UploadAvatarFile } from './avatars';
-export { useUpdateMyStudentProfile, useMyStudentInterestSelections } from './profile';
+export {
+  useUpdateMyStudentProfile,
+  useMyStudentInterestSelections,
+  useMyProfileCompletion,
+} from './profile';
 export type { UpdateStudentProfileArgs, StudentInterestSelections } from './profile';
+export { useMyReferences, useSaveReference, useDeleteReference } from './references';
+export type { StudentReference, SaveReferenceInput } from './references';
+export {
+  useLanguageExams,
+  useMyLanguageExams,
+  useSaveMyLanguageExam,
+  useDeleteMyLanguageExam,
+} from './languageExams';
+export type { SaveLanguageExamInput } from './languageExams';
 export {
   useCountries,
   useFieldsOfStudy,

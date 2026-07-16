@@ -646,6 +646,57 @@ notifications owner-only mark-read + scoped unread count, avatars bucket policie
 columns admin-write/student-read, and the RPC's no-status-append + validation + no-profile
 + unauthenticated paths). No UI change in this PR, so no device pass.
 
+## 2026-07-16 — Student profile, PR 4: schema + hooks for "Mi información" (branch `feat/student-profile-backend`)
+
+The client's second design (the student profile screen) surfaced fields the schema didn't
+carry. Backend-only, mirroring the PR-1 pattern so the screens land on a settled data layer.
+
+**The English test/score needed no new columns.** The design's "Avanzado (C1) – IELTS 7.0"
+looked like new schema (an earlier plan called for `english_test_type`/`english_test_score`
+columns), but `student_language_exams` — `language_exam_id` → a seeded IELTS/TOEFL/PTE/
+Cambridge/DELE catalog, plus `score`, `exam_date`, `expiry_date` — has existed since
+`20260701000004_student_domain.sql`, already covered by the `can_access_student` child-table
+RLS loop. It only lacked hooks. The CEFR band stays on `students.cefr_level`. Checking the
+schema before writing the migration avoided a redundant, divergent second home for exam data.
+
+**Added** (`20260716000003_student_profile_fields.sql`): `students.parent_or_guardian_phone`
+(the design shows guardian name **+ phone**; only the name existed); `students.consent_info_use`
+boolean + `consent_info_use_at` (product decision 2026-07-16: consent is a plain boolean — the
+student's permission to use their info for the application process; the timestamp is kept
+because a consent you can't date is hard to stand behind); `students.personal_notes`; and
+`student_references` (0..N contacts: full_name/relationship/email/phone). The references policy
+is spelled out rather than appended to the loop in `20260701000009_rls_policies.sql`, which is
+already applied — backend tests assert it behaves identically to its sibling tables.
+
+**`update_student_profile` replaced** to carry the new fields. They're **optional**, because
+onboarding never collected them: requiring them would fail the first profile save for every
+existing student. Omitting `consent_info_use` leaves the stored consent alone rather than
+silently revoking it; granting stamps the timestamp, revoking clears it (all three covered by
+`tests/backend/integration/profile-rpc.test.ts`).
+
+**`computeProfileCompletion`'s sections were re-mapped** — the PR-1 definition was a guess made
+before this design existed. Now: `personal`, `guardian`, `consent`, `academic`, `english`,
+`extras`. Two changes matter:
+- **No `financial` section.** Budget/financial plan are collected at onboarding but the profile
+  screen doesn't show them; counting them moves a number for a reason the student can't see.
+- The sections that can actually be *incomplete* are exactly the ones onboarding never
+  collected. Onboarding hard-requires everything in `personal`/`academic`, so those read
+  complete for any onboarded student — which is precisely what the design shows (those rows
+  "Completado", the new ones "Pendiente"). Under the old definition every onboarded student
+  scored ~100%, making the dashboard's "Completa tu perfil" card meaningless.
+- `english` and `extras` also depend on child-table rows, so the helper takes optional counts
+  and **`useMyProfileCompletion()`** composes row + exams + references. That hook is now the
+  only supported way to read the metric (calling the pure helper with just the row
+  under-reports); the dashboard card and profile screen were both moved onto it so they can't
+  disagree.
+
+The design's "4 de 6 / 68%" is internally inconsistent (4/6 = 67%; the row ratio is 71%), so its
+numbers are treated as illustrative. Revisit if the client defines the sections explicitly.
+
+**Verified:** `yarn supabase db reset` clean, `gen:types` committed, typecheck + 75 unit + 77
+backend green (new: reference RLS across student/counselor/admin/anon, exam upsert-not-duplicate,
+guardian-phone validation, and the three consent transitions).
+
 ## 2026-07-16 — Student-home redesign, PR 3: navigation + the designed dashboard (branch `feat/student-home`)
 
 **Tabs are now the designed five** — Inicio / Universidades / Eventos / Consejero / Mi perfil.

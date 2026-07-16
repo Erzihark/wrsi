@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useMyStudentProfile } from '@wrsi/api';
-import { computeProfileCompletion, fullName } from '@wrsi/shared-utils';
+import { useMyProfileCompletion, useMyStudentProfile } from '@wrsi/api';
+import { fullName } from '@wrsi/shared-utils';
 import { Avatar, Button, Card, ProgressRing, Screen, Text, useTheme } from '@wrsi/ui';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -23,7 +23,7 @@ export function ProfileScreen() {
   const { data: student } = useMyStudentProfile();
 
   const name = student ? fullName(student.first_name, student.last_name) : '';
-  const completion = computeProfileCompletion(student);
+  const completion = useMyProfileCompletion();
 
   return (
     <Screen scroll testID="student-profile-screen">

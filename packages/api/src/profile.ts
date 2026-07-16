@@ -1,7 +1,12 @@
+import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@wrsi/shared-types';
+import { computeProfileCompletion, type ProfileCompletion } from '@wrsi/shared-utils';
 import { useSupabase } from './context';
 import { queryKeys } from './queryKeys';
+import { useMyStudentProfile } from './hooks';
+import { useMyLanguageExams } from './languageExams';
+import { useMyReferences } from './references';
 
 export type UpdateStudentProfileArgs =
   Database['public']['Functions']['update_student_profile']['Args'];
@@ -26,6 +31,31 @@ export function useUpdateMyStudentProfile() {
       void qc.invalidateQueries({ queryKey: queryKeys.myInterestSelections });
     },
   });
+}
+
+/**
+ * The profile-completion metric, resolved from every source it depends on: the
+ * `students` row plus the child tables two of the six sections need (recorded
+ * language exams, reference contacts).
+ *
+ * Exists so the dashboard's "Completa tu perfil" card and the profile screen's
+ * ring can't disagree — calling `computeProfileCompletion` with the row alone
+ * scores those two sections as incomplete. All three queries are cached and
+ * shared with the screens that read them directly.
+ */
+export function useMyProfileCompletion(): ProfileCompletion {
+  const student = useMyStudentProfile();
+  const exams = useMyLanguageExams();
+  const references = useMyReferences();
+
+  const row = student.data;
+  const languageExamCount = exams.data?.length ?? 0;
+  const referenceCount = references.data?.length ?? 0;
+
+  return useMemo(
+    () => computeProfileCompletion(row, { languageExamCount, referenceCount }),
+    [row, languageExamCount, referenceCount],
+  );
 }
 
 export interface StudentInterestSelections {
