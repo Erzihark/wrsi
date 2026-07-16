@@ -30,4 +30,6 @@ export const queryKeys = {
   myCounselor: ['me', 'counselor'] as const,
   myApplications: ['me', 'applications'] as const,
   myInterestSelections: ['me', 'student', 'interests'] as const,
+  myReferences: ['me', 'student', 'references'] as const,
+  myLanguageExams: ['me', 'student', 'language_exams'] as const,
 };

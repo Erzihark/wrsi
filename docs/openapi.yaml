@@ -188,8 +188,16 @@ paths:
         side effects**: it never inserts a `status_history` row and never touches
         `onboarding_completed_at`, so editing a profile can't regress the student's
         journey status. Errors (errcode P0002 → PostgREST 400) when the caller has no
-        student row yet — onboarding must run first. Definition:
-        `supabase/migrations/20260716000001_student_home.sql`.
+        student row yet — onboarding must run first.
+
+        Also carries the profile-only fields onboarding never collected —
+        `parent_or_guardian_phone`, `consent_info_use`, `personal_notes`. These are
+        **optional**: requiring them would fail the first save for every already-onboarded
+        student. Omitting `consent_info_use` leaves the stored consent untouched rather
+        than revoking it; granting it stamps `consent_info_use_at`, revoking clears it.
+
+        Definition: `supabase/migrations/20260716000001_student_home.sql`, replaced by
+        `supabase/migrations/20260716000003_student_profile_fields.sql`.
       requestBody:
         required: true
         content:
@@ -299,11 +307,17 @@ components:
     UpdateStudentProfileArgs:
       type: object
       required: [p_profile]
-      description: Mirrors `Database['public']['Functions']['update_student_profile']['Args']` (`UpdateStudentProfileArgs` in `packages/api/src/profile.ts`). Same shape and required keys as `CompleteOnboardingArgs`.
+      description: Mirrors `Database['public']['Functions']['update_student_profile']['Args']` (`UpdateStudentProfileArgs` in `packages/api/src/profile.ts`). Same shape and required keys as `CompleteOnboardingArgs`, plus the profile-only fields below.
       properties:
         p_profile:
           type: object
-          description: Same JSON profile shape as `CompleteOnboardingArgs.p_profile` — all onboarding-required keys stay required on edit.
+          description: |
+            Same JSON profile shape as `CompleteOnboardingArgs.p_profile` — all
+            onboarding-required keys stay required on edit. Additional optional keys the
+            profile screen writes (onboarding never collected them, so they can't be
+            required): parent_or_guardian_phone (validated 8–15 digits when non-empty),
+            consent_info_use (boolean; omit to leave the stored consent unchanged),
+            personal_notes (blank string is stored as NULL).
         p_country_interest_ids:
           type: array
           items: { type: string, format: uuid }

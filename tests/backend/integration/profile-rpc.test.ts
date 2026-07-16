@@ -26,6 +26,10 @@ type StudentRow = {
   desired_intake_year: number | null;
   expected_graduation_year: number | null;
   onboarding_completed_at: string | null;
+  parent_or_guardian_phone: string | null;
+  consent_info_use: boolean;
+  consent_info_use_at: string | null;
+  personal_notes: string | null;
 };
 
 let original: StudentRow;
@@ -81,16 +85,32 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // Restore the seeded scalar values the positive-path test changed.
+  // Restore the seeded scalar values the positive-path tests changed.
   const svc = serviceClient();
   await svc
     .from('students')
     .update({
       parent_or_guardian_name: original.parent_or_guardian_name,
       average_grade: original.average_grade,
+      parent_or_guardian_phone: original.parent_or_guardian_phone,
+      consent_info_use: original.consent_info_use,
+      consent_info_use_at: original.consent_info_use_at,
+      personal_notes: original.personal_notes,
     })
     .eq('id', IDS.students.s1);
 });
+
+/** Call the RPC as student1 with a valid base payload plus the given overrides. */
+async function editAsStudent1(overrides: Record<string, unknown>) {
+  const c = await signInAs(EMAILS.student1);
+  return c.rpc('update_student_profile', {
+    p_profile: { ...profileFrom(original), ...overrides },
+    p_passport_country_ids: originalPassports,
+    p_country_interest_ids: originalCountries,
+    p_field_ids: originalFields,
+    p_intended_level_ids: originalLevels,
+  });
+}
 
 describe('update_student_profile RPC', () => {
   it('updates scalars + replaces interest rows without touching lifecycle', async () => {
@@ -166,5 +186,66 @@ describe('update_student_profile RPC', () => {
       p_profile: profileFrom(original),
     });
     expect(error).not.toBeNull();
+  });
+
+  // --- Profile-only fields (added 2026-07-16 for the "Mi información" design) ---
+  describe('profile-only fields', () => {
+    it('writes guardian phone and personal notes', async () => {
+      const { data, error } = await editAsStudent1({
+        parent_or_guardian_phone: '+52 998 765 4321',
+        personal_notes: 'Me interesan las ciudades grandes.',
+      });
+      expect(error).toBeNull();
+      // Non-digits are stripped, same as phone_number.
+      expect(data?.parent_or_guardian_phone).toBe('+529987654321');
+      expect(data?.personal_notes).toBe('Me interesan las ciudades grandes.');
+    });
+
+    it('accepts an absent guardian phone (onboarding never collected one)', async () => {
+      const { data, error } = await editAsStudent1({ parent_or_guardian_phone: '' });
+      expect(error).toBeNull();
+      expect(data?.parent_or_guardian_phone).toBeNull();
+    });
+
+    it('rejects a malformed guardian phone', async () => {
+      const { error } = await editAsStudent1({ parent_or_guardian_phone: '123' });
+      expect(error).not.toBeNull();
+      expect(error?.message).toContain('parent_or_guardian_phone');
+    });
+
+    it('stores blank personal notes as NULL rather than an empty string', async () => {
+      const { data, error } = await editAsStudent1({ personal_notes: '   ' });
+      expect(error).toBeNull();
+      expect(data?.personal_notes).toBeNull();
+    });
+
+    it('stamps consent_info_use_at when consent is first granted', async () => {
+      // Start from a known-revoked state.
+      await editAsStudent1({ consent_info_use: false });
+      const { data, error } = await editAsStudent1({ consent_info_use: true });
+      expect(error).toBeNull();
+      expect(data?.consent_info_use).toBe(true);
+      expect(data?.consent_info_use_at).not.toBeNull();
+    });
+
+    it('leaves consent untouched when the key is omitted (an edit must not revoke it)', async () => {
+      await editAsStudent1({ consent_info_use: true });
+      const granted = await editAsStudent1({ consent_info_use: true });
+      const grantedAt = granted.data?.consent_info_use_at;
+
+      const { data, error } = await editAsStudent1({}); // no consent key at all
+      expect(error).toBeNull();
+      expect(data?.consent_info_use).toBe(true);
+      // ...and re-granting doesn't re-stamp the original timestamp.
+      expect(data?.consent_info_use_at).toBe(grantedAt);
+    });
+
+    it('clears the timestamp when consent is revoked', async () => {
+      await editAsStudent1({ consent_info_use: true });
+      const { data, error } = await editAsStudent1({ consent_info_use: false });
+      expect(error).toBeNull();
+      expect(data?.consent_info_use).toBe(false);
+      expect(data?.consent_info_use_at).toBeNull();
+    });
   });
 });

@@ -3,8 +3,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { useMyCounselor } from '@wrsi/api';
-import { computeProfileCompletion, waChatUrl, type ProfileCompletionInput } from '@wrsi/shared-utils';
+import { useMyCounselor, useMyProfileCompletion } from '@wrsi/api';
+import { waChatUrl } from '@wrsi/shared-utils';
 import {
   Avatar,
   Card,
@@ -18,6 +18,13 @@ import {
 } from '@wrsi/ui';
 import type { StudentHomeStackParamList, StudentTabParamList } from '../../../navigation/types';
 
+/** Only what the card's avatar needs — completion comes from its own hook. */
+interface StudentSummary {
+  first_name: string;
+  last_name: string;
+  photo_url: string | null;
+}
+
 /**
  * The paged highlights row: "Completa tu perfil" (completion ring + photo) and
  * "Tu consejera WRSI" (photo + WhatsApp CTA). The counselor page is omitted
@@ -26,7 +33,7 @@ import type { StudentHomeStackParamList, StudentTabParamList } from '../../../na
 export function HighlightsCarousel({
   student,
 }: {
-  student: (ProfileCompletionInput & { first_name: string; last_name: string }) | null | undefined;
+  student: StudentSummary | null | undefined;
 }) {
   const counselor = useMyCounselor();
 
@@ -41,12 +48,12 @@ export function HighlightsCarousel({
 function ProfileCompletionCard({
   student,
 }: {
-  student: (ProfileCompletionInput & { first_name: string; last_name: string }) | null | undefined;
+  student: StudentSummary | null | undefined;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const nav = useNavigation<NativeStackNavigationProp<StudentHomeStackParamList>>();
-  const completion = computeProfileCompletion(student);
+  const completion = useMyProfileCompletion();
 
   return (
     <Pressable

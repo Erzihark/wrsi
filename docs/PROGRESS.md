@@ -22,7 +22,24 @@ side effects); new hooks (`useMyCounselor`, `useMyApplications`,
 `useUploadCounselorPhoto`, `useUpdateMyStudentProfile`, `useMyStudentInterestSelections`);
 dashboard display helpers in `@wrsi/shared-utils`.
 
-**In review:** `feat/student-home` — **PR 3 of 4** (the visible redesign). Student tabs are now
+**In review:** `feat/student-profile-backend` — **PR 4 of 5** (data layer for the designed
+"Mi información" profile screen). New on `students`: `parent_or_guardian_phone`,
+`consent_info_use` (+ `consent_info_use_at`), `personal_notes`; new `student_references` table
+("Personas extra") with the standard student-keyed RLS. **No English test columns** — the
+design's "IELTS 7.0" already fits the pre-existing `student_language_exams` + seeded
+`language_exams` catalog, which only lacked hooks. `update_student_profile` replaced to carry
+the new (optional) fields. New hooks: `useMyReferences`/`useSaveReference`/`useDeleteReference`,
+`useLanguageExams`/`useMyLanguageExams`/`useSaveMyLanguageExam`/`useDeleteMyLanguageExam`, and
+`useMyProfileCompletion`. **`computeProfileCompletion`'s 6 sections were re-mapped** to the
+profile design (dropped `financial` — the screen shows no budget; added guardian/consent/
+english/extras). Verified: typecheck + 75 unit + 77 backend, all green.
+
+**Next:** PR 5 — the profile screens: full ProfileScreen (grouped rows w/ Completado/Pendiente),
+a single bare-bones ProfileEditScreen (design pending) that the "Editar" button and each field
+row both open, with the tapped row's field auto-focused via a route param; photo upload
+(`expo-image-picker`, needs a dev-client rebuild); admin counselor photo.
+
+**Merged:** `feat/student-home` — **PR 3 of 4** (the visible redesign). Student tabs are now
 the designed five — **Inicio · Universidades · Eventos · Consejero · Mi perfil** — with SVG tab
 icons. Documents **left the tab bar** and lives in the Home stack (reached from the
 quick-access grid). New `StudentHeader` (WRSI wordmark + bell w/ unread badge + profile

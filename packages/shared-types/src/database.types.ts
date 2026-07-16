@@ -1452,6 +1452,54 @@ export type Database = {
           },
         ]
       }
+      student_references: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          relationship: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          relationship?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          relationship?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_references_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_references_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_university_interest: {
         Row: {
           created_at: string
@@ -1502,6 +1550,8 @@ export type Database = {
           budget: number | null
           budget_currency_id: string | null
           cefr_level: string | null
+          consent_info_use: boolean
+          consent_info_use_at: string | null
           counselor_id: string | null
           country_id: string | null
           created_at: string
@@ -1516,6 +1566,8 @@ export type Database = {
           last_name: string
           onboarding_completed_at: string | null
           parent_or_guardian_name: string | null
+          parent_or_guardian_phone: string | null
+          personal_notes: string | null
           phone_number: string | null
           photo_url: string | null
           updated_at: string
@@ -1527,6 +1579,8 @@ export type Database = {
           budget?: number | null
           budget_currency_id?: string | null
           cefr_level?: string | null
+          consent_info_use?: boolean
+          consent_info_use_at?: string | null
           counselor_id?: string | null
           country_id?: string | null
           created_at?: string
@@ -1543,6 +1597,8 @@ export type Database = {
           last_name: string
           onboarding_completed_at?: string | null
           parent_or_guardian_name?: string | null
+          parent_or_guardian_phone?: string | null
+          personal_notes?: string | null
           phone_number?: string | null
           photo_url?: string | null
           updated_at?: string
@@ -1554,6 +1610,8 @@ export type Database = {
           budget?: number | null
           budget_currency_id?: string | null
           cefr_level?: string | null
+          consent_info_use?: boolean
+          consent_info_use_at?: string | null
           counselor_id?: string | null
           country_id?: string | null
           created_at?: string
@@ -1570,6 +1628,8 @@ export type Database = {
           last_name?: string
           onboarding_completed_at?: string | null
           parent_or_guardian_name?: string | null
+          parent_or_guardian_phone?: string | null
+          personal_notes?: string | null
           phone_number?: string | null
           photo_url?: string | null
           updated_at?: string
@@ -2083,6 +2143,8 @@ export type Database = {
           budget: number | null
           budget_currency_id: string | null
           cefr_level: string | null
+          consent_info_use: boolean
+          consent_info_use_at: string | null
           counselor_id: string | null
           country_id: string | null
           created_at: string
@@ -2097,6 +2159,8 @@ export type Database = {
           last_name: string
           onboarding_completed_at: string | null
           parent_or_guardian_name: string | null
+          parent_or_guardian_phone: string | null
+          personal_notes: string | null
           phone_number: string | null
           photo_url: string | null
           updated_at: string
@@ -2133,6 +2197,8 @@ export type Database = {
           budget: number | null
           budget_currency_id: string | null
           cefr_level: string | null
+          consent_info_use: boolean
+          consent_info_use_at: string | null
           counselor_id: string | null
           country_id: string | null
           created_at: string
@@ -2147,6 +2213,8 @@ export type Database = {
           last_name: string
           onboarding_completed_at: string | null
           parent_or_guardian_name: string | null
+          parent_or_guardian_phone: string | null
+          personal_notes: string | null
           phone_number: string | null
           photo_url: string | null
           updated_at: string
