@@ -21,12 +21,12 @@ export const en = {
     haveAccount: "Already have an account?",
   },
   student: {
-    dashboard: "Dashboard",
+    home: "Home",
     universities: "Universities",
     documents: "Documents",
     events: "Events",
-    progress: "Your progress",
-    nextSteps: "Next steps",
+    counselor: "Counselor",
+    profile: "My profile",
   },
   counselor: {
     students: "Students",
@@ -188,13 +188,103 @@ export const en = {
     exitConfirmTitle: "Exit sign-up?",
     exitConfirmMessage: "You'll be signed out and your progress on this form won't be saved.",
   },
-  dashboard: {
-    welcome: "Welcome, {{name}}",
-    currentStatus: "Current status",
-    noStatus: "Not started yet",
-    progress: "Your progress",
-    pendingTasks: "Pending tasks",
-    noTasks: "You’re all caught up.",
+  home: {
+    greeting: "Hi, {{name}}! 👋",
+    seeAll: "See all",
+    timeOfDay: {
+      morning: "Good morning.",
+      afternoon: "Good afternoon.",
+      evening: "Good evening.",
+    },
+    journey: {
+      title: "Your WRSI journey",
+      currentStep: "Current step",
+      nextStep: "Next step",
+      notStarted: "Not started yet",
+      finalStep: "Final step",
+      remainingLabel: "Remaining",
+      // Singular/plural picked in code rather than via i18next's plural suffixes:
+      // those need Intl.PluralRules, which Hermes doesn't reliably ship (same
+      // reason the date-word maps in shared-utils are hand-rolled).
+      remainingOne: "{{count}} step to your goal",
+      remaining: "{{count}} steps to your goal",
+    },
+    profileCard: {
+      title: "Complete your profile",
+      completed: "{{completed}} of {{total}} completed",
+    },
+    counselorCard: {
+      title: "Your WRSI counselor",
+      online: "On WhatsApp",
+      openChat: "Open chat",
+    },
+    nextEvent: {
+      title: "Your next event",
+      principal: "Main event",
+      registered: "You're registered!",
+      notRegistered: "Registration open",
+      details: "View event details",
+      empty: "No upcoming events right now.",
+    },
+    quickAccess: {
+      title: "Quick access",
+      learning: "WRSI Learning",
+      applications: "My Apps",
+      universities: "Universities",
+      documents: "My documents",
+    },
+    featured: {
+      title: "Featured resource",
+      sampleTitle: "How to choose a university abroad",
+      sampleMeta: "Video · 8 min",
+    },
+    benefit: {
+      eyebrow: "WRSI student benefit",
+      placeholderTitle: "Perks for WRSI students",
+      placeholderDetail: "Discounts with our partners",
+      cta: "View benefit",
+    },
+    social: {
+      title: "Connect with us",
+    },
+  },
+  notifications: {
+    title: "Notifications",
+    markAll: "Mark all read",
+    empty: "No notifications yet",
+  },
+  counselorScreen: {
+    title: "Your counselor",
+    role: "WRSI counselor",
+    openChat: "Open WhatsApp chat",
+    unassigned: "You don't have a counselor assigned yet. We'll let you know as soon as you do.",
+    noPhone: "This counselor has no WhatsApp number on file yet.",
+    hint: "Your counselor answers on WhatsApp during business hours.",
+  },
+  applications: {
+    title: "My Apps",
+    empty: "You don't have any applications yet.",
+    emptyHint: "Your counselor creates them once you pick your universities.",
+  },
+  profile: {
+    role: "Student",
+    completionTitle: "Profile completion",
+    completionDetail: "{{completed}} of {{total}} sections complete",
+  },
+  comingSoon: {
+    badge: "Coming soon",
+    learning: {
+      title: "WRSI Learning",
+      body: "Courses and guides to prepare you for studying abroad are on the way.",
+    },
+    resources: {
+      title: "Resources",
+      body: "Videos, guides, and articles from our counselors are on the way.",
+    },
+    benefits: {
+      title: "Student benefits",
+      body: "Discounts and perks from our partners are on the way.",
+    },
   },
   documents: {
     title: "My documents",

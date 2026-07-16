@@ -1,0 +1,81 @@
+# The redesigned student dashboard renders its sections and its links reach the
+# destinations that left the tab bar (Documents) or are new (Notifications).
+# Targets testIDs, not text — Spanish is the default locale.
+appId: com.wxstudy.wrsi
+tags:
+  - student
+  - dashboard
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "student1@wrsi.dev"
+      PASSWORD: "password123"
+
+# --- Dashboard sections ---
+- assertVisible:
+    id: "student-home-screen"
+- assertVisible:
+    id: "student-home-greeting"
+- assertVisible:
+    id: "student-journey-card"
+- assertVisible:
+    id: "student-profile-card"
+- assertVisible:
+    id: "student-next-event-card"
+
+# --- Quick access: Documents now lives in the Home stack ---
+- tapOn:
+    id: "student-quick-documents"
+- assertVisible:
+    id: "student-documents-screen"
+- back
+
+# --- Quick access: My Apps ---
+- tapOn:
+    id: "student-quick-applications"
+- assertVisible:
+    id: "student-applications-screen"
+- back
+
+# --- Quick access: an unbuilt feature lands on the coming-soon screen ---
+- tapOn:
+    id: "student-quick-learning"
+- assertVisible:
+    id: "student-coming-soon-screen"
+- back
+
+# --- The bell opens notifications ---
+- tapOn:
+    id: "student-header-bell"
+- assertVisible:
+    id: "student-notifications-screen"
+- back
+
+# --- The five designed tabs are all present ---
+- assertVisible:
+    id: "student-tab-home"
+- assertVisible:
+    id: "student-tab-universities"
+- assertVisible:
+    id: "student-tab-events"
+- assertVisible:
+    id: "student-tab-counselor"
+- assertVisible:
+    id: "student-tab-profile"
+
+# --- Counselor tab: WhatsApp-only contact card ---
+- tapOn:
+    id: "student-tab-counselor"
+- assertVisible:
+    id: "student-counselor-screen"
+
+# --- Profile tab owns Log out now that students have no AppHeader ---
+- tapOn:
+    id: "student-tab-profile"
+- assertVisible:
+    id: "student-profile-screen"
+- assertVisible:
+    id: "student-logout"

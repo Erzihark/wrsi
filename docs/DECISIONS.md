@@ -646,6 +646,50 @@ notifications owner-only mark-read + scoped unread count, avatars bucket policie
 columns admin-write/student-read, and the RPC's no-status-append + validation + no-profile
 + unauthenticated paths). No UI change in this PR, so no device pass.
 
+## 2026-07-16 — Student-home redesign, PR 3: navigation + the designed dashboard (branch `feat/student-home`)
+
+**Tabs are now the designed five** — Inicio / Universidades / Eventos / Consejero / Mi perfil.
+Documents left the tab bar for the Home stack (the design gives it a quick-access tile, not a
+tab). Tab param lists use `NavigatorScreenParams` so cross-tab jumps stay type-safe (the event
+card → `navigate('Events', { screen: 'EventDetail', … })`).
+
+**Header ownership / the Log-out move.** `AppHeader` (brand + the app's only Log out) used to
+sit above *every* signed-in experience, with `RootNavigator` zeroing the top safe-area inset for
+the navigator beneath it. The design replaces it for students with `StudentHeader`, so:
+- `RootNavigator` now wraps only admin/counselor in `AppHeaderShell` (the header + inset-zeroing
+  contract, extracted so both shells share it). Students render unwrapped, keeping **real**
+  insets.
+- Because the real top inset now reaches the student navigators, *something* must consume it or
+  content renders under the status bar. Inicio hides its tab header (its stack supplies
+  `StudentHeader`, which consumes the inset itself); **every other student tab keeps its tab
+  header**, which handles the inset for free. This is why the redesign didn't blanket-set
+  `headerShown: false`.
+- Log out moved to the Profile tab. The onboarding wizard keeps `AppHeader` — before the tabs
+  exist it's the only way out.
+
+**`StudentHeader` is presentational.** Navigation is injected by the Home stack's `header`
+option from the `navigation` object the navigator passes it. React Navigation documents that
+prop as the contract for custom headers; `useNavigation()` inside a header is not documented,
+and this PR couldn't be exercised on a device, so we took the guaranteed path.
+
+**No i18next pluralization.** "Faltan N pasos" picks between `remainingOne`/`remaining` in code
+rather than i18next's `_one`/`_other` suffixes: those need `Intl.PluralRules`, which Hermes
+doesn't reliably ship, there's no polyfill in the app, and the repo has no plural precedent —
+the same reasoning that made the month/weekday maps in `shared-utils` hand-rolled.
+
+**Applications shipped here, not in PR 4** (a plan deviation): `useMyApplications` already
+existed from PR 1, and routing the "My Apps" tile to a placeholder would have been churn. PR 4
+is now Profile + photos + the second design's new fields.
+
+**Review catch worth recording:** the quick-access tiles were content-sized in a
+`space-between` row. React Native defaults `flexShrink` to **0**, so the four translated labels
+(~355px) would have overflowed a 343px content width and clipped the last tile — `numberOfLines`
+never triggers because nothing constrains the Text width. Fixed with `flex: 1` per tile.
+
+**Verified:** `yarn typecheck` + `yarn test` (69 unit) green. **Not exercised on device** —
+this box can't run a local Expo build; `.maestro/student/dashboard.yaml` covers the flow when
+the rig is available. Existing flows were updated off the retired `student-tab-dashboard` testID.
+
 ## 2026-07-16 — Student-home redesign, PR 2: UI kit + orange brand (branch `feat/ui-brand-foundation`)
 
 `packages/ui`-only, no behavior/screen changes — the visual foundation PR 3/4 consume.

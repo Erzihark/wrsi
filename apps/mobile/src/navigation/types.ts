@@ -1,13 +1,38 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type AuthStackParamList = {
   Login: undefined;
   SignUp: undefined;
 };
 
+/**
+ * The student's five designed tabs: Inicio · Universidades · Eventos ·
+ * Consejero · Mi perfil. Documents left the tab bar — it's reached from the
+ * dashboard's quick-access grid, inside the Home stack. Tabs holding a stack
+ * use `NavigatorScreenParams` so cross-tab jumps stay type-safe (e.g. the
+ * dashboard's event card → `navigate('Events', { screen: 'EventDetail', … })`).
+ */
 export type StudentTabParamList = {
-  Dashboard: undefined;
-  Universities: undefined;
+  Home: NavigatorScreenParams<StudentHomeStackParamList>;
+  Universities: NavigatorScreenParams<StudentUniversitiesStackParamList>;
+  Events: NavigatorScreenParams<StudentEventsStackParamList>;
+  Counselor: undefined;
+  Profile: NavigatorScreenParams<StudentProfileStackParamList>;
+};
+
+/** Features that aren't built yet and route to the shared "coming soon" screen. */
+export type ComingSoonFeature = 'learning' | 'resources' | 'benefits';
+
+export type StudentHomeStackParamList = {
+  HomeMain: undefined;
   Documents: undefined;
-  Events: undefined;
+  Applications: undefined;
+  Notifications: undefined;
+  ComingSoon: { feature: ComingSoonFeature };
+};
+
+export type StudentProfileStackParamList = {
+  ProfileHome: undefined;
 };
 
 // Student-facing university browsing (distinct from the admin UniversitiesStack).

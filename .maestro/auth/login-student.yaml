@@ -1,4 +1,4 @@
-# An onboarded student signs in and lands on the student experience (Dashboard).
+# An onboarded student signs in and lands on the student experience (Inicio).
 appId: com.wxstudy.wrsi
 tags:
   - auth
@@ -11,4 +11,4 @@ tags:
       EMAIL: "student1@wrsi.dev"
       PASSWORD: "password123"
 - assertVisible:
-    id: "student-tab-dashboard"
+    id: "student-tab-home"
