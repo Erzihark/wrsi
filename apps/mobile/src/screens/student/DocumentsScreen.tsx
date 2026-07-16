@@ -88,7 +88,7 @@ export function DocumentsScreen() {
   }
 
   return (
-    <Screen>
+    <Screen testID="student-documents-screen">
       <Text variant="heading">{t('documents.title')}</Text>
 
       <View style={{ gap: theme.spacing.sm, paddingVertical: theme.spacing.sm }}>

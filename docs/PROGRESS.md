@@ -22,7 +22,21 @@ side effects); new hooks (`useMyCounselor`, `useMyApplications`,
 `useUploadCounselorPhoto`, `useUpdateMyStudentProfile`, `useMyStudentInterestSelections`);
 dashboard display helpers in `@wrsi/shared-utils`.
 
-**In review:** `feat/ui-brand-foundation` — **PR 2 of 4** (UI kit, `packages/ui` only, no
+**In review:** `feat/student-home` — **PR 3 of 4** (the visible redesign). Student tabs are now
+the designed five — **Inicio · Universidades · Eventos · Consejero · Mi perfil** — with SVG tab
+icons. Documents **left the tab bar** and lives in the Home stack (reached from the
+quick-access grid). New `StudentHeader` (WRSI wordmark + bell w/ unread badge + profile
+shortcut) replaces the staff `AppHeader` for onboarded students; **Log out therefore moved to
+the Profile tab** (the onboarding wizard keeps `AppHeader` as its escape hatch). `DashboardScreen`
+is replaced by `screens/student/home/` (greeting, journey card, highlights carousel, next-event
+card, quick-access grid, featured resource, benefit banner, social links). New screens:
+Notifications, Counselor (WhatsApp-only contact), ComingSoon (learning/resources/benefits), and
+Applications + a minimal Profile. i18n: new `home`/`notifications`/`counselorScreen`/
+`applications`/`profile`/`comingSoon` blocks; retired the `dashboard` block.
+Verified: `yarn typecheck` + `yarn test` (69 unit tests) green. **Not run on a device** —
+`.maestro/student/dashboard.yaml` is written but needs the emulator/phone rig.
+
+**Merged:** `feat/ui-brand-foundation` — **PR 2 of 4** (UI kit, `packages/ui` only, no
 behavior change). Brand recolored **app-wide** to orange: `tokens.color.primary` → `#f97316`,
 + `primaryDark #ea580c` (pressed / small text — white-on-orange is only ~2.8:1) + `primarySoft
 #fff7ed` (tinted surfaces). This restyles **every** experience (auth/admin/counselor buttons &

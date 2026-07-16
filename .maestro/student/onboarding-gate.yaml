@@ -15,4 +15,4 @@ tags:
 - assertVisible:
     id: "onboarding-screen"
 - assertNotVisible:
-    id: "student-tab-dashboard"
+    id: "student-tab-home"

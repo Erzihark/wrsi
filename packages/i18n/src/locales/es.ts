@@ -24,12 +24,12 @@ export const es: TranslationResource = {
     haveAccount: '¿Ya tienes una cuenta?',
   },
   student: {
-    dashboard: 'Panel',
+    home: 'Inicio',
     universities: 'Universidades',
     documents: 'Documentos',
     events: 'Eventos',
-    progress: 'Tu progreso',
-    nextSteps: 'Próximos pasos',
+    counselor: 'Consejero',
+    profile: 'Mi perfil',
   },
   counselor: {
     students: 'Alumnos',
@@ -191,13 +191,100 @@ export const es: TranslationResource = {
     exitConfirmTitle: '¿Salir del registro?',
     exitConfirmMessage: 'Se cerrará tu sesión y no se guardará tu progreso en este formulario.',
   },
-  dashboard: {
-    welcome: 'Bienvenido, {{name}}',
-    currentStatus: 'Estatus actual',
-    noStatus: 'Aún no comienza',
-    progress: 'Tu progreso',
-    pendingTasks: 'Tareas pendientes',
-    noTasks: 'Estás al día.',
+  home: {
+    greeting: '¡Hola, {{name}}! 👋',
+    seeAll: 'Ver todos',
+    timeOfDay: {
+      morning: 'Buenos días.',
+      afternoon: 'Buenas tardes.',
+      evening: 'Buenas noches.',
+    },
+    journey: {
+      title: 'Tu viaje WRSI',
+      currentStep: 'Paso actual',
+      nextStep: 'Próximo paso',
+      notStarted: 'Aún no comienza',
+      finalStep: 'Último paso',
+      remainingLabel: 'Faltan',
+      remainingOne: '{{count}} paso para tu meta',
+      remaining: '{{count}} pasos para tu meta',
+    },
+    profileCard: {
+      title: 'Completa tu perfil',
+      completed: '{{completed}} de {{total}} completados',
+    },
+    counselorCard: {
+      title: 'Tu consejera WRSI',
+      online: 'En línea en WhatsApp',
+      openChat: 'Abrir chat',
+    },
+    nextEvent: {
+      title: 'Tu próximo evento',
+      principal: 'Evento principal',
+      registered: '¡Ya estás registrado!',
+      notRegistered: 'Registro abierto',
+      details: 'Ver detalles del evento',
+      empty: 'No hay eventos próximos por ahora.',
+    },
+    quickAccess: {
+      title: 'Accesos rápidos',
+      learning: 'WRSI Learning',
+      applications: 'My Apps',
+      universities: 'Universidades',
+      documents: 'Mis documentos',
+    },
+    featured: {
+      title: 'Recurso destacado',
+      sampleTitle: '¿Cómo elegir una universidad en el extranjero?',
+      sampleMeta: 'Video · 8 min',
+    },
+    benefit: {
+      eyebrow: 'Beneficio para alumnos WRSI',
+      placeholderTitle: 'Beneficios para alumnos WRSI',
+      placeholderDetail: 'Descuentos con nuestros aliados',
+      cta: 'Ver beneficio',
+    },
+    social: {
+      title: 'Conéctate con nosotros',
+    },
+  },
+  notifications: {
+    title: 'Notificaciones',
+    markAll: 'Marcar todas',
+    empty: 'Aún no tienes notificaciones',
+  },
+  counselorScreen: {
+    title: 'Tu consejero',
+    role: 'Consejero WRSI',
+    openChat: 'Abrir chat de WhatsApp',
+    unassigned: 'Aún no tienes un consejero asignado. Te avisaremos en cuanto lo tengas.',
+    noPhone: 'Este consejero aún no tiene un número de WhatsApp registrado.',
+    hint: 'Tu consejero responde por WhatsApp en horario de oficina.',
+  },
+  applications: {
+    title: 'My Apps',
+    empty: 'Aún no tienes aplicaciones.',
+    emptyHint: 'Tu consejero las crea cuando eliges tus universidades.',
+  },
+  profile: {
+    role: 'Estudiante',
+    completionTitle: 'Perfil completo',
+    completionDetail: '{{completed}} de {{total}} secciones completas',
+  },
+  comingSoon: {
+    badge: 'Muy pronto',
+    learning: {
+      title: 'WRSI Learning',
+      body: 'Cursos y guías para prepararte para estudiar en el extranjero vienen en camino.',
+    },
+    resources: {
+      title: 'Recursos',
+      body: 'Videos, guías y artículos de nuestros consejeros vienen en camino.',
+    },
+    benefits: {
+      title: 'Beneficios para alumnos',
+      body: 'Descuentos y beneficios de nuestros aliados vienen en camino.',
+    },
   },
   documents: {
     title: 'Mis documentos',
