@@ -120,6 +120,8 @@ export const en = {
     logoUrl: "Logo URL",
     eventTitle: "Title",
     eventType: "Event type",
+    eventVenue: "Venue",
+    eventImageUrl: "Image URL",
     country: "Country",
     startDate: "Start date",
     endDate: "End date",

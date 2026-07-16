@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: |
     Only the **hand-written** API surface of WRSI: the two Supabase Edge Functions
-    and the two RPCs the mobile client calls. All table CRUD goes through
+    and the three RPCs the mobile client calls. All table CRUD goes through
     PostgREST + Row Level Security via the typed TanStack Query hooks in
     `packages/api` — see `docs/API.md` for that contract index. This spec is
     deliberately **not** a snapshot of the generated PostgREST spec (48 tables);
@@ -175,6 +175,37 @@ paths:
                 description: Full students row incl. `onboarding_completed_at`
         '400':
           description: Validation failure (PostgREST error body, not the `{error}` shape)
+  /rest/v1/rpc/update_student_profile:
+    post:
+      tags: [rpc]
+      operationId: updateStudentProfile
+      summary: Atomically update the calling student's profile + interests (post-onboarding edit)
+      description: |
+        Called via `supabase.rpc('update_student_profile', args)` — wrapped by the
+        `useUpdateMyStudentProfile` hook (`packages/api/src/profile.ts`). Runs as the
+        caller (student). Same argument shape and server-side validation as
+        `complete_student_onboarding`, but UPDATE-only semantics with **no lifecycle
+        side effects**: it never inserts a `status_history` row and never touches
+        `onboarding_completed_at`, so editing a profile can't regress the student's
+        journey status. Errors (errcode P0002 → PostgREST 400) when the caller has no
+        student row yet — onboarding must run first. Definition:
+        `supabase/migrations/20260716000001_student_home.sql`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStudentProfileArgs'
+      responses:
+        '200':
+          description: The updated `students` row (see `Database['public']['Functions']['update_student_profile']['Returns']`)
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Full students row (onboarding_completed_at unchanged)
+        '400':
+          description: Validation failure or no student profile row (PostgREST error body)
   /rest/v1/rpc/is_admin:
     post:
       tags: [rpc]
@@ -265,6 +296,26 @@ components:
     EntityType:
       type: string
       enum: [student, high_school, university, counselor]
+    UpdateStudentProfileArgs:
+      type: object
+      required: [p_profile]
+      description: Mirrors `Database['public']['Functions']['update_student_profile']['Args']` (`UpdateStudentProfileArgs` in `packages/api/src/profile.ts`). Same shape and required keys as `CompleteOnboardingArgs`.
+      properties:
+        p_profile:
+          type: object
+          description: Same JSON profile shape as `CompleteOnboardingArgs.p_profile` — all onboarding-required keys stay required on edit.
+        p_country_interest_ids:
+          type: array
+          items: { type: string, format: uuid }
+        p_field_ids:
+          type: array
+          items: { type: string, format: uuid }
+        p_intended_level_ids:
+          type: array
+          items: { type: string, format: uuid }
+        p_passport_country_ids:
+          type: array
+          items: { type: string, format: uuid }
     CompleteOnboardingArgs:
       type: object
       required: [p_profile]

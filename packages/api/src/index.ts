@@ -9,7 +9,16 @@ export {
   useToggleUniversityInterest,
   useMyStudentProfile,
   useNotifications,
+  useUnreadNotificationsCount,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  useMyCounselor,
 } from './hooks';
+export { useMyApplications } from './applications';
+export { useUploadMyAvatar, useUploadCounselorPhoto } from './avatars';
+export type { UploadAvatarFile } from './avatars';
+export { useUpdateMyStudentProfile, useMyStudentInterestSelections } from './profile';
+export type { UpdateStudentProfileArgs, StudentInterestSelections } from './profile';
 export {
   useCountries,
   useFieldsOfStudy,

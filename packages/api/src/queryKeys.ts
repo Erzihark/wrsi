@@ -24,4 +24,10 @@ export const queryKeys = {
   myEventRegistrations: ['me', 'event_registrations'] as const,
   myWorkshopRegistrations: (eventId: string) => ['me', 'workshop_registrations', eventId] as const,
   notifications: ['notifications'] as const,
+  // `head: true` count query — separate leaf under the notifications base so
+  // invalidating `notifications` refreshes both list and badge.
+  notificationsUnread: ['notifications', 'unread'] as const,
+  myCounselor: ['me', 'counselor'] as const,
+  myApplications: ['me', 'applications'] as const,
+  myInterestSelections: ['me', 'student', 'interests'] as const,
 };

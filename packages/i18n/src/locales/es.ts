@@ -123,6 +123,8 @@ export const es: TranslationResource = {
     logoUrl: 'URL del logo',
     eventTitle: 'Título',
     eventType: 'Tipo de evento',
+    eventVenue: 'Lugar / sede',
+    eventImageUrl: 'URL de la imagen',
     country: 'País',
     startDate: 'Fecha de inicio',
     endDate: 'Fecha de fin',

@@ -583,6 +583,69 @@ all 62 hooks across 9 domain files). Scalar page served and rendered: sidebar sh
 Edge Function operations, the rpc group, and Models with no spec-parse errors.
 `yarn test:backend` not run — no DB/API behavior changed (docs + a filesystem-only unit test).
 
+## 2026-07-16 — Student-home redesign, PR 1: backend/data layer (branch `feat/student-home-backend`)
+
+The designer's first page (student dashboard, orange brand) arrived. Implementation is split
+into 4 sequential PRs: **(1) backend/API** (this) → (2) UI kit (orange tokens, icons,
+ProgressBar/Ring/Avatar/Carousel) → (3) nav restructure + Home/Notifications/Counselor
+screens → (4) Profile/Applications screens + photo upload. Full plan:
+`~/.claude/plans/i-finally-was-given-snappy-charm.md`.
+
+**Schema (`20260716000001_student_home.sql`, `…02_avatars_storage.sql`):**
+
+- `events` + `image_url text` (admin pastes a URL — mirrors `universities.logo_url`; no
+  upload flow yet), `start_time`/`end_time time` (day schedule, independent of the multi-day
+  date range), and `location` formalized (column comment) as the **venue name** — the column
+  existed but was unpopulated since events moved to structured geography.
+- `students.photo_url` + `counselors.photo_url`, backed by a **public `avatars` bucket**
+  (`{owner_user_id}/avatar-{ts}.{ext}`; writes: own folder or admin; public read).
+  **Privacy tradeoff, decided:** avatars are display-everywhere images so a public bucket
+  keeps rendering trivial (`getPublicUrl`, no signed-URL churn); anyone with the exact URL
+  can view, mitigated by the unguessable uuid path prefix. Signed-URL hardening logged as a
+  follow-up if the client wants it.
+- **New RPC `update_student_profile`** — post-onboarding profile editing. Clone of
+  `complete_student_onboarding` **including its full validation block** (all fields stay
+  required — an edit can't blank what onboarding required) but UPDATE-only and with **no
+  lifecycle side effects**: no `status_history` append (reusing the onboarding RPC for edits
+  would regress the student's journey back to "Onboarding" on every save) and
+  `onboarding_completed_at` untouched. The validation duplication is deliberate: applied
+  migrations are immutable, so the shared block can't be factored out; the backend test pins
+  the behavior.
+
+**"Evento principal" decision:** no `is_featured` flag — the dashboard's card is "Tu próximo
+evento", so the *soonest upcoming event* (end_date ?? start_date ≥ today) is the principal
+one, computed by `selectNextUpcomingEvent` in `@wrsi/shared-utils` (unit-tested). Revisit
+with a flag only if the client asks for editorial control.
+
+**Hooks (`@wrsi/api`)** — all documented in API.md (docs-coverage green): `useMyCounselor`
+(embed via `students.counselor_id`), `useMyApplications` (first hooks over the existing
+`student_applications` table; read-only, staff manage applications),
+`useUnreadNotificationsCount` (`head:true` count for the bell badge) +
+`useMarkNotificationRead`/`useMarkAllNotificationsRead` (owner-only via RLS),
+`useUploadMyAvatar`/`useUploadCounselorPhoto` (upload + `photo_url` persist, object removed
+on row-update failure — same orphan-protection pattern as documents),
+`useUpdateMyStudentProfile` + `useMyStudentInterestSelections` (edit-form prefill).
+`queryKeys` additions: `myCounselor`, `myApplications`, `notificationsUnread` (leaf under the
+`notifications` base so one invalidation refreshes list + badge), `myInterestSelections`.
+
+**Shared-utils dashboard helpers** (all pure + unit-tested): `computeProfileCompletion`
+(6 fixed profile *sections*, matching the mockup's "X de 6"), `computeJourneyProgress`
+(percent/current/next/remaining over the ordered status catalog), `formatEventDateBadge` +
+`formatTime12h/Range` (hand-rolled es/en month/weekday maps — Hermes `Intl` locale data is
+incomplete; dates parsed as UTC to avoid off-by-one-day), `timeOfDayKey`, `waChatUrl`
+(libphonenumber → digits-only `wa.me` link, `MX` default country for numbers stored without
+`+`; null → caller hides the CTA).
+
+**Admin event form** gained venue / image URL (validated `imageUrlField`) / start-end time
+fields (new `FormTimeField` RHF wrapper in `apps/mobile/src/components/form`).
+
+**Verified:** `supabase db reset` clean · `yarn typecheck` · `yarn test` (69 unit, incl.
+docs-coverage) · `yarn test:backend` (62, incl. 19 new: applications RLS scoping,
+notifications owner-only mark-read + scoped unread count, avatars bucket policies
+(own-folder ok / foreign folder blocked / admin ok / public URL fetch 200), events new
+columns admin-write/student-read, and the RPC's no-status-append + validation + no-profile
++ unauthenticated paths). No UI change in this PR, so no device pass.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

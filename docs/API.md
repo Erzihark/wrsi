@@ -4,8 +4,8 @@ There is **no hand-written REST server**. Data access is:
 
 1. **PostgREST + Row Level Security** through the typed TanStack Query hooks in
    `packages/api/src/` — the surface this file indexes.
-2. **Two Edge Functions** (`create-entity`, `delete-entity`) and **two client-called
-   RPCs** (`complete_student_onboarding`, `is_admin`) — specified in
+2. **Two Edge Functions** (`create-entity`, `delete-entity`) and **three client-called
+   RPCs** (`complete_student_onboarding`, `update_student_profile`, `is_admin`) — specified in
    [`docs/openapi.yaml`](openapi.yaml); browse with `yarn docs:api` →
    http://localhost:3000/api-reference.html.
 
@@ -50,6 +50,41 @@ universities of interest.
 | `useToggleUniversityInterest()` | INSERT/DELETE `student_university_interest` (insert fires admin-notification trigger) | invalidates `universityInterests` | self |
 | `useMyStudentProfile()` | SELECT `students` (maybeSingle) | `myStudent` | self |
 | `useNotifications()` | SELECT `notifications`, newest first | `notifications` | self |
+| `useUnreadNotificationsCount()` | COUNT `notifications` where unread (`head: true`, serves the header bell badge) | `notificationsUnread` | self |
+| `useMarkNotificationRead()` | UPDATE one `notifications` row → read | invalidates `notifications` (prefix covers `notificationsUnread`) | self (owner update) |
+| `useMarkAllNotificationsRead()` | UPDATE all unread `notifications` → read | invalidates `notifications` (prefix covers `notificationsUnread`) | self (owner update) |
+| `useMyCounselor()` | SELECT `students` → embedded `counselors(id, names, phone, photo_url)`, null when unassigned | `myCounselor` | self (student row) / counselors readable by all authed |
+
+## Applications — `packages/api/src/applications.ts`
+
+Student-facing read of `student_applications` (the "My Apps" screen). Applications
+are created/advanced by staff — no student-side writes.
+
+| Hook | Operation | Query key / invalidates | Auth & RLS |
+|---|---|---|---|
+| `useMyApplications()` | SELECT `student_applications` + embedded status (name/color) + university (name/logo), newest first | `myApplications` | self via `can_access_student` (staff sessions would see their scope) |
+
+## Avatars (public Storage) — `packages/api/src/avatars.ts`
+
+Bucket `avatars` (public read), paths `{owner_user_id}/avatar-{ts}.{ext}`; the
+resolved public URL is persisted on `students.photo_url` / `counselors.photo_url`.
+Storage writes: own folder or admin.
+
+| Hook | Operation | Query key / invalidates | Auth & RLS |
+|---|---|---|---|
+| `useUploadMyAvatar()` | Storage upload + UPDATE `students.photo_url` (removes object if the update fails) | invalidates `myStudent` | student self (Storage: own folder; row: self-update) |
+| `useUploadCounselorPhoto()` | Storage upload into counselor's folder + UPDATE `counselors.photo_url` | invalidates `lookup('counselors')` base + `myCounselor` | admin |
+
+## Student profile (self-serve) — `packages/api/src/profile.ts`
+
+Post-onboarding profile editing. Uses the `update_student_profile` RPC — same
+validation as onboarding, but **no** lifecycle-status or `onboarding_completed_at`
+side effects.
+
+| Hook | Operation | Query key / invalidates | Auth & RLS |
+|---|---|---|---|
+| `useUpdateMyStudentProfile()` | RPC `update_student_profile` (atomic profile UPDATE + interest-table replace; server-side validation) — see [openapi.yaml](openapi.yaml) | invalidates `myStudent` + `myInterestSelections` | student (runs as caller; errors if no profile row) |
+| `useMyStudentInterestSelections(studentId)` | SELECT the 4 interest join tables → id arrays (edit-form prefill) | `myInterestSelections` | self (RLS-filtered) |
 
 ## Lookups — `packages/api/src/lookups.ts`
 
@@ -130,7 +165,10 @@ Other exports: `DocumentRow`, `UploadDocumentArgs` types.
 ## Events — `packages/api/src/events.ts`
 
 Fairs / Open Fair Day: admin CRUD + student browse/register/notes. Event rows
-embed `states_provinces(name)` + `countries(name, name_es)`.
+embed `states_provinces(name)` + `countries(name, name_es)`. Display fields for
+the student dashboard's event card: `location` (venue name), `image_url`, and
+`start_time`/`end_time` (day schedule, Postgres `time`) — all optional,
+admin-entered, and included in every event read (`'*'` selects).
 
 | Hook | Operation | Query key / invalidates | Auth & RLS |
 |---|---|---|---|
@@ -185,4 +223,5 @@ Full specs in [`docs/openapi.yaml`](openapi.yaml) (`yarn docs:api` to browse).
 | `POST /functions/v1/create-entity` | Edge Function | `useCreateEntity` | admin-only; provisions auth user + role + profile row; per-type column allow-list in `supabase/functions/_shared/entities.ts` |
 | `POST /functions/v1/delete-entity` | Edge Function | `useDeleteEntity` | admin-only; deletes auth user, row via CASCADE |
 | `POST /rest/v1/rpc/complete_student_onboarding` | RPC | `useCompleteOnboarding` | validation in `supabase/migrations/20260703000002_onboarding_validation.sql` |
+| `POST /rest/v1/rpc/update_student_profile` | RPC | `useUpdateMyStudentProfile` | same validation as onboarding; UPDATE-only, no status/onboarding side effects (`supabase/migrations/20260716000001_student_home.sql`) |
 | `POST /rest/v1/rpc/is_admin` | RPC | (Edge Function guard only) | same predicate the RLS policies use |

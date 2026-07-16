@@ -5,7 +5,7 @@ import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { requiredString } from '@wrsi/shared-utils';
+import { imageUrlField, requiredString } from '@wrsi/shared-utils';
 import { getMonthNames } from '@wrsi/i18n';
 import {
   useAddEventUniversity,
@@ -41,7 +41,13 @@ import {
   useToast,
 } from '@wrsi/ui';
 import type { AdminEventsStackParamList } from '../../navigation/types';
-import { FormDateField, FormInput, FormSearchSelect, FormSelect } from '../../components/form';
+import {
+  FormDateField,
+  FormInput,
+  FormSearchSelect,
+  FormSelect,
+  FormTimeField,
+} from '../../components/form';
 
 const EVENT_TYPES = ['fair', 'open_fair_day', 'other'];
 
@@ -85,6 +91,10 @@ const eventSchema = z
     end_date: z.string(),
     country_id: z.string().nullable(),
     state_province_id: z.string().nullable(),
+    location: z.string(),
+    image_url: imageUrlField(),
+    start_time: z.string(),
+    end_time: z.string(),
   })
   .superRefine((f, ctx) => {
     if (f.start_date && f.end_date && f.end_date < f.start_date) {
@@ -92,6 +102,13 @@ const eventSchema = z
         code: z.ZodIssueCode.custom,
         path: ['end_date'],
         message: 'validation.endBeforeStart',
+      });
+    }
+    if (f.start_time && f.end_time && f.end_time <= f.start_time) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['end_time'],
+        message: 'validation.endTimeBeforeStart',
       });
     }
   });
@@ -105,6 +122,10 @@ const EMPTY_FORM: FormState = {
   end_date: '',
   country_id: null,
   state_province_id: null,
+  location: '',
+  image_url: '',
+  start_time: '',
+  end_time: '',
 };
 
 function EventUniversitiesSection({ eventId }: { eventId: string }) {
@@ -532,6 +553,11 @@ export function EventDetailScreen() {
         end_date: loaded.end_date ?? '',
         country_id: loaded.country_id,
         state_province_id: loaded.state_province_id,
+        location: loaded.location ?? '',
+        image_url: loaded.image_url ?? '',
+        // Postgres `time` comes back as 'HH:MM:SS'; TimeField holds 'HH:MM'.
+        start_time: loaded.start_time?.slice(0, 5) ?? '',
+        end_time: loaded.end_time?.slice(0, 5) ?? '',
       });
       void form.trigger();
     }
@@ -585,6 +611,10 @@ export function EventDetailScreen() {
       end_date: f.end_date || null,
       country_id: f.country_id,
       state_province_id: f.state_province_id,
+      location: f.location.trim() || null,
+      image_url: f.image_url.trim() || null,
+      start_time: f.start_time || null,
+      end_time: f.end_time || null,
     };
   }
 
@@ -635,6 +665,13 @@ export function EventDetailScreen() {
     searchPlaceholder: t('picker.search'),
     noResultsText: t('picker.noResults'),
   };
+  const timeProps = {
+    hourPlaceholder: t('picker.hour'),
+    minutePlaceholder: t('picker.minute'),
+    periodPlaceholder: t('picker.period'),
+    searchPlaceholder: t('picker.search'),
+    noResultsText: t('picker.noResults'),
+  };
 
   return (
     <Screen scroll>
@@ -645,6 +682,17 @@ export function EventDetailScreen() {
       <FormSelect control={control} name="event_type" label={t('admin.eventType')} options={typeOptions} />
       <FormDateField control={control} name="start_date" label={t('admin.startDate')} {...dateProps} />
       <FormDateField control={control} name="end_date" label={t('admin.endDate')} {...dateProps} />
+      {/* Day schedule shown on the student dashboard's event card (optional). */}
+      <FormTimeField control={control} name="start_time" label={t('events.startTime')} {...timeProps} />
+      <FormTimeField control={control} name="end_time" label={t('events.endTime')} {...timeProps} />
+      <FormInput control={control} name="location" label={t('admin.eventVenue')} />
+      <FormInput
+        control={control}
+        name="image_url"
+        label={t('admin.eventImageUrl')}
+        autoCapitalize="none"
+        keyboardType="url"
+      />
       {/* Geography is a cascading Country -> State/Province pair (no free-text location).
           Country is set manually so it can clear the dependent state selection. */}
       <SearchSelect

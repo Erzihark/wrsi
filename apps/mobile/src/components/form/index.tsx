@@ -21,6 +21,8 @@ import {
   type SearchSelectProps,
   Select,
   type SelectProps,
+  TimeField,
+  type TimeFieldProps,
 } from '@wrsi/ui';
 import type { PhoneValue } from '@wrsi/shared-utils';
 
@@ -170,6 +172,28 @@ export function FormDateField<T extends FieldValues>({
       name={name}
       render={({ field, fieldState }) => (
         <DateField
+          {...rest}
+          value={(field.value as string | undefined) ?? ''}
+          onChange={field.onChange}
+          error={err(fieldState.error?.message)}
+        />
+      )}
+    />
+  );
+}
+
+export function FormTimeField<T extends FieldValues>({
+  control,
+  name,
+  ...rest
+}: Bound<T> & Omit<TimeFieldProps, 'value' | 'onChange' | 'error'>) {
+  const err = useErr();
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <TimeField
           {...rest}
           value={(field.value as string | undefined) ?? ''}
           onChange={field.onChange}
