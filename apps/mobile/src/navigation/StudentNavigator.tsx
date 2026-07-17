@@ -1,3 +1,4 @@
+import { Pressable } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +8,7 @@ import {
   ChatIcon,
   HomeIcon,
   PersonIcon,
+  Text,
   useTheme,
 } from '@wrsi/ui';
 import type {
@@ -27,7 +29,8 @@ import { NotificationsScreen } from '../screens/student/NotificationsScreen';
 import { ApplicationsScreen } from '../screens/student/ApplicationsScreen';
 import { ComingSoonScreen } from '../screens/student/ComingSoonScreen';
 import { CounselorScreen } from '../screens/student/CounselorScreen';
-import { ProfileScreen } from '../screens/student/ProfileScreen';
+import { ProfileScreen } from '../screens/student/profile/ProfileScreen';
+import { ProfileEditScreen } from '../screens/student/profile/ProfileEditScreen';
 
 /**
  * Inicio. Holds the dashboard plus the destinations it links to that aren't
@@ -119,12 +122,36 @@ function EventsStackScreen() {
 const ProfileStack = createNativeStackNavigator<StudentProfileStackParamList>();
 
 function ProfileStackScreen() {
+  const { t } = useTranslation();
+  const theme = useTheme();
   return (
     <ProfileStack.Navigator>
       <ProfileStack.Screen
         name="ProfileHome"
         component={ProfileScreen}
-        options={{ headerShown: false }}
+        // This stack owns the Profile headers (the tab's is hidden), so the
+        // screen can carry the designed "Editar" action, which opens the form at
+        // the top — individual rows deep-link to their own field instead.
+        options={({ navigation }) => ({
+          title: t('profile.title'),
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              testID="student-profile-edit"
+              hitSlop={8}
+              onPress={() => navigation.navigate('ProfileEdit')}
+            >
+              <Text style={{ color: theme.color.primaryDark, fontWeight: theme.fontWeight.semibold }}>
+                {t('profile.edit')}
+              </Text>
+            </Pressable>
+          ),
+        })}
+      />
+      <ProfileStack.Screen
+        name="ProfileEdit"
+        component={ProfileEditScreen}
+        options={{ title: t('profile.editTitle') }}
       />
     </ProfileStack.Navigator>
   );
@@ -194,6 +221,8 @@ export function StudentNavigator() {
         component={ProfileStackScreen}
         options={{
           title: t('student.profile'),
+          // The Profile stack renders its own headers (and consumes the inset).
+          headerShown: false,
           tabBarButtonTestID: 'student-tab-profile',
           tabBarIcon: ({ color }) => <PersonIcon size={24} color={color} />,
         }}

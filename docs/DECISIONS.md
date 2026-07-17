@@ -646,6 +646,57 @@ notifications owner-only mark-read + scoped unread count, avatars bucket policie
 columns admin-write/student-read, and the RPC's no-status-append + validation + no-profile
 + unauthenticated paths). No UI change in this PR, so no device pass.
 
+## 2026-07-17 — Student profile, PR 5: the "Mi información" screens (branch `feat/student-profile-screens`)
+
+Completes the second design on top of PR 4's data layer.
+
+**One edit form, deep-linked — not per-field editors.** The design shows both a header "Editar"
+and a chevron per row, which reads like per-field editing. Product decision (2026-07-17): a
+single form. "Editar" opens it at the top; tapping a row opens the *same* form scrolled to that
+field and, when the control is a text input, focused on it — via a `focus` route param typed as
+`ProfileFieldKey`. That union (`apps/mobile/src/features/profile/fields.ts`) is shared by both
+screens, so a row can't point at a field the form doesn't render. The form itself is
+**deliberately bare-bones**: there's no design for it yet, so it's one plain scrolling form
+rather than a styled layout.
+
+**Focus mechanics.** Each field is wrapped in a `Field` that records its Y offset via
+`onLayout`; the effect scrolls there, then focuses. Two things this got wrong first time and
+are worth not re-breaking:
+- `onLayout` fires **asynchronously after commit**, so reading `positions` synchronously in the
+  effect finds an empty map and the scroll silently no-ops. The measurement now happens inside a
+  short timeout.
+- `Field` must live at **module scope**. Declared inside the screen it'd be a new component type
+  every render, remounting every input and dropping the keyboard on each keystroke.
+
+**Two rows are intentionally read-only**, with no chevron: the **email** (it's the auth
+identity — changing it is a guarded operation, not a profile edit) and the **high school** (the
+`students_guard_restricted_columns` trigger rejects a student changing it; it's staff-owned).
+
+**The form renders budget / currency / financial plan even though the design's profile view
+doesn't show them** — `update_student_profile` still hard-requires them, so they'd otherwise be
+invisibly round-tripped. Editable beats silently preserved.
+
+**References save immediately**, outside the form's submit: they're 0..N rows in their own
+table, so a form field wouldn't carry them. Mixed save semantics on one screen is a known
+wrinkle to revisit when the design lands.
+
+**`@wrsi/ui` `Input` now forwards refs** (`forwardRef`) — the focus feature needs a handle on
+the underlying `TextInput`. `pickAvatarFile` (`features/profile/pickAvatar.ts`) is shared by the
+student's own photo and the admin's counselor photo; SDK 56's picker takes
+`mediaTypes: ['images']` (the array form — `MediaTypeOptions` is deprecated), and the base64 →
+ArrayBuffer path mirrors `DocumentsScreen`'s Storage upload.
+
+**Fixes a typecheck break PR 4 merged.** `profile-rpc.test.ts` typed the RPC override bag as
+`Record<string, unknown>`, which isn't assignable to `Json`. It slipped through because PR 4 ran
+`typecheck` *before* those tests were written and only `test:backend` (which doesn't typecheck)
+after. CI gates typecheck, so master was red. Lesson: run `typecheck` **after** the last edit,
+not mid-way.
+
+**Verified:** typecheck + 75 unit green. Backend suite not re-run (Docker down); PR 5 changes no
+backend behavior. **Not exercised on a device** — and this one genuinely needs it: it's the
+first change with a native dependency (`expo-image-picker`, requiring a dev-client rebuild), and
+the scroll/focus timing is the kind of thing only a real device settles.
+
 ## 2026-07-16 — Student profile, PR 4: schema + hooks for "Mi información" (branch `feat/student-profile-backend`)
 
 The client's second design (the student profile screen) surfaced fields the schema didn't

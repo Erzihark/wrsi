@@ -22,7 +22,29 @@ side effects); new hooks (`useMyCounselor`, `useMyApplications`,
 `useUploadCounselorPhoto`, `useUpdateMyStudentProfile`, `useMyStudentInterestSelections`);
 dashboard display helpers in `@wrsi/shared-utils`.
 
-**In review:** `feat/student-profile-backend` — **PR 4 of 5** (data layer for the designed
+**In review:** `feat/student-profile-screens` — **PR 5 of 5** (the designed "Mi información"
+screen). Full `ProfileScreen`: identity card (avatar + camera → `expo-image-picker` upload,
+"Perfil activo", completion ring), a nudge banner while anything's outstanding, and the two
+designed row groups (Información personal / académica) with Completado/Pendiente per row. Every
+row deep-links into **one** `ProfileEditScreen` (product decision: a single form, not per-field
+editors) scrolled to — and, for text inputs, focused on — the tapped field via a `focus` route
+param; the header "Editar" opens the same form at the top. The form is **deliberately
+bare-bones pending a design**. References save immediately (own table); the rest goes through
+`update_student_profile`. Also: admin counselor-photo upload, and `@wrsi/ui`'s `Input` now
+forwards refs.
+
+⚠️ **PR 5 also fixes a typecheck break that PR 4 merged to master** (`profile-rpc.test.ts`
+typed RPC overrides as `Record<string, unknown>`, which isn't assignable to `Json`). CI gates
+typecheck, so master is red until this lands.
+
+**⚠️ Needs a dev-client rebuild** — `expo-image-picker` is a native dependency:
+`yarn workspace @wrsi/mobile android` (or `ios`).
+
+Verified: typecheck + 75 unit green. Backend suite **not re-run** (Docker was down); PR 5
+changes no backend behavior — its only backend-file edit is the compile-time type fix above.
+**Not exercised on a device.**
+
+**Merged:** `feat/student-profile-backend` — **PR 4 of 5** (data layer for the designed
 "Mi información" profile screen). New on `students`: `parent_or_guardian_phone`,
 `consent_info_use` (+ `consent_info_use_at`), `personal_notes`; new `student_references` table
 ("Personas extra") with the standard student-keyed RLS. **No English test columns** — the
