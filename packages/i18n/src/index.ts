@@ -12,6 +12,22 @@ export const resources = {
 
 export type AppLanguage = keyof typeof resources;
 
+/**
+ * Makes `t('some.key')` a compile-time error when the key doesn't exist in
+ * `en`/`es` (both locales share one shape — see the `docs-coverage`-style
+ * assumption enforced by `locales.test.ts`). Without this, a typo'd key like
+ * `onboarding.intendedLevels` silently renders the raw key string on-device
+ * instead of failing `yarn typecheck`.
+ */
+declare module 'i18next' {
+  interface CustomTypeOptions {
+    defaultNS: 'translation';
+    resources: {
+      translation: typeof en;
+    };
+  }
+}
+
 /** Initialize i18next once. `lng` typically comes from expo-localization. */
 export function initI18n(lng: string = 'es') {
   if (!i18n.isInitialized) {

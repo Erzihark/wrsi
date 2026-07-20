@@ -292,7 +292,7 @@ export const en = {
     addReference: "Add reference",
     referenceName: "Full name",
     referenceRelationship: "Relationship",
-    referenceContact: "Email or phone",
+    referenceContact: "Phone",
     sections: {
       personal: "Personal information",
       academic: "Academic information",

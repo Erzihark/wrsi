@@ -29,10 +29,20 @@ export function Carousel({ children, showDots = true, style }: CarouselProps) {
   const t = useTheme();
   const [width, setWidth] = useState(0);
   const [index, setIndex] = useState(0);
+  // Pages have different content (e.g. the counselor card's WhatsApp CTA row),
+  // so left to their own height they'd render unevenly. Measure each page's
+  // natural height and apply the tallest to all of them.
+  const [heights, setHeights] = useState<number[]>([]);
   const pages = Children.toArray(children);
+  const maxHeight = heights.length ? Math.max(...heights) : undefined;
 
   function onLayout(e: LayoutChangeEvent) {
     setWidth(e.nativeEvent.layout.width);
+  }
+
+  function onPageLayout(i: number, e: LayoutChangeEvent) {
+    const height = e.nativeEvent.layout.height;
+    setHeights((prev) => (prev[i] === height ? prev : Object.assign([...prev], { [i]: height })));
   }
 
   function onMomentumScrollEnd(e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -52,7 +62,7 @@ export function Carousel({ children, showDots = true, style }: CarouselProps) {
       >
         {width > 0
           ? pages.map((page, i) => (
-              <View key={i} style={{ width }}>
+              <View key={i} style={{ width, minHeight: maxHeight }} onLayout={(e) => onPageLayout(i, e)}>
                 {page}
               </View>
             ))

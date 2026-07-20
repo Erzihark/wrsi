@@ -190,7 +190,12 @@ export function ProfileEditScreen() {
     );
   }
 
-  const errText = (message?: string) => (message ? t(message) : undefined);
+  // Validation messages are always one of our own `validation.*` keys (see
+  // features/profile/schema.ts), but react-hook-form's FieldError.message
+  // widens that to `string` — the cast below opts this call out of the
+  // strict-key typing intentionally, since the key isn't a literal here.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above
+  const errText = (message?: string) => (message ? (t(message as any) as string) : undefined);
   const picker = {
     placeholder: t('picker.select'),
     searchPlaceholder: t('picker.search'),
@@ -424,7 +429,7 @@ export function ProfileEditScreen() {
           name="intended_level_ids"
           render={({ field, fieldState }) => (
             <MultiSelect
-              label={t('onboarding.intendedLevels')}
+              label={t('onboarding.intendedLevel')}
               options={opt(levels.data ?? [])}
               values={field.value}
               onChange={field.onChange}
@@ -442,7 +447,7 @@ export function ProfileEditScreen() {
             name="field_ids"
             render={({ field, fieldState }) => (
               <SearchMultiSelect
-                label={t('onboarding.fields')}
+                label={t('onboarding.fieldsInterest')}
                 options={opt(fields.data ?? [])}
                 values={field.value}
                 onChange={field.onChange}
@@ -457,7 +462,7 @@ export function ProfileEditScreen() {
             name="country_interest_ids"
             render={({ field, fieldState }) => (
               <SearchMultiSelect
-                label={t('onboarding.countriesOfInterest')}
+                label={t('onboarding.countriesInterest')}
                 options={countryOptions}
                 values={field.value}
                 onChange={field.onChange}
@@ -524,7 +529,7 @@ export function ProfileEditScreen() {
             name="highest_education_level_id"
             render={({ field, fieldState }) => (
               <Select
-                label={t('onboarding.highestLevel')}
+                label={t('onboarding.achievedLevel')}
                 options={opt(levels.data ?? [])}
                 value={field.value}
                 onChange={field.onChange}
@@ -559,7 +564,7 @@ export function ProfileEditScreen() {
             name="cefr_level"
             render={({ field, fieldState }) => (
               <Select
-                label={t('onboarding.cefr')}
+                label={t('onboarding.englishLevel')}
                 options={CEFR_OPTIONS}
                 value={field.value}
                 onChange={field.onChange}
@@ -667,7 +672,14 @@ export function ProfileEditScreen() {
 
       {/* Saves immediately — its own table, not part of the form submit. */}
       <Field name="references" positions={positions}>
-        <ReferencesEditor studentId={student.id} />
+        <ReferencesEditor
+          studentId={student.id}
+          countries={countries.data ?? []}
+          spanish={isEs}
+          countryPickerTitle={t('onboarding.phoneCountry')}
+          searchPlaceholder={picker.searchPlaceholder}
+          noResultsText={picker.noResultsText}
+        />
       </Field>
 
       <Button

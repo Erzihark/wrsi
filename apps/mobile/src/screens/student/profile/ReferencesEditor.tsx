@@ -2,14 +2,30 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDeleteReference, useMyReferences, useSaveReference } from '@wrsi/api';
-import { Button, Card, CloseIcon, Input, Text, useTheme, useToast } from '@wrsi/ui';
+import { Button, Card, CloseIcon, Input, PhoneField, Text, useTheme, useToast } from '@wrsi/ui';
+import { emptyPhone, isPhoneEmpty, VALIDATION_MSG } from '@wrsi/shared-utils';
+import type { PhoneCountry } from '@wrsi/ui';
 
 /**
  * "Personas extra (Referencias / Recomendaciones)" — a 0..N list living in its
  * own table, so it saves immediately rather than participating in the profile
  * form's submit. Bare-bones pending a design.
  */
-export function ReferencesEditor({ studentId }: { studentId: string }) {
+export function ReferencesEditor({
+  studentId,
+  countries,
+  spanish,
+  countryPickerTitle,
+  searchPlaceholder,
+  noResultsText,
+}: {
+  studentId: string;
+  countries: PhoneCountry[];
+  spanish?: boolean;
+  countryPickerTitle?: string;
+  searchPlaceholder?: string;
+  noResultsText?: string;
+}) {
   const { t } = useTranslation();
   const theme = useTheme();
   const toast = useToast();
@@ -19,22 +35,23 @@ export function ReferencesEditor({ studentId }: { studentId: string }) {
 
   const [fullName, setFullName] = useState('');
   const [relationship, setRelationship] = useState('');
-  const [contact, setContact] = useState('');
+  const [contact, setContact] = useState(emptyPhone());
+
+  const contactValid = isPhoneEmpty(contact) || contact.isValid;
 
   async function add() {
-    if (!fullName.trim()) return;
+    if (!fullName.trim() || !contactValid) return;
     try {
       await save.mutateAsync({
         studentId,
         fullName,
         relationship,
-        // One contact box for now: route an "@" to email, anything else to phone.
-        email: contact.includes('@') ? contact : null,
-        phone: contact.includes('@') ? null : contact,
+        email: null,
+        phone: contact.e164,
       });
       setFullName('');
       setRelationship('');
-      setContact('');
+      setContact(emptyPhone());
     } catch (e) {
       toast.show({ type: 'error', message: (e as Error).message });
     }
@@ -80,18 +97,24 @@ export function ReferencesEditor({ studentId }: { studentId: string }) {
           value={relationship}
           onChangeText={setRelationship}
         />
-        <Input
+        <PhoneField
           label={t('profile.referenceContact')}
+          countries={countries}
           value={contact}
-          onChangeText={setContact}
-          autoCapitalize="none"
+          onChange={setContact}
+          spanish={spanish}
+          placeholder={t('profile.referenceContact')}
+          countryPickerTitle={countryPickerTitle}
+          searchPlaceholder={searchPlaceholder}
+          noResultsText={noResultsText}
+          error={contactValid ? undefined : t(VALIDATION_MSG.phone)}
         />
         <Button
           testID="reference-add"
           variant="secondary"
           title={t('profile.addReference')}
           loading={save.isPending}
-          disabled={!fullName.trim()}
+          disabled={!fullName.trim() || !contactValid}
           onPress={() => void add()}
         />
       </Card>

@@ -107,8 +107,12 @@ export function OnboardingScreen() {
     );
   }
 
-  // Translate zod messages (they are i18n keys).
-  const errText = (message?: string) => (message ? t(message) : undefined);
+  // Validation messages are always one of our own `validation.*` keys (see
+  // features/onboarding/schema.ts), but react-hook-form's FieldError.message
+  // widens that to `string` — the cast below opts this call out of the
+  // strict-key typing intentionally, since the key isn't a literal here.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above
+  const errText = (message?: string) => (message ? (t(message as any) as string) : undefined);
   const picker = {
     placeholder: t('picker.select'),
     searchPlaceholder: t('picker.search'),

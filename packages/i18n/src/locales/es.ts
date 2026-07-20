@@ -292,7 +292,7 @@ export const es: TranslationResource = {
     addReference: 'Agregar referencia',
     referenceName: 'Nombre completo',
     referenceRelationship: 'Parentesco',
-    referenceContact: 'Correo o teléfono',
+    referenceContact: 'Teléfono',
     sections: {
       personal: 'Información personal',
       academic: 'Información académica',

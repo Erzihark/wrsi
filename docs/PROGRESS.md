@@ -5,7 +5,19 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-16
+**Last updated:** 2026-07-20
+**Fixed on `feat/student-profile-screens`:** `ProfileEditScreen` had 5 typo'd i18n keys
+(`onboarding.intendedLevels`, `onboarding.fields`, etc.) that rendered raw key strings on-device
+instead of localized text — `t()` accepted any string, so `yarn typecheck` never caught it.
+Hardened against recurrence: `packages/i18n/src/index.ts` now augments i18next's
+`CustomTypeOptions` so `t('bad.key')` is a **compile-time error** (with a "did you mean" hint);
+`packages/i18n/src/locales/locales.test.ts` adds a unit test that (1) asserts `en`/`es` expose
+identical key sets and (2) scans every `t('...')` call in `apps/mobile/src` and fails if any
+literal key doesn't resolve. The few legitimate dynamic-key call sites (`useErr()` in
+`components/form/index.tsx`, and duplicate local copies in `OnboardingScreen`/
+`ProfileEditScreen`, plus `EventDetailScreen`'s `validateSlot`) were updated to keep working
+under the stricter typing — see the inline comments there for why the cast/re-typing is safe.
+
 **Current phase:** Phase 1 (MVP) — foundation, onboarding/dashboard, admin CRUD (students/high
 schools/universities/counselors), documents upload, student university directory, the
 counselor's read-only CRM view, and event management (registration/workshops/1:1s/notes +

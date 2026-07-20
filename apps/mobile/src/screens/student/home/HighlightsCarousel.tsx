@@ -1,10 +1,10 @@
-import { Linking, Pressable, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTranslation } from 'react-i18next';
-import { useMyCounselor, useMyProfileCompletion } from '@wrsi/api';
-import { waChatUrl } from '@wrsi/shared-utils';
+import { Linking, Pressable, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
+import { useMyCounselor, useMyProfileCompletion } from "@wrsi/api";
+import { waChatUrl } from "@wrsi/shared-utils";
 import {
   Avatar,
   Card,
@@ -15,8 +15,11 @@ import {
   Text,
   WhatsAppIcon,
   useTheme,
-} from '@wrsi/ui';
-import type { StudentHomeStackParamList, StudentTabParamList } from '../../../navigation/types';
+} from "@wrsi/ui";
+import type {
+  StudentHomeStackParamList,
+  StudentTabParamList,
+} from "../../../navigation/types";
 
 /** Only what the card's avatar needs — completion comes from its own hook. */
 interface StudentSummary {
@@ -52,7 +55,8 @@ function ProfileCompletionCard({
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const nav = useNavigation<NativeStackNavigationProp<StudentHomeStackParamList>>();
+  const nav =
+    useNavigation<NativeStackNavigationProp<StudentHomeStackParamList>>();
   const completion = useMyProfileCompletion();
 
   return (
@@ -62,47 +66,67 @@ function ProfileCompletionCard({
       onPress={() =>
         nav
           .getParent<BottomTabNavigationProp<StudentTabParamList>>()
-          ?.navigate('Profile', { screen: 'ProfileHome' })
+          ?.navigate("Profile", { screen: "ProfileHome" })
       }
-      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+      style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.85 : 1 })}
     >
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}>
-        <Avatar
-          photoUrl={student?.photo_url}
-          name={student ? `${student.first_name} ${student.last_name}` : null}
-          size={52}
-          badge={
-            <View
+      <Card style={{ flex: 1, gap: theme.spacing.md }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: theme.spacing.md,
+          }}
+        >
+          <Avatar
+            photoUrl={student?.photo_url}
+            name={student ? `${student.first_name} ${student.last_name}` : null}
+            size={52}
+            style={{ transform: [{ scale: 1.2 }] }}
+            badge={
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: theme.radius.pill,
+                  backgroundColor: theme.color.text,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 2,
+                  borderColor: theme.color.surface,
+                }}
+              >
+                <CameraIcon size={11} color={theme.color.primaryText} />
+              </View>
+            }
+          />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="label">{t("home.profileCard.title")}</Text>
+            <Text variant="muted" style={{ color: theme.color.primaryDark }}>
+              {t("home.profileCard.completed", {
+                completed: completion.completed,
+                total: completion.total,
+              })}
+            </Text>
+          </View>
+          <ChevronRightIcon size={18} color={theme.color.textMuted} />
+        </View>
+        <View style={{ alignItems: "center" }}>
+          <ProgressRing
+            value={completion.percent / 100}
+            size={64}
+            strokeWidth={5}
+          >
+            <Text
               style={{
-                width: 22,
-                height: 22,
-                borderRadius: theme.radius.pill,
-                backgroundColor: theme.color.text,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 2,
-                borderColor: theme.color.surface,
+                fontSize: theme.fontSize.xs,
+                fontWeight: theme.fontWeight.bold,
               }}
             >
-              <CameraIcon size={11} color={theme.color.primaryText} />
-            </View>
-          }
-        />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text variant="label">{t('home.profileCard.title')}</Text>
-          <Text variant="muted" style={{ color: theme.color.primaryDark }}>
-            {t('home.profileCard.completed', {
-              completed: completion.completed,
-              total: completion.total,
-            })}
-          </Text>
+              {completion.percent}%
+            </Text>
+          </ProgressRing>
         </View>
-        <ProgressRing value={completion.percent / 100} size={52} strokeWidth={5}>
-          <Text style={{ fontSize: theme.fontSize.xs, fontWeight: theme.fontWeight.bold }}>
-            {completion.percent}%
-          </Text>
-        </ProgressRing>
-        <ChevronRightIcon size={18} color={theme.color.textMuted} />
       </Card>
     </Pressable>
   );
@@ -118,7 +142,8 @@ interface CounselorSummary {
 function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const nav = useNavigation<NativeStackNavigationProp<StudentHomeStackParamList>>();
+  const nav =
+    useNavigation<NativeStackNavigationProp<StudentHomeStackParamList>>();
   // Free-text phone: only offer the CTA when it parses to a valid number.
   const chatUrl = waChatUrl(counselor.phone);
 
@@ -127,16 +152,25 @@ function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
       testID="student-counselor-card"
       accessibilityRole="button"
       onPress={() =>
-        nav.getParent<BottomTabNavigationProp<StudentTabParamList>>()?.navigate('Counselor')
+        nav
+          .getParent<BottomTabNavigationProp<StudentTabParamList>>()
+          ?.navigate("Counselor")
       }
-      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+      style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.85 : 1 })}
     >
-      <Card style={{ gap: theme.spacing.sm }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}>
+      <Card style={{ flex: 1, gap: theme.spacing.sm }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: theme.spacing.md,
+          }}
+        >
           <Avatar
             photoUrl={counselor.photo_url}
             name={`${counselor.first_name} ${counselor.last_name}`}
             size={52}
+            style={{ transform: [{ scale: 1.2 }] }}
             badge={
               <View
                 style={{
@@ -144,8 +178,8 @@ function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
                   height: 22,
                   borderRadius: theme.radius.pill,
                   backgroundColor: theme.color.success,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  alignItems: "center",
+                  justifyContent: "center",
                   borderWidth: 2,
                   borderColor: theme.color.surface,
                 }}
@@ -155,11 +189,13 @@ function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
             }
           />
           <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="label">{t('home.counselorCard.title')}</Text>
-            <Text style={{ fontWeight: theme.fontWeight.semibold }}>{counselor.first_name}</Text>
+            <Text variant="label">{t("home.counselorCard.title")}</Text>
+            <Text style={{ fontWeight: theme.fontWeight.semibold }}>
+              {counselor.first_name}
+            </Text>
             {chatUrl ? (
               <Text variant="muted" style={{ color: theme.color.success }}>
-                {t('home.counselorCard.online')}
+                {t("home.counselorCard.online")}
               </Text>
             ) : null}
           </View>
@@ -172,9 +208,9 @@ function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
             accessibilityRole="button"
             onPress={() => void Linking.openURL(chatUrl)}
             style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
               gap: theme.spacing.xs,
               backgroundColor: theme.color.primarySoft,
               borderRadius: theme.radius.md,
@@ -183,8 +219,13 @@ function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
             })}
           >
             <WhatsAppIcon size={16} color={theme.color.primaryDark} />
-            <Text style={{ color: theme.color.primaryDark, fontWeight: theme.fontWeight.semibold }}>
-              {t('home.counselorCard.openChat')}
+            <Text
+              style={{
+                color: theme.color.primaryDark,
+                fontWeight: theme.fontWeight.semibold,
+              }}
+            >
+              {t("home.counselorCard.openChat")}
             </Text>
           </Pressable>
         ) : null}

@@ -5,6 +5,7 @@ import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { imageUrlField, requiredString } from '@wrsi/shared-utils';
 import { getMonthNames } from '@wrsi/i18n';
 import {
@@ -64,7 +65,7 @@ type SlotFormErrors = Partial<Record<'title' | 'date' | 'startTime' | 'endTime',
  * malformed input is unrepresentable by construction.
  */
 function validateSlot(
-  t: (key: string, opts?: Record<string, unknown>) => string,
+  t: TFunction,
   date: string,
   start: string,
   end: string,
