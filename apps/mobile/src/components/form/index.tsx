@@ -39,10 +39,17 @@ interface Bound<T extends FieldValues> {
   name: FieldPath<T>;
 }
 
-/** Translate a zod message (which is an i18n key) for display. */
+/**
+ * Translate a zod message (which is an i18n key) for display. The key always
+ * comes from our own `validation.*` set (see `docs/VALIDATION.md`), but
+ * react-hook-form's `FieldError.message` widens that to `string` — the cast
+ * below opts this call out of the strict-key typing intentionally, since the
+ * key isn't a literal here.
+ */
 function useErr() {
   const { t } = useTranslation();
-  return (message?: string) => (message ? t(message) : undefined);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above
+  return (message?: string) => (message ? (t(message as any) as string) : undefined);
 }
 
 export function FormInput<T extends FieldValues>({

@@ -19,6 +19,7 @@ import {
 import type { Control } from 'react-hook-form';
 import type { CounselorsStackParamList } from '../../navigation/types';
 import { FormInput, FormPhoneField } from '../../components/form';
+import { CounselorPhotoField } from './CounselorPhotoField';
 import { EntityDetailScreen } from './EntityDetailScreen';
 
 const schema = z.object({
@@ -64,6 +65,17 @@ export function CounselorDetailScreen() {
   function renderFields(control: Control<FormState>) {
     return (
       <>
+        {/* Uploads immediately (Storage + its own column), so it's outside the
+            form's submit. Only on edit — a counselor has no user folder to
+            upload into until the create Edge Function has provisioned them. */}
+        {mode === 'edit' && record.data?.user_id ? (
+          <CounselorPhotoField
+            counselorId={record.data.id}
+            counselorUserId={record.data.user_id}
+            photoUrl={record.data.photo_url}
+            name={`${record.data.first_name} ${record.data.last_name}`}
+          />
+        ) : null}
         <FormInput control={control} name="first_name" label={t('onboarding.firstName')} />
         <FormInput control={control} name="last_name" label={t('onboarding.lastName')} />
         <FormPhoneField

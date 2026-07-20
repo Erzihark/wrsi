@@ -100,8 +100,12 @@ afterAll(async () => {
     .eq('id', IDS.students.s1);
 });
 
-/** Call the RPC as student1 with a valid base payload plus the given overrides. */
-async function editAsStudent1(overrides: Record<string, unknown>) {
+/**
+ * Call the RPC as student1 with a valid base payload plus the given overrides.
+ * Values are constrained to the JSON scalars `p_profile` accepts (`Json`), so a
+ * bad override is a compile error rather than a runtime PostgREST rejection.
+ */
+async function editAsStudent1(overrides: Record<string, string | number | boolean | null>) {
   const c = await signInAs(EMAILS.student1);
   return c.rpc('update_student_profile', {
     p_profile: { ...profileFrom(original), ...overrides },

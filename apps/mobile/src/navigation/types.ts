@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { ProfileFieldKey } from '../features/profile/fields';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -33,6 +34,12 @@ export type StudentHomeStackParamList = {
 
 export type StudentProfileStackParamList = {
   ProfileHome: undefined;
+  /**
+   * `focus` names the field the edit form should scroll to (and focus, when it's
+   * a text input) — set when the student taps a specific profile row rather than
+   * the general "Editar" button.
+   */
+  ProfileEdit: { focus?: ProfileFieldKey } | undefined;
 };
 
 // Student-facing university browsing (distinct from the admin UniversitiesStack).

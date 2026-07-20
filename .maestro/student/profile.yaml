@@ -1,0 +1,71 @@
+# The profile screen lists the student's info, and both entry points reach the
+# edit form: the "Editar" header action, and tapping an individual row (which
+# additionally focuses that field — not assertable here, so the flow just proves
+# the row lands on the form).
+#
+# The photo picker opens the OS gallery, which Maestro can't drive; the flow only
+# asserts the control is present.
+appId: com.wxstudy.wrsi
+tags:
+  - student
+  - profile
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "student1@wrsi.dev"
+      PASSWORD: "password123"
+
+- tapOn:
+    id: "student-tab-profile"
+- assertVisible:
+    id: "student-profile-screen"
+
+# --- The designed identity card + rows ---
+- assertVisible:
+    id: "student-profile-photo"
+- assertVisible:
+    id: "student-profile-row-name"
+- assertVisible:
+    id: "student-profile-row-guardian"
+- assertVisible:
+    id: "student-profile-row-consent"
+- assertVisible:
+    id: "student-profile-row-english"
+- assertVisible:
+    id: "student-profile-row-references"
+
+# --- Row -> edit form (deep-links to that field) ---
+- tapOn:
+    id: "student-profile-row-notes"
+- assertVisible:
+    id: "student-profile-edit-screen"
+- assertVisible:
+    id: "profile-edit-notes"
+- back
+
+# --- "Editar" header action -> the same form, at the top ---
+- tapOn:
+    id: "student-profile-edit"
+- assertVisible:
+    id: "student-profile-edit-screen"
+- assertVisible:
+    id: "profile-edit-first-name"
+
+# --- References save on their own (separate table, not the form submit) ---
+- tapOn:
+    id: "reference-name"
+- inputText: "Maria Garza"
+- tapOn:
+    id: "reference-add"
+- assertVisible: "Maria Garza"
+
+- back
+- assertVisible:
+    id: "student-profile-screen"
+
+# --- Log out still lives here now that students have no AppHeader ---
+- assertVisible:
+    id: "student-logout"

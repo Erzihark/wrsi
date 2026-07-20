@@ -52,6 +52,7 @@ export type { ConfirmContextValue, ConfirmOptions } from './components/ConfirmDi
 export {
   CheckIcon,
   CloseIcon,
+  EditIcon,
   InfoIcon,
   HeartIcon,
   HomeIcon,
