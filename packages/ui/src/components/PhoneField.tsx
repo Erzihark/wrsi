@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import {
+  countryDisplayName,
+  countrySearchKeywords,
   formatPhoneAsYouType,
   makePhoneValue,
+  priorityCountryIds,
   type PhoneValue,
 } from '@wrsi/shared-utils';
 import { useTheme } from '../theme/ThemeProvider';
@@ -31,6 +34,12 @@ export interface PhoneFieldProps {
   countryPickerTitle?: string;
   searchPlaceholder?: string;
   noResultsText?: string;
+  /** Heading over the pinned dial codes (Mexico, US) in the country picker. */
+  pinnedLabel?: string;
+  /** Heading over the remaining countries in the picker. */
+  allLabel?: string;
+  /** Hook for E2E flows — set on the button that opens the dial-code picker. */
+  countryTestID?: string;
 }
 
 /**
@@ -39,6 +48,10 @@ export interface PhoneFieldProps {
  * and validated against that country's real numbering rules
  * (`libphonenumber-js`). Emits a {@link PhoneValue} carrying the composed E.164
  * string and a `isValid` flag the form's schema gates on.
+ *
+ * The country picker pins the high-traffic dial codes (Mexico, US — see
+ * `PRIORITY_COUNTRY_ISOS`) above the alphabetical list, and matches searches on
+ * the ISO code and dial code too, so "+52", "52" and "MX" all find Mexico.
  */
 export function PhoneField({
   label,
@@ -51,6 +64,9 @@ export function PhoneField({
   countryPickerTitle,
   searchPlaceholder,
   noResultsText,
+  pinnedLabel,
+  allLabel,
+  countryTestID,
 }: PhoneFieldProps) {
   const t = useTheme();
   const [open, setOpen] = useState(false);
@@ -68,17 +84,24 @@ export function PhoneField({
     return m;
   }, [countries]);
 
+  // Only countries with a dial code can be an extension; sorted by the label the
+  // user actually reads (which follows the app language).
+  const dialCountries = useMemo(() => countries.filter((c) => c.calling_code), [countries]);
+
   const dialOptions = useMemo(
     () =>
-      countries
-        .filter((c) => c.calling_code)
+      dialCountries
         .map((c) => ({
           value: c.id,
-          label: `${(spanish ? c.name_es : null) ?? c.name} (${c.calling_code})`,
+          label: `${countryDisplayName(c, spanish)} (${c.calling_code})`,
+          keywords: countrySearchKeywords(c),
         }))
         .sort((a, b) => a.label.localeCompare(b.label)),
-    [countries, spanish],
+    [dialCountries, spanish],
   );
+
+  // Quick selection: the countries that account for most numbers entered here.
+  const pinnedIds = useMemo(() => priorityCountryIds(dialCountries), [dialCountries]);
 
   function pickCountry(id: string) {
     const next = countries.find((c) => c.id === id) ?? null;
@@ -96,6 +119,7 @@ export function PhoneField({
       {label ? <Text variant="label">{label}</Text> : null}
       <View style={{ flexDirection: 'row', gap: t.spacing.sm }}>
         <Pressable
+          testID={countryTestID}
           accessibilityRole="button"
           onPress={() => setOpen(true)}
           style={({ pressed }) => ({
@@ -151,6 +175,9 @@ export function PhoneField({
         onClose={() => setOpen(false)}
         searchPlaceholder={searchPlaceholder}
         noResultsText={noResultsText}
+        pinnedValues={pinnedIds}
+        pinnedLabel={pinnedLabel}
+        allLabel={allLabel}
         renderLeading={(id) => {
           const flagIso = isoById.get(id);
           return flagIso ? <CountryFlag iso={flagIso} size={16} /> : null;

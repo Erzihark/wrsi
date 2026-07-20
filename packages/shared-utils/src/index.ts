@@ -6,6 +6,8 @@ export * from './journey';
 export * from './eventsDisplay';
 export * from './greeting';
 export * from './whatsapp';
+export * from './countries';
+export * from './pickerOptions';
 
 /**
  * Normalize a name/email for duplicate detection: trim, lowercase, strip accents.

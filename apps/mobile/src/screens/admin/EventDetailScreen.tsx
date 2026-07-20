@@ -49,6 +49,7 @@ import {
   FormSelect,
   FormTimeField,
 } from '../../components/form';
+import { CountrySelect } from '../../components/CountrySelect';
 
 const EVENT_TYPES = ['fair', 'open_fair_day', 'other'];
 
@@ -522,7 +523,6 @@ export function EventDetailScreen() {
   const confirm = useConfirm();
   const { id } = useRoute<RouteProp<AdminEventsStackParamList, 'Detail'>>().params;
   const mode = id ? 'edit' : 'create';
-  const spanish = i18n.language.startsWith('es');
   const nowY = new Date().getFullYear();
 
   const record = useEvent(id);
@@ -567,14 +567,6 @@ export function EventDetailScreen() {
   const countryId = form.watch('country_id');
   const startDate = form.watch('start_date');
   const endDate = form.watch('end_date');
-
-  const countryOptions = useMemo(
-    () =>
-      (countries.data ?? [])
-        .map((c) => ({ label: spanish ? c.name_es ?? c.name : c.name, value: c.id }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [countries.data, spanish],
-  );
 
   // State/province options are scoped to the chosen country (cascading select).
   const stateOptions = useMemo(
@@ -696,14 +688,11 @@ export function EventDetailScreen() {
       />
       {/* Geography is a cascading Country -> State/Province pair (no free-text location).
           Country is set manually so it can clear the dependent state selection. */}
-      <SearchSelect
+      <CountrySelect
         label={t('admin.country')}
-        options={countryOptions}
+        countries={countries.data ?? []}
         value={countryId}
         onChange={setCountry}
-        placeholder={t('picker.select')}
-        searchPlaceholder={t('picker.search')}
-        noResultsText={t('picker.noResults')}
       />
       {countryId && stateOptions.length > 0 ? (
         <FormSearchSelect

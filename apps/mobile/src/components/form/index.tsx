@@ -25,6 +25,7 @@ import {
   type TimeFieldProps,
 } from '@wrsi/ui';
 import type { PhoneValue } from '@wrsi/shared-utils';
+import { CountrySelect, type CountrySelectProps } from '../CountrySelect';
 
 /**
  * react-hook-form–bound wrappers around the `@wrsi/ui` primitives. These are the
@@ -113,6 +114,33 @@ export function FormSearchSelect<T extends FieldValues, V extends string | numbe
         <SearchSelect<V>
           {...rest}
           value={(field.value as V | null) ?? null}
+          onChange={field.onChange}
+          error={err(fieldState.error?.message)}
+        />
+      )}
+    />
+  );
+}
+
+/**
+ * Country dropdown bound to a form field. Prefer this over `FormSearchSelect`
+ * over `countryOptions` — it brings the flags, the pinned quick selection and
+ * the ISO/dial-code search that every country picker in the app shares.
+ */
+export function FormCountrySelect<T extends FieldValues>({
+  control,
+  name,
+  ...rest
+}: Bound<T> & Omit<CountrySelectProps, 'value' | 'onChange' | 'error'>) {
+  const err = useErr();
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <CountrySelect
+          {...rest}
+          value={(field.value as string | null) ?? null}
           onChange={field.onChange}
           error={err(fieldState.error?.message)}
         />
@@ -217,12 +245,17 @@ export function FormPhoneField<T extends FieldValues>({
   ...rest
 }: Bound<T> & Omit<PhoneFieldProps, 'value' | 'onChange' | 'error'>) {
   const err = useErr();
+  const { t } = useTranslation();
   return (
     <Controller
       control={control}
       name={name}
       render={({ field, fieldState }) => (
         <PhoneField
+          // The dial-code picker's group headings are the same everywhere, so
+          // supply them here rather than at each call site (overridable).
+          pinnedLabel={t('picker.frequent')}
+          allLabel={t('picker.allCountries')}
           {...rest}
           value={field.value as PhoneValue}
           onChange={field.onChange}

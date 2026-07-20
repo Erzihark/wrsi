@@ -19,8 +19,6 @@ import {
   Input,
   MultiSelect,
   Screen,
-  SearchMultiSelect,
-  SearchSelect,
   Select,
   Text,
   useConfirm,
@@ -29,6 +27,7 @@ import {
 } from '@wrsi/ui';
 import { useAuth } from '../../auth/AuthContext';
 import { FormPhoneField } from '../../components/form';
+import { CountryMultiSelect, CountrySelect } from '../../components/CountrySelect';
 import {
   BUDGET_OPTIONS,
   CEFR_OPTIONS,
@@ -122,11 +121,6 @@ export function OnboardingScreen() {
   const opt = <T extends { id: string; name: string }>(rows: T[]) =>
     rows.map((r) => ({ label: r.name, value: r.id }));
   const isEs = i18n.language.startsWith('es');
-  // Country display names follow the app language (name_es vs English name).
-  const countryOptions = countries.data.map((c) => ({
-    label: (isEs ? c.name_es : null) ?? c.name,
-    value: c.id,
-  }));
   const fieldOptions = opt(fields.data);
   const levelOptions = opt(levels.data);
   const planOptions = opt(plans.data);
@@ -257,6 +251,7 @@ export function OnboardingScreen() {
             control={form.control}
             name="phone"
             label={t('onboarding.phone')}
+            countryTestID="onboarding-phone-country"
             countries={countries.data}
             spanish={isEs}
             placeholder={t('onboarding.phone')}
@@ -281,13 +276,13 @@ export function OnboardingScreen() {
             control={form.control}
             name="country_id"
             render={({ field, fieldState }) => (
-              <SearchSelect
+              <CountrySelect
+                testID="onboarding-nationality-select"
                 label={t('onboarding.nationality')}
-                options={countryOptions}
+                countries={countries.data}
                 value={field.value}
                 onChange={field.onChange}
                 error={errText(fieldState.error?.message)}
-                {...picker}
               />
             )}
           />
@@ -295,14 +290,12 @@ export function OnboardingScreen() {
             control={form.control}
             name="passport_country_ids"
             render={({ field, fieldState }) => (
-              <SearchMultiSelect
+              <CountryMultiSelect
                 label={t('onboarding.passports')}
-                options={countryOptions}
+                countries={countries.data}
                 values={field.value}
                 onChange={field.onChange}
                 error={errText(fieldState.error?.message)}
-                doneText={t('picker.done')}
-                {...picker}
               />
             )}
           />
@@ -341,14 +334,12 @@ export function OnboardingScreen() {
             control={form.control}
             name="country_interest_ids"
             render={({ field, fieldState }) => (
-              <SearchMultiSelect
+              <CountryMultiSelect
                 label={t('onboarding.countriesInterest')}
-                options={countryOptions}
+                countries={countries.data}
                 values={field.value}
                 onChange={field.onChange}
                 error={errText(fieldState.error?.message)}
-                doneText={t('picker.done')}
-                {...picker}
               />
             )}
           />
