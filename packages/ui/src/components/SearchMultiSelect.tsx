@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { Text } from './Text';
@@ -16,6 +16,12 @@ export interface SearchMultiSelectProps<T extends string | number> {
   values: T[];
   onChange: (values: T[]) => void;
   error?: string;
+  /** "Quick selection" values pinned above the rest — see `OptionPickerModal`. */
+  pinnedValues?: readonly T[];
+  pinnedLabel?: string;
+  allLabel?: string;
+  /** Optional leading content per picker row (e.g. a country flag). */
+  renderLeading?: (value: T) => ReactNode;
 }
 
 /**
@@ -32,6 +38,10 @@ export function SearchMultiSelect<T extends string | number>({
   values,
   onChange,
   error,
+  pinnedValues,
+  pinnedLabel,
+  allLabel,
+  renderLeading,
 }: SearchMultiSelectProps<T>) {
   const t = useTheme();
   const [open, setOpen] = useState(false);
@@ -103,6 +113,10 @@ export function SearchMultiSelect<T extends string | number>({
         searchPlaceholder={searchPlaceholder}
         noResultsText={noResultsText}
         doneText={doneText}
+        pinnedValues={pinnedValues}
+        pinnedLabel={pinnedLabel}
+        allLabel={allLabel}
+        renderLeading={renderLeading}
       />
     </View>
   );

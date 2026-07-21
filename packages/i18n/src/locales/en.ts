@@ -133,6 +133,8 @@ export const en = {
     search: "Type to search…",
     noResults: "No results",
     done: "Done",
+    frequent: "Most used",
+    allCountries: "All countries",
     day: "Day",
     month: "Month",
     year: "Year",

@@ -6,6 +6,21 @@
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
 **Last updated:** 2026-07-20
+
+**In review:** `feat/country-quick-select` — every country dropdown in the app now pins a
+"quick selection" group (Mexico, US) above the alphabetical list, including the `PhoneField`
+dial-code picker. `OptionPickerModal` grew generic `pinnedValues`/`pinnedLabel`/`allLabel`
+props (headings appear only when both groups are non-empty, so a narrow search stays clean),
+and `Option` grew `keywords` so search also matches ISO code, dial code and the name in the
+other language. The 6 duplicated `countryOptions` map/sorts across screens collapsed into
+`CountrySelect`/`CountryMultiSelect`/`FormCountrySelect` (`apps/mobile/src/components/
+CountrySelect.tsx`), which also add flags to every country picker (previously only
+`PhoneField` had them). Pinned set = `PRIORITY_COUNTRY_ISOS` in `@wrsi/shared-utils`.
+Verified: typecheck + 107 unit green (30 new, covering the pinning/filtering/row-building).
+**Not exercised on a device — no Maestro flow added and no iOS/Android run.** testIDs are in
+place for one (`picker-section-pinned`, `picker-section-all`, `country-select`,
+`onboarding-nationality-select`, `onboarding-phone-country`).
+
 **Fixed on `feat/student-profile-screens`:** `ProfileEditScreen` had 5 typo'd i18n keys
 (`onboarding.intendedLevels`, `onboarding.fields`, etc.) that rendered raw key strings on-device
 instead of localized text — `t()` accepted any string, so `yarn typecheck` never caught it.

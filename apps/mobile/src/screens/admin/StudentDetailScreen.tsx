@@ -27,6 +27,7 @@ import { getMonthNames } from '@wrsi/i18n';
 import { useTheme } from '@wrsi/ui';
 import type { StudentsStackParamList } from '../../navigation/types';
 import {
+  FormCountrySelect,
   FormDateField,
   FormInput,
   FormPhoneField,
@@ -138,10 +139,6 @@ export function StudentDetailScreen() {
 
   const isEs = i18n.language.startsWith('es');
   const nowY = new Date().getFullYear();
-  const countryOptions = (countries.data ?? []).map((c) => ({
-    label: (isEs ? c.name_es : null) ?? c.name,
-    value: c.id,
-  }));
   const counselorOptions = (counselors.data ?? []).map((c) => ({
     label: `${c.first_name} ${c.last_name}`,
     value: c.id,
@@ -215,14 +212,11 @@ export function StudentDetailScreen() {
           name="parent_or_guardian_name"
           label={t('onboarding.guardianName')}
         />
-        <FormSearchSelect
+        <FormCountrySelect
           control={control}
           name="country_id"
           label={t('onboarding.nationality')}
-          options={countryOptions}
-          placeholder={t('picker.select')}
-          searchPlaceholder={t('picker.search')}
-          noResultsText={t('picker.noResults')}
+          countries={countries.data ?? []}
         />
         <FormSearchSelect
           control={control}

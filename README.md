@@ -260,6 +260,12 @@ come from the `user_roles` join table (a signup trigger mirrors `auth.users` int
 - **Forms & validation:** react-hook-form + zod, real-time, submit disabled until valid.
   Build fields with the `apps/mobile/src/components/form` wrappers and compose schemas from
   the `@wrsi/shared-utils` builders. Full standard in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+- **Country pickers:** never build a country dropdown from a raw `SearchSelect` over the
+  `countries` lookup — use `CountrySelect` / `CountryMultiSelect` / `FormCountrySelect`
+  (`apps/mobile/src/components/CountrySelect.tsx`), or `PhoneField` for a dial code. They all
+  share one behavior: flags, a pinned "quick selection" group (`PRIORITY_COUNTRY_ISOS` in
+  `@wrsi/shared-utils` — Mexico, US), and search that also matches the ISO code, the dial code
+  and the name in the other language. Change the pinned set in that one constant.
 - **Navigation:** React Navigation only (no file-based routing).
 - **i18n:** all user-facing strings live in `packages/i18n`; Spanish is the default.
 - **Git:** never leave finished work uncommitted; scoped commits with a clear _why_.

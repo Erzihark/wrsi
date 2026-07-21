@@ -23,13 +23,14 @@ import {
   Text,
   useTheme,
 } from '@wrsi/ui';
+import { CountrySelect } from '../../components/CountrySelect';
 import type { StudentsStackParamList } from '../../navigation/types';
 import { useRefetchOnFocus } from '../../lib/useRefetchOnFocus';
 
 const EMPTY_FILTERS: StudentFilters = {};
 
 export function StudentsListScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const nav = useNavigation<NativeStackNavigationProp<StudentsStackParamList, 'StudentsList'>>();
 
@@ -64,10 +65,6 @@ export function StudentsListScreen() {
     setFilters(next);
   }
 
-  const isEs = i18n.language.startsWith('es');
-  const countryLabel = (c: { name: string; name_es: string | null }) =>
-    (isEs ? c.name_es : null) ?? c.name;
-
   const counselorOptions = (counselors.data ?? []).map((c) => ({
     label: fullName(c.first_name, c.last_name),
     value: c.id,
@@ -77,10 +74,6 @@ export function StudentsListScreen() {
     value: h.id,
   }));
   const statusOptions = (statuses.data ?? []).map((s) => ({ label: s.name, value: s.id }));
-  const countryOptions = (countries.data ?? []).map((c) => ({
-    label: countryLabel(c),
-    value: c.id,
-  }));
   const gradYears = Array.from({ length: 8 }, (_, i) => new Date().getFullYear() - 3 + i);
   const yearOptions = gradYears.map((y) => ({ label: String(y), value: y }));
 
@@ -164,10 +157,10 @@ export function StudentsListScreen() {
               value={filters.graduationYear ?? null}
               onChange={(v) => applyFilterChange({ ...filters, graduationYear: v })}
             />
-            <SearchSelect
+            <CountrySelect
               label={t('admin.nationality')}
               placeholder={t('admin.anyCountry')}
-              options={countryOptions}
+              countries={countries.data ?? []}
               value={filters.countryId ?? null}
               onChange={(v) => applyFilterChange({ ...filters, countryId: v })}
             />

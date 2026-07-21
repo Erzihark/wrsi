@@ -27,13 +27,13 @@ import {
   MultiSelect,
   Screen,
   SearchMultiSelect,
-  SearchSelect,
   Select,
   Text,
   useTheme,
   useToast,
 } from '@wrsi/ui';
 import { FormPhoneField } from '../../../components/form';
+import { CountryMultiSelect, CountrySelect } from '../../../components/CountrySelect';
 import {
   BUDGET_OPTIONS,
   CEFR_OPTIONS,
@@ -204,10 +204,6 @@ export function ProfileEditScreen() {
   const isEs = i18n.language.startsWith('es');
   const opt = <T extends { id: string; name: string }>(rows: T[]) =>
     rows.map((r) => ({ label: r.name, value: r.id }));
-  const countryOptions = (countries.data ?? []).map((c) => ({
-    label: (isEs ? c.name_es : null) ?? c.name,
-    value: c.id,
-  }));
   const nowYear = new Date().getFullYear();
 
   const submit = form.handleSubmit(async (values) => {
@@ -395,13 +391,12 @@ export function ProfileEditScreen() {
             control={form.control}
             name="country_id"
             render={({ field, fieldState }) => (
-              <SearchSelect
+              <CountrySelect
                 label={t('onboarding.nationality')}
-                options={countryOptions}
+                countries={countries.data}
                 value={field.value}
                 onChange={field.onChange}
                 error={errText(fieldState.error?.message)}
-                {...picker}
               />
             )}
           />
@@ -409,14 +404,12 @@ export function ProfileEditScreen() {
             control={form.control}
             name="passport_country_ids"
             render={({ field, fieldState }) => (
-              <SearchMultiSelect
+              <CountryMultiSelect
                 label={t('onboarding.passports')}
-                options={countryOptions}
+                countries={countries.data}
                 values={field.value}
                 onChange={field.onChange}
                 error={errText(fieldState.error?.message)}
-                doneText={t('picker.done')}
-                {...picker}
               />
             )}
           />
@@ -461,14 +454,12 @@ export function ProfileEditScreen() {
             control={form.control}
             name="country_interest_ids"
             render={({ field, fieldState }) => (
-              <SearchMultiSelect
+              <CountryMultiSelect
                 label={t('onboarding.countriesInterest')}
-                options={countryOptions}
+                countries={countries.data}
                 values={field.value}
                 onChange={field.onChange}
                 error={errText(fieldState.error?.message)}
-                doneText={t('picker.done')}
-                {...picker}
               />
             )}
           />

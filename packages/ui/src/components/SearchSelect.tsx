@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { Text } from './Text';
@@ -14,6 +14,14 @@ export interface SearchSelectProps<T extends string | number> {
   value: T | null;
   onChange: (value: T) => void;
   error?: string;
+  /** "Quick selection" values pinned above the rest — see `OptionPickerModal`. */
+  pinnedValues?: readonly T[];
+  pinnedLabel?: string;
+  allLabel?: string;
+  /** Optional leading content per picker row (e.g. a country flag). */
+  renderLeading?: (value: T) => ReactNode;
+  /** Hook for E2E flows — set on the field that opens the picker. */
+  testID?: string;
 }
 
 /**
@@ -29,6 +37,11 @@ export function SearchSelect<T extends string | number>({
   value,
   onChange,
   error,
+  pinnedValues,
+  pinnedLabel,
+  allLabel,
+  renderLeading,
+  testID,
 }: SearchSelectProps<T>) {
   const t = useTheme();
   const [open, setOpen] = useState(false);
@@ -42,6 +55,7 @@ export function SearchSelect<T extends string | number>({
     <View style={{ gap: t.spacing.xs }}>
       {label ? <Text variant="label">{label}</Text> : null}
       <Pressable
+        testID={testID}
         accessibilityRole="button"
         onPress={() => setOpen(true)}
         style={({ pressed }) => ({
@@ -57,9 +71,22 @@ export function SearchSelect<T extends string | number>({
           opacity: pressed ? 0.8 : 1,
         })}
       >
-        <Text style={{ color: selectedLabel ? t.color.text : t.color.textMuted }}>
-          {selectedLabel ?? placeholder}
-        </Text>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: t.spacing.sm,
+          }}
+        >
+          {/* Mirror the picker row's leading content (e.g. flag) on the field. */}
+          {renderLeading && value != null ? renderLeading(value) : null}
+          <Text
+            style={{ flexShrink: 1, color: selectedLabel ? t.color.text : t.color.textMuted }}
+          >
+            {selectedLabel ?? placeholder}
+          </Text>
+        </View>
         <Text style={{ color: t.color.textMuted }}>▾</Text>
       </Pressable>
       {error ? (
@@ -77,6 +104,10 @@ export function SearchSelect<T extends string | number>({
         onClose={() => setOpen(false)}
         searchPlaceholder={searchPlaceholder}
         noResultsText={noResultsText}
+        pinnedValues={pinnedValues}
+        pinnedLabel={pinnedLabel}
+        allLabel={allLabel}
+        renderLeading={renderLeading}
       />
     </View>
   );

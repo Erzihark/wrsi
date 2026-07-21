@@ -107,6 +107,8 @@ export function ReferencesEditor({
           countryPickerTitle={countryPickerTitle}
           searchPlaceholder={searchPlaceholder}
           noResultsText={noResultsText}
+          pinnedLabel={t('picker.frequent')}
+          allLabel={t('picker.allCountries')}
           error={contactValid ? undefined : t(VALIDATION_MSG.phone)}
         />
         <Button

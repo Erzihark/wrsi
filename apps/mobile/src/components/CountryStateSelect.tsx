@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SearchSelect } from '@wrsi/ui';
-
-interface CountryOption {
-  id: string;
-  name: string;
-  name_es: string | null;
-}
+import { CountrySelect, type CountryRow } from './CountrySelect';
 
 interface StateOption {
   id: string;
@@ -15,7 +10,7 @@ interface StateOption {
 }
 
 export interface CountryStateSelectProps {
-  countries: CountryOption[];
+  countries: CountryRow[];
   states: StateOption[];
   /** The persisted state/province id — the only value the parent stores. */
   value: string | null;
@@ -36,19 +31,10 @@ export function CountryStateSelect({
   value,
   onChange,
 }: CountryStateSelectProps) {
-  const { t, i18n } = useTranslation();
-  const spanish = i18n.language.startsWith('es');
+  const { t } = useTranslation();
 
   const [countryId, setCountryId] = useState<string | null>(
     () => states.find((s) => s.id === value)?.country_id ?? null,
-  );
-
-  const countryOptions = useMemo(
-    () =>
-      countries
-        .map((c) => ({ label: spanish ? c.name_es ?? c.name : c.name, value: c.id }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [countries, spanish],
   );
 
   // State/province options are scoped to the chosen country (cascading select).
@@ -69,14 +55,12 @@ export function CountryStateSelect({
 
   return (
     <>
-      <SearchSelect
+      <CountrySelect
+        testID="country-select"
         label={t('admin.country')}
-        options={countryOptions}
+        countries={countries}
         value={countryId}
         onChange={onCountryChange}
-        placeholder={t('picker.select')}
-        searchPlaceholder={t('picker.search')}
-        noResultsText={t('picker.noResults')}
       />
       {countryId && stateOptions.length > 0 ? (
         <SearchSelect

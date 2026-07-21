@@ -646,6 +646,46 @@ notifications owner-only mark-read + scoped unread count, avatars bucket policie
 columns admin-write/student-read, and the RPC's no-status-append + validation + no-profile
 + unauthenticated paths). No UI change in this PR, so no device pass.
 
+## 2026-07-20 — Country "quick selection" + one country-picker component (branch `feat/country-quick-select`)
+
+**Problem.** The `countries` lookup is ~200 rows, but in practice nearly every selection is
+Mexico or the US. Every country dropdown made the user search or scroll for them — worst in
+the `PhoneField` dial-code picker, which is on the critical path of onboarding. Separately,
+six screens had each built their own `countryOptions` map/sort, so they had drifted: only
+`PhoneField` showed flags, and only its picker was reachable by dial code.
+
+**Decision — pin, don't reorder.** A "quick selection" group is rendered *above* a heading
+rule, with the rest of the list unchanged below it. The rejected alternative was silently
+sorting Mexico/US to the top of one flat list: cheaper, but it breaks the alphabetical
+contract users rely on to scan, and gives no affordance explaining why those two are first.
+
+Implementation, generic-first so it isn't country-only:
+
+1. **`@wrsi/shared-utils`** — `countries.ts` (`PRIORITY_COUNTRY_ISOS = ['MX','US']`,
+   `priorityCountryIds`, `countryDisplayName`, `countrySearchKeywords`) and `pickerOptions.ts`
+   (`filterOptions`, `partitionPinned`, `buildPickerRows`). The list logic lives here, not in
+   the component, so it's unit-testable without a renderer — 30 new tests.
+2. **`@wrsi/ui`** — `Option` gained `keywords` (searched alongside the label);
+   `OptionPickerModal` gained `pinnedValues`/`pinnedLabel`/`allLabel`, threaded through
+   `SearchSelect`, `SearchMultiSelect` and `PhoneField`. **Headings render only when both
+   groups are non-empty** — while searching, a query usually narrows to one group, and a lone
+   "Most used" heading over a single result reads as a bug. The row divider moved from
+   `ItemSeparatorComponent` onto the row itself (`borderTopWidth` on every row but the first
+   of its group) so no rule lands between a heading and its first option.
+3. **`apps/mobile`** — new `CountrySelect` / `CountryMultiSelect` / `FormCountrySelect`
+   replacing all six ad-hoc `countryOptions` blocks. This is now the only sanctioned way to
+   build a country dropdown (noted in README Conventions), which incidentally gave flags to
+   every country picker, not just the phone one.
+
+**Platform parity.** Flags stay `CountryFlag` (bundled SVG via `react-native-svg`), never flag
+emoji — Android's font fallback renders those as colored emoji ignoring text color. The
+headings use plain text; the only glyphs are the text-presentation `✓ ✕ ▾` already in use.
+
+*Verified:* `yarn typecheck` + `yarn test` green (107 unit, 30 new). Backend suite not run —
+this branch touches no backend file. **Not exercised on a device**, and no Maestro flow added;
+the testIDs a flow needs are in place (`picker-section-pinned`, `picker-section-all`,
+`country-select`, `onboarding-nationality-select`, `onboarding-phone-country`).
+
 ## 2026-07-17 — Student profile, PR 5: the "Mi información" screens (branch `feat/student-profile-screens`)
 
 Completes the second design on top of PR 4's data layer.

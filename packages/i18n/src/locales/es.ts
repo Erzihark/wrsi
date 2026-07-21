@@ -136,6 +136,8 @@ export const es: TranslationResource = {
     search: 'Escribe para buscar…',
     noResults: 'Sin resultados',
     done: 'Listo',
+    frequent: 'Más usados',
+    allCountries: 'Todos los países',
     day: 'Día',
     month: 'Mes',
     year: 'Año',

@@ -6,6 +6,12 @@ import { Chip } from './Chip';
 export interface Option<T extends string | number = string> {
   label: string;
   value: T;
+  /**
+   * Extra terms the searchable pickers match on beyond the visible label — e.g.
+   * a country's ISO code and dial code, or its name in the other language.
+   * Ignored by the chip-based {@link Select}, which has no search.
+   */
+  keywords?: string[];
 }
 
 export interface SelectProps<T extends string | number> {
