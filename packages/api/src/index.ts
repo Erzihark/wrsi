@@ -44,6 +44,7 @@ export {
   useStudentStatuses,
   useCounselors,
   useHighSchools,
+  useIndustries,
 } from './lookups';
 export { useCompleteOnboarding } from './onboarding';
 export type { CompleteOnboardingArgs } from './onboarding';
@@ -113,3 +114,11 @@ export type {
   WorkshopInsert,
   OneToOneInsert,
 } from './events';
+export {
+  useSponsorsList,
+  useSponsor,
+  useCreateSponsor,
+  useUpdateSponsor,
+  useDeleteSponsor,
+} from './sponsors';
+export type { SponsorRow, SponsorInsert, SponsorUpdate } from './sponsors';

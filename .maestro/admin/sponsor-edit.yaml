@@ -1,0 +1,88 @@
+# Admin edits an existing sponsor/ally and the change shows in the list
+# immediately (no app reload). Regression guard for the stale-list bug on the
+# *update* path, same as high-school-edit.yaml.
+#
+# Self-contained: creates a fresh sponsor, then edits it, so it doesn't depend
+# on any particular seed row surviving prior runs.
+#
+# Prereqs & device-verified conventions: see sponsor-create.yaml. In short: run
+# against a standalone build; the form is long (scrollUntilVisible before
+# submit); react-hook-form needs a field blur before submit enables.
+#
+# The edit sets login_username (an empty field) rather than mutating the name.
+# Editing pre-filled text via adb is unreliable — tapping a populated field puts
+# the cursor mid-string, so append/erase corrupt the value. An empty field types
+# cleanly; login_username isn't shown in the list subtitle, so this flow re-opens
+# the row afterwards to assert the saved value instead of checking the list.
+appId: com.wxstudy.wrsi
+tags:
+  - admin
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"
+
+# Unique per run so re-runs don't collide/clutter the list.
+- evalScript: ${output.stamp = Date.now()}
+
+- tapOn:
+    id: "admin-tab-sponsors"
+
+# --- Create the sponsor we're going to edit ---
+- tapOn:
+    id: "admin-add-sponsor"
+- tapOn:
+    id: "sponsor-name-input"
+- inputText: "E2E Sponsor ${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "sponsor-email-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+- assertVisible: "E2E Sponsor ${output.stamp}"
+
+# --- Edit it ---
+# Filter the list to the single row we just created (search matches the name) so
+# the shared per-row Edit button (same id on every row) is unambiguous.
+- tapOn:
+    id: "admin-sponsor-search"
+- inputText: "${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "sponsor-edit"
+
+# Fill the empty login-username field (types cleanly), then blur it so the form
+# revalidates and the submit button stays enabled.
+- tapOn:
+    id: "sponsor-login-username-input"
+- inputText: "e2e-contact-${output.stamp}"
+- hideKeyboard
+- tapOn:
+    id: "sponsor-name-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+
+# Re-open the (still search-filtered) row to confirm the save took without a
+# manual reload — login_username isn't part of the list subtitle, so this
+# checks the field value directly rather than the list.
+- tapOn:
+    id: "sponsor-edit"
+- assertVisible: "e2e-contact-${output.stamp}"

@@ -116,6 +116,23 @@ export function useCurrencies() {
   });
 }
 
+/** Industries, for the sponsors/allies directory's "industry" field. */
+export function useIndustries() {
+  const supabase = useSupabase();
+  return useQuery({
+    queryKey: queryKeys.lookup('industries'),
+    staleTime: ONE_HOUR,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('industries')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 /** Counselors, for the CRM's "assigned counselor" filter/field. */
 export function useCounselors() {
   const supabase = useSupabase();

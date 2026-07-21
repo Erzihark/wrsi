@@ -32,4 +32,6 @@ export const queryKeys = {
   myInterestSelections: ['me', 'student', 'interests'] as const,
   myReferences: ['me', 'student', 'references'] as const,
   myLanguageExams: ['me', 'student', 'language_exams'] as const,
+  sponsors: ['sponsors_and_allies'] as const,
+  sponsor: (id: string) => ['sponsors_and_allies', id] as const,
 };

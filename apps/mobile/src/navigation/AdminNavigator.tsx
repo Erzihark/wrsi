@@ -6,6 +6,7 @@ import type {
   AdminTabParamList,
   CounselorsStackParamList,
   HighSchoolsStackParamList,
+  SponsorsStackParamList,
   StudentsStackParamList,
   UniversitiesStackParamList,
 } from './types';
@@ -19,6 +20,8 @@ import { EventsListScreen } from '../screens/admin/EventsListScreen';
 import { EventDetailScreen } from '../screens/admin/EventDetailScreen';
 import { CounselorsListScreen } from '../screens/admin/CounselorsListScreen';
 import { CounselorDetailScreen } from '../screens/admin/CounselorDetailScreen';
+import { SponsorsListScreen } from '../screens/admin/SponsorsListScreen';
+import { SponsorDetailScreen } from '../screens/admin/SponsorDetailScreen';
 
 const StudentsStack = createNativeStackNavigator<StudentsStackParamList>();
 
@@ -120,6 +123,26 @@ function CounselorsManagement() {
   );
 }
 
+const SponsorsStack = createNativeStackNavigator<SponsorsStackParamList>();
+
+function SponsorsManagement() {
+  const { t } = useTranslation();
+  return (
+    <SponsorsStack.Navigator>
+      <SponsorsStack.Screen
+        name="List"
+        component={SponsorsListScreen}
+        options={{ title: t('admin.sponsors') }}
+      />
+      <SponsorsStack.Screen
+        name="Detail"
+        component={SponsorDetailScreen}
+        options={{ title: t('admin.sponsor') }}
+      />
+    </SponsorsStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 /**
@@ -154,6 +177,11 @@ export function AdminNavigator() {
         name="Events"
         component={EventsManagement}
         options={{ title: t('admin.events') }}
+      />
+      <Tab.Screen
+        name="Sponsors"
+        component={SponsorsManagement}
+        options={{ title: t('admin.sponsors'), tabBarButtonTestID: 'admin-tab-sponsors' }}
       />
     </Tab.Navigator>
   );

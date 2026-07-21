@@ -147,6 +147,14 @@ export function emailField() {
     .refine(isEmail, VALIDATION_MSG.email);
 }
 
+/** Email. `required = false` treats an empty string as valid (optional field). */
+export function optionalEmailField(required = false) {
+  return z
+    .string()
+    .trim()
+    .refine((v) => (v.length === 0 ? !required : isEmail(v)), VALIDATION_MSG.email);
+}
+
 /** Web URL. `required = false` treats an empty string as valid (optional field). */
 export function webUrlField(required = false) {
   return z

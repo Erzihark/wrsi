@@ -864,6 +864,41 @@ in the app renders these components yet (PR 3 mounts them), and this box can't r
 Expo build (repo path has a space; EAS dev build needed). On-device visual check happens when
 PR 3 wires the components into the dashboard.
 
+## 2026-07-21 — Admin sponsors/allies CRUD (branch `feat/sponsors-and-allies-crud`)
+
+New admin directory tab for `sponsors_and_allies` — the schema (id, `industry_id` →
+`industries`, `status_id` → `statuses`, name, email, `login_username`/`login_password`,
+links) had existed since the foundation migration + an admin-only RLS policy, but had no
+CRUD surface. Modeled off the **events** pattern, not high-schools/universities: the table
+has no `user_id` and isn't login-backed (the migration's own comment says `login_username`/
+`login_password` are internal admin-only reference notes about the partner's *own* external
+portal, not the WRSI auth mechanism), so create/update/delete are direct RLS-guarded table
+writes — no Edge Function, no credentials-alert step in the UI or Maestro flows.
+
+**Backend:** added seed statuses for a new `entity_type = 'sponsor'` (Prospect/Active/
+Inactive, mirroring `high_school`'s partnership statuses) — no new migration needed since
+`statuses` is already polymorphic; just new rows in `seed.sql`.
+
+**API:** `packages/api/src/sponsors.ts` (`useSponsorsList(search?)`/`useSponsor(id)`/
+`useCreateSponsor()`/`useUpdateSponsor(id)`/`useDeleteSponsor()`), `useIndustries()` added to
+`lookups.ts` for the industry dropdown, `optionalEmailField()` added to
+`shared-utils/validation.ts` (mirrors the existing `webUrlField`/`imageUrlField`
+required-toggle shape) since the sponsor's email is optional unlike auth-login emails.
+
+**Mobile:** `SponsorsListScreen`/`SponsorDetailScreen` (own scaffold, not `EntityDetailScreen`
+— that component hardcodes the login-backed create-with-credentials flow), new `Sponsors` tab
+in `AdminNavigator` (`admin-tab-sponsors`).
+
+**Verified:** `yarn typecheck` + 79 unit tests green (incl. `docs-coverage.test.ts` and the
+i18n key-parity test against the new `en`/`es` keys); `yarn supabase db reset` applied the
+seed change cleanly; `yarn test:backend` — 79 backend tests green including the new
+`tests/backend/security/sponsors.test.ts` (admin-only create/search/update/delete; the
+existing `rls.test.ts` already covered read-visibility denial for this table). **Not
+exercised on a device** — three self-contained Maestro flows were added
+(`.maestro/admin/sponsor-{create,edit,delete}.yaml`, following the high-school flows'
+device-verified conventions: scroll-then-tap for the below-the-fold submit/delete buttons,
+blur-before-submit for `onTouched` validation) but not run against an emulator/build.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web
