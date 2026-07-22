@@ -1,0 +1,55 @@
+# "Mis aplicaciones": the summary tiles, the per-card milestone tracker, the
+# tile-as-filter behavior, and the WhatsApp help banner.
+# Relies on the four applications seeded for student1 in supabase/seeds/dev.sql
+# (one per stage). Targets testIDs, not text — Spanish is the default locale.
+appId: com.wxstudy.wrsi
+tags:
+  - student
+  - applications
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "student1@wrsi.dev"
+      PASSWORD: "password123"
+
+- tapOn:
+    id: "student-tab-applications"
+- assertVisible:
+    id: "student-applications-screen"
+
+# --- The four summary tiles ---
+- assertVisible:
+    id: "student-applications-stat-all"
+- assertVisible:
+    id: "student-applications-stat-review"
+- assertVisible:
+    id: "student-applications-stat-accepted"
+- assertVisible:
+    id: "student-applications-stat-draft"
+
+# --- A tile filters the list; tapping it again clears back to all ---
+- tapOn:
+    id: "student-applications-stat-draft"
+- assertVisible:
+    id: "student-applications-stat-draft"
+- tapOn:
+    id: "student-applications-stat-draft"
+
+# --- Sorting flips between newest and oldest first ---
+- tapOn:
+    id: "student-applications-sort"
+- assertVisible: "Más antiguas"
+- tapOn:
+    id: "student-applications-sort"
+- assertVisible: "Más recientes"
+
+# --- The single counselor CTA sits at the end of the list, not on every card ---
+- scrollUntilVisible:
+    element:
+      id: "student-applications-help"
+    direction: DOWN
+- assertVisible:
+    id: "student-applications-whatsapp"

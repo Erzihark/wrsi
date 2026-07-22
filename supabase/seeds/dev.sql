@@ -68,6 +68,10 @@ declare
   s1   uuid := 'eeee0000-0000-4000-8000-000000000001';
   s2   uuid := 'eeee0000-0000-4000-8000-000000000002';
   s3   uuid := 'eeee0000-0000-4000-8000-000000000003';
+  ap1  uuid := 'eeee0000-0000-4000-8000-000000000101';
+  ap2  uuid := 'eeee0000-0000-4000-8000-000000000102';
+  ap3  uuid := 'eeee0000-0000-4000-8000-000000000103';
+  ap4  uuid := 'eeee0000-0000-4000-8000-000000000104';
   ev1  uuid := 'ffff0000-0000-4000-8000-000000000001';
   w1   uuid := 'ffff0000-0000-4000-8000-000000000011';
   w2   uuid := 'ffff0000-0000-4000-8000-000000000012';
@@ -116,10 +120,16 @@ begin
     (hs2, u_hs2, 'Dolor Sit High School', hs_active, 'Elit', 'Adipiscing', '+529987654321', 6200, usd)
   on conflict (id) do nothing;
 
-  insert into public.universities (id, user_id, name, description, website, currency_id)
+  -- Located in different countries so the application cards exercise the
+  -- "State, Country" line with more than one geography.
+  insert into public.universities (id, user_id, name, description, website, currency_id, state_province_id)
   values
-    (un1, u_un1, 'Universidad Lorem', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.', 'https://lorem.example.edu', usd),
-    (un2, u_un2, 'Amet Elit University', 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.', 'https://amet.example.edu', usd)
+    (un1, u_un1, 'Universidad Lorem', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.', 'https://lorem.example.edu', usd,
+     (select sp.id from public.states_provinces sp join public.countries c on c.id = sp.country_id
+        where c.iso_code = 'US' and sp.name = 'Florida')),
+    (un2, u_un2, 'Amet Elit University', 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.', 'https://amet.example.edu', usd,
+     (select sp.id from public.states_provinces sp join public.countries c on c.id = sp.country_id
+        where c.iso_code = 'CA' and sp.name = 'Ontario'))
   on conflict (id) do nothing;
 
   insert into public.university_programs (university_id, field_of_study_id, education_level_id, name, duration, tuition, tuition_currency_id)
@@ -206,6 +216,46 @@ begin
   -- Fires the admin-notification trigger -> admin gets a notification too.
   insert into public.student_university_interest (student_id, university_id, rating)
   values (s1, un1, 5) on conflict do nothing;
+
+  -- Applications ---------------------------------------------------------------
+  -- One per stage of the catalog so "Mis aplicaciones" renders every card state
+  -- (decided / under review / submitted / draft) and both the with-program and
+  -- no-program-yet variants in a single screen.
+  insert into public.student_applications
+    (id, student_id, university_id, program_id, status_id, intake_year, intake_term, created_at)
+  values
+    (ap1, s1, un1,
+     (select id from public.university_programs where university_id = un1 and name = 'Lorem Business'),
+     (select id from public.statuses where entity_type = 'application' and name = 'Accepted'),
+     extract(year from now())::int + 1, 'fall', now() - interval '60 days'),
+    (ap2, s1, un1,
+     (select id from public.university_programs where university_id = un1 and name = 'Lorem Computer Science'),
+     (select id from public.statuses where entity_type = 'application' and name = 'Under Review'),
+     extract(year from now())::int + 1, 'fall', now() - interval '55 days'),
+    (ap3, s1, un2,
+     (select id from public.university_programs where university_id = un2 and name = 'Ipsum Medicine'),
+     (select id from public.statuses where entity_type = 'application' and name = 'Submitted'),
+     extract(year from now())::int + 1, 'winter', now() - interval '40 days'),
+    -- No program yet: exercises the intake-term fallback on the card.
+    (ap4, s1, un2, null,
+     (select id from public.statuses where entity_type = 'application' and name = 'Draft'),
+     extract(year from now())::int + 2, 'fall', now() - interval '9 days')
+  on conflict (id) do nothing;
+
+  -- The timeline dates on each card come from this history, not from the
+  -- application row, so every stage a card shows as done needs a row here.
+  insert into public.application_status_history (application_id, status_id, changed_by, changed_at)
+  select v.app, st.id, u_counselor, v.at
+  from (values
+    (ap1, 'Submitted',    now() - interval '50 days'),
+    (ap1, 'Under Review', now() - interval '35 days'),
+    (ap1, 'Accepted',     now() - interval '8 days'),
+    (ap2, 'Submitted',    now() - interval '45 days'),
+    (ap2, 'Under Review', now() - interval '30 days'),
+    (ap3, 'Submitted',    now() - interval '22 days')
+  ) as v(app, status_name, at)
+  join public.statuses st
+    on st.entity_type = 'application' and st.name = v.status_name;
 
   insert into public.comments (author_user_id, entity_type, entity_id, body)
   values (u_counselor, 'student', s1, 'Lorem ipsum: strong candidate, waiting on transcript.');

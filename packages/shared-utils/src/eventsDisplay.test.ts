@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatDayMonth,
+  formatDayMonthYear,
   formatEventDateBadge,
   formatTime12h,
   formatTimeRange,
@@ -74,5 +76,30 @@ describe('formatTime12h / formatTimeRange', () => {
   it('rejects garbage', () => {
     expect(formatTime12h('25:00')).toBeNull();
     expect(formatTime12h('noon')).toBeNull();
+  });
+});
+
+describe('formatDayMonth / formatDayMonthYear', () => {
+  it('formats a date-only string, title-casing the month', () => {
+    expect(formatDayMonth('2026-09-15')).toBe('15 Sep');
+    expect(formatDayMonthYear('2026-11-10')).toBe('10 Nov, 2026');
+  });
+
+  it('reads the calendar day off a timestamp without timezone drift', () => {
+    // A late-evening UTC change must not render as the next (or previous) day.
+    expect(formatDayMonth('2026-09-15T23:30:00Z')).toBe('15 Sep');
+    expect(formatDayMonthYear('2026-01-01T00:00:00+00:00')).toBe('1 Ene, 2026');
+  });
+
+  it('honors the locale month words', () => {
+    expect(formatDayMonth('2026-12-05', 'en')).toBe('5 Dec');
+    expect(formatDayMonth('2026-12-05', 'es')).toBe('5 Dic');
+  });
+
+  it('returns null for missing or unparseable input', () => {
+    expect(formatDayMonth(null)).toBeNull();
+    expect(formatDayMonth(undefined)).toBeNull();
+    expect(formatDayMonthYear('not a date')).toBeNull();
+    expect(formatDayMonth('2026-13-01')).toBeNull();
   });
 });

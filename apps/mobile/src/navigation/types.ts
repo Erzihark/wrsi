@@ -8,16 +8,23 @@ export type AuthStackParamList = {
 
 /**
  * The student's five designed tabs: Inicio · Universidades · Eventos ·
- * Consejero · Mi perfil. Documents left the tab bar — it's reached from the
- * dashboard's quick-access grid, inside the Home stack. Tabs holding a stack
- * use `NavigatorScreenParams` so cross-tab jumps stay type-safe (e.g. the
- * dashboard's event card → `navigate('Events', { screen: 'EventDetail', … })`).
+ * Mis aplicaciones · Mi perfil — matching the designer's bottom bar.
+ *
+ * Two screens are deliberately *not* tabs: Documents (reached from the
+ * dashboard's quick-access grid) and Consejero, which lost its tab to
+ * Applications. The counselor stays one tap away through the dashboard's
+ * highlight card and the WhatsApp CTAs on Applications, so it lives in the Home
+ * stack instead — five is the most a Spanish-labeled tab bar fits legibly on a
+ * small phone.
+ *
+ * Tabs holding a stack use `NavigatorScreenParams` so cross-tab jumps stay
+ * type-safe (e.g. `navigate('Events', { screen: 'EventDetail', … })`).
  */
 export type StudentTabParamList = {
   Home: NavigatorScreenParams<StudentHomeStackParamList>;
   Universities: NavigatorScreenParams<StudentUniversitiesStackParamList>;
   Events: NavigatorScreenParams<StudentEventsStackParamList>;
-  Counselor: undefined;
+  Applications: undefined;
   Profile: NavigatorScreenParams<StudentProfileStackParamList>;
 };
 
@@ -27,7 +34,7 @@ export type ComingSoonFeature = 'learning' | 'resources' | 'benefits';
 export type StudentHomeStackParamList = {
   HomeMain: undefined;
   Documents: undefined;
-  Applications: undefined;
+  Counselor: undefined;
   Notifications: undefined;
   ComingSoon: { feature: ComingSoonFeature };
 };

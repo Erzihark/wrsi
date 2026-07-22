@@ -57,12 +57,19 @@ universities of interest.
 
 ## Applications — `packages/api/src/applications.ts`
 
-Student-facing read of `student_applications` (the "My Apps" screen). Applications
-are created/advanced by staff — no student-side writes.
+Student-facing read of `student_applications` (the "Mis aplicaciones" screen).
+Applications are created/advanced by staff — no student-side writes.
+
+`student_applications.program_id` is nullable and carries a **composite** FK on
+`(program_id, university_id)` → `university_programs (id, university_id)`, so a
+program can never belong to a different university than the application does.
+The per-card milestone tracker is derived client-side by
+`computeApplicationTimeline()` (`@wrsi/shared-utils`) from the current status
+plus `application_status_history` — there is no milestone table.
 
 | Hook | Operation | Query key / invalidates | Auth & RLS |
 |---|---|---|---|
-| `useMyApplications()` | SELECT `student_applications` + embedded status (name/color) + university (name/logo), newest first | `myApplications` | self via `can_access_student` (staff sessions would see their scope) |
+| `useMyApplications()` | SELECT `student_applications` + embedded status (name/color/sort_order/is_terminal), university (name/logo + `state_province → country`), program (name), and `application_status_history` (changed_at + status), newest first | `myApplications` | self via `can_access_student` (staff sessions would see their scope); history is scoped by the same policy |
 
 ## Avatars (public Storage) — `packages/api/src/avatars.ts`
 

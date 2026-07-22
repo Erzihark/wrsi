@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import {
   BookIcon,
   CalendarIcon,
-  ChatIcon,
   EditIcon,
+  FileTextIcon,
   HomeIcon,
   PersonIcon,
   Text,
@@ -27,7 +27,7 @@ import { DocumentsScreen } from "../screens/student/DocumentsScreen";
 import { EventsScreen } from "../screens/student/EventsScreen";
 import { EventDetailScreen } from "../screens/student/EventDetailScreen";
 import { NotificationsScreen } from "../screens/student/NotificationsScreen";
-import { ApplicationsScreen } from "../screens/student/ApplicationsScreen";
+import { ApplicationsScreen } from "../screens/student/applications/ApplicationsScreen";
 import { ComingSoonScreen } from "../screens/student/ComingSoonScreen";
 import { CounselorScreen } from "../screens/student/CounselorScreen";
 import { ProfileScreen } from "../screens/student/profile/ProfileScreen";
@@ -36,7 +36,9 @@ import { ProfileEditScreen } from "../screens/student/profile/ProfileEditScreen"
 /**
  * Inicio. Holds the dashboard plus the destinations it links to that aren't
  * tabs of their own: Documents (which left the tab bar for the quick-access
- * grid), My Apps, Notifications (the bell), and the coming-soon placeholder.
+ * grid), Consejero (which gave its tab up to Mis aplicaciones and is reached
+ * from the dashboard's highlight card), Notifications (the bell), and the
+ * coming-soon placeholder.
  */
 const HomeStack = createNativeStackNavigator<StudentHomeStackParamList>();
 
@@ -68,9 +70,9 @@ function HomeStackScreen() {
         options={{ title: t("student.documents") }}
       />
       <HomeStack.Screen
-        name="Applications"
-        component={ApplicationsScreen}
-        options={{ title: t("applications.title") }}
+        name="Counselor"
+        component={CounselorScreen}
+        options={{ title: t("student.counselor") }}
       />
       <HomeStack.Screen
         name="Notifications"
@@ -179,13 +181,20 @@ function ProfileStackScreen() {
 const Tab = createBottomTabNavigator<StudentTabParamList>();
 
 /**
- * The five designed student tabs.
+ * The five designed student tabs: Inicio · Universidades · Eventos ·
+ * Mis aplicaciones · Mi perfil.
+ *
+ * Icons run at 22px (down from 24) and labels at 11px so the longest Spanish
+ * labels — "Universidades", "Aplicaciones" — still fit on a 375px-wide phone
+ * without ellipsizing now that Applications has joined the bar.
  *
  * Header ownership matters here: the staff `AppHeader` is no longer mounted over
  * this experience, so the real top safe-area inset reaches these navigators and
  * *something* must consume it or content renders under the status bar. Inicio
- * hides the tab header because its stack supplies the branded `StudentHeader`;
- * every other tab keeps its header, which handles the inset for free.
+ * hides the tab header because its stack supplies the branded `StudentHeader`,
+ * and Mis aplicaciones hides it because that screen draws the designed heading
+ * and consumes the inset itself; the rest keep their header, which handles the
+ * inset for free.
  */
 export function StudentNavigator() {
   const { t } = useTranslation();
@@ -198,54 +207,59 @@ export function StudentNavigator() {
         tabBarActiveTintColor: theme.color.brand,
         tabBarInactiveTintColor: theme.color.textMuted,
         tabBarStyle: { backgroundColor: theme.color.surface },
+        tabBarLabelStyle: { fontSize: 11 },
+        tabBarItemStyle: { paddingHorizontal: 2 },
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeStackScreen}
         options={{
-          title: t("student.home"),
+          title: t("student.tabs.home"),
           headerShown: false,
           tabBarButtonTestID: "student-tab-home",
-          tabBarIcon: ({ color }) => <HomeIcon size={24} color={color} />,
+          tabBarIcon: ({ color }) => <HomeIcon size={22} color={color} />,
         }}
       />
       <Tab.Screen
         name="Universities"
         component={UniversitiesStackScreen}
         options={{
-          title: t("student.universities"),
+          title: t("student.tabs.universities"),
           tabBarButtonTestID: "student-tab-universities",
-          tabBarIcon: ({ color }) => <BookIcon size={24} color={color} />,
+          tabBarIcon: ({ color }) => <BookIcon size={22} color={color} />,
         }}
       />
       <Tab.Screen
         name="Events"
         component={EventsStackScreen}
         options={{
-          title: t("student.events"),
+          title: t("student.tabs.events"),
           tabBarButtonTestID: "student-tab-events",
-          tabBarIcon: ({ color }) => <CalendarIcon size={24} color={color} />,
+          tabBarIcon: ({ color }) => <CalendarIcon size={22} color={color} />,
         }}
       />
       <Tab.Screen
-        name="Counselor"
-        component={CounselorScreen}
+        name="Applications"
+        component={ApplicationsScreen}
         options={{
-          title: t("student.counselor"),
-          tabBarButtonTestID: "student-tab-counselor",
-          tabBarIcon: ({ color }) => <ChatIcon size={24} color={color} />,
+          title: t("student.tabs.applications"),
+          // The screen renders its own large "Mis aplicaciones" heading, per the
+          // design, so a navigator header would just repeat it.
+          headerShown: false,
+          tabBarButtonTestID: "student-tab-applications",
+          tabBarIcon: ({ color }) => <FileTextIcon size={22} color={color} />,
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileStackScreen}
         options={{
-          title: t("student.profile"),
+          title: t("student.tabs.profile"),
           // The Profile stack renders its own headers (and consumes the inset).
           headerShown: false,
           tabBarButtonTestID: "student-tab-profile",
-          tabBarIcon: ({ color }) => <PersonIcon size={24} color={color} />,
+          tabBarIcon: ({ color }) => <PersonIcon size={22} color={color} />,
         }}
       />
     </Tab.Navigator>

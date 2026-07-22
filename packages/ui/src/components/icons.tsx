@@ -392,6 +392,21 @@ export function TargetIcon({ size, color }: IconProps) {
   );
 }
 
+/** Paper plane — "documents sent" on the application timeline. */
+export function SendIcon({ size, color }: IconProps) {
+  return (
+    <Line size={size} color={color}>
+      <Path d="M21 3 10.5 13.5" stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+      <Path
+        d="M21 3 14.5 21l-4-7.5L3 9.5 21 3Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+    </Line>
+  );
+}
+
 // --- Brand marks (solid fill; drawn to their own official silhouettes) -------
 // These use `fill` (not stroke) so they read as recognizable logos. WhatsApp
 // keeps its bubble+handset; the social marks are simplified glyphs.
