@@ -133,7 +133,7 @@ function ToastView({
             flexDirection: 'row',
             alignItems: 'center',
             gap: t.spacing.sm,
-            backgroundColor: t.color.text,
+            backgroundColor: t.color.brand,
             borderLeftWidth: 4,
             borderLeftColor: accent,
             borderRadius: t.radius.md,
@@ -148,7 +148,7 @@ function ToastView({
           }}
         >
           <Icon size={18} color={accent} />
-          <Text style={{ color: t.color.background, flexShrink: 1 }}>{toast.message}</Text>
+          <Text style={{ color: t.color.textOnDark, flexShrink: 1 }}>{toast.message}</Text>
         </Pressable>
       </Animated.View>
     </View>

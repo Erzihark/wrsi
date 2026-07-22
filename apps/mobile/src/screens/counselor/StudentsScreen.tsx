@@ -57,7 +57,7 @@ export function StudentsScreen() {
                   {fullName(item.first_name, item.last_name)}
                 </Text>
                 {item.status_name ? (
-                  <Badge label={item.status_name} color={item.status_color ?? theme.color.primary} />
+                  <Badge label={item.status_name} color={item.status_color ?? undefined} />
                 ) : null}
               </View>
               <Text variant="muted">{item.high_school_name ?? '—'}</Text>

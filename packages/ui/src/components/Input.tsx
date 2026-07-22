@@ -32,7 +32,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
             paddingVertical: t.spacing.md,
             fontSize: t.fontSize.md,
             color: t.color.text,
-            backgroundColor: t.color.background,
+            backgroundColor: t.color.surface,
           },
           style,
         ]}

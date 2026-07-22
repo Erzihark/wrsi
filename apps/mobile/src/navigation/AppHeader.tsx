@@ -47,7 +47,7 @@ export function AppHeader() {
       >
         <Text variant="title">WX Study</Text>
         <Pressable accessibilityRole="button" hitSlop={8} onPress={() => void signOut()}>
-          <Text style={{ color: theme.color.primary, fontWeight: theme.fontWeight.semibold }}>
+          <Text style={{ color: theme.color.brand, fontWeight: theme.fontWeight.semibold }}>
             {t('auth.logout')}
           </Text>
         </Pressable>

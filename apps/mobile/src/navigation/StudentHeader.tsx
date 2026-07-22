@@ -51,7 +51,7 @@ export function StudentHeader({ onBellPress, onProfilePress }: StudentHeaderProp
             fontSize: t.fontSize.lg,
             fontWeight: t.fontWeight.bold,
             letterSpacing: 0.5,
-            color: t.color.text,
+            color: t.color.brand,
           }}
         >
           WRSI
@@ -66,7 +66,7 @@ export function StudentHeader({ onBellPress, onProfilePress }: StudentHeaderProp
             onPress={onBellPress}
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
-            <BellIcon size={24} color={t.color.text} />
+            <BellIcon size={24} color={t.color.brand} />
             {count > 0 ? (
               <View
                 style={{
@@ -106,13 +106,13 @@ export function StudentHeader({ onBellPress, onProfilePress }: StudentHeaderProp
               width: 34,
               height: 34,
               borderRadius: t.radius.pill,
-              backgroundColor: t.color.surface,
+              backgroundColor: t.color.brandSoft,
               alignItems: 'center',
               justifyContent: 'center',
               opacity: pressed ? 0.6 : 1,
             })}
           >
-            <PersonIcon size={20} color={t.color.text} />
+            <PersonIcon size={20} color={t.color.brand} />
           </Pressable>
         </View>
       </View>

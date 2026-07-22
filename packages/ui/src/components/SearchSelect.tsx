@@ -64,7 +64,7 @@ export function SearchSelect<T extends string | number>({
           borderRadius: t.radius.md,
           paddingHorizontal: t.spacing.md,
           paddingVertical: t.spacing.md,
-          backgroundColor: t.color.background,
+          backgroundColor: t.color.surface,
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',

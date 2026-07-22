@@ -128,7 +128,7 @@ export function PhoneField({
             borderRadius: t.radius.md,
             paddingHorizontal: t.spacing.md,
             paddingVertical: t.spacing.md,
-            backgroundColor: t.color.background,
+            backgroundColor: t.color.surface,
             flexDirection: 'row',
             alignItems: 'center',
             gap: t.spacing.xs,
@@ -156,7 +156,7 @@ export function PhoneField({
             paddingVertical: t.spacing.md,
             fontSize: t.fontSize.md,
             color: t.color.text,
-            backgroundColor: t.color.background,
+            backgroundColor: t.color.surface,
           }}
         />
       </View>

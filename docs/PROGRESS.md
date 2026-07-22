@@ -7,35 +7,30 @@
 
 **Last updated:** 2026-07-22
 
-**In review:** `feat/sponsors-and-allies-crud` — new admin directory tab for
-`sponsors_and_allies` (schema + admin-only RLS already existed, unused). Modeled off **events**
-(not high-schools/universities) since it's not login-backed — create/update/delete are direct
-table writes, no Edge Function, no credentials alert. New: `packages/api/src/sponsors.ts`
-(list w/ search, get, create, update, delete), `useIndustries()` lookup, `emailField()`/
-`webUrlField()` validation, `SponsorsListScreen`/`SponsorDetailScreen`, a `Sponsors` admin tab.
-Seeded `entity_type = 'sponsor'` statuses (Prospect/Active/Inactive).
-⚠️ **Fixed during review:** the `links` field had zero format validation (bare `z.string()`) —
-any value saved. Now `webUrlField()` client-side, **plus a DB-layer CHECK constraint**
-(migration `20260722000001_sponsors_format_checks.sql`) on both `email` and `links` so a
-malformed value is rejected even on a direct write, not just blocked by the form.
-`emailField()`/`webUrlField()`/`imageUrlField()` also got unified onto one `required?`-toggle
-shape (an ad-hoc `optionalEmailField()` this feature briefly introduced was folded into
-`emailField(required?)` instead — see docs/VALIDATION.md, now documents this as the standard
-so a new one-off builder isn't added next time).
+**In review:** `feat/brand-color-system` — the designer's five brand colors are now **the**
+color system, replacing the placeholder orange/slate scale. Navy `#08385B` (headers, nav,
+icons), orange `#FF924D` (CTAs), amber `#FFBD59` (badges/progress/attention), gray `#545454`
+(copy), white (cards). All five live once in `brandPalette` (`packages/ui/src/theme/tokens.ts`);
+screens only ever read semantic tokens, so the whole app re-skins from that one file.
+Each brand color gained a `*Soft` tint (backgrounds/tracks) and, where needed, a `*Dark` shade
+for text — the raw orange (2.4:1) and amber (1.7:1) are unreadable as small text and are
+**fill-only**. `page background` and `card` swapped (page = `#F6F8FA`, cards = white) to match
+the mockups. New `tokens.test.ts` pins every fg/bg pairing at WCAG AA 4.5:1, so a future palette
+tweak fails `yarn test` instead of shipping unreadable text (`@wrsi/ui` now has a test script).
+Also: the two designed screens' *semantic* mistakes fixed (navy chrome was rendering as slate
+because dark surfaces reached for `color.text`), `Button` gained a navy `brand` variant, `Badge`
+gained AA-safe `tone`s, and React Navigation's own header/back-chevron colors now come from the
+tokens via `apps/mobile/src/navigation/navigationTheme.ts` (the iOS back arrow was system blue).
+Verified: typecheck + 132 unit green; no DB/API change. ⚠️ **Not exercised on a device** — it's
+a pure-visual change to every screen and needs an iOS **and** Android pass. See DECISIONS.md
+2026-07-22.
 
-Also added **search filters**: the list gained a collapsible filter panel (status + industry,
-alongside the existing name search), same pattern as `StudentsListScreen`'s richer filter UI —
-`SponsorsListScreen` is now bespoke rather than the generic `EntityListScreen` (which only
-offers name search). `useSponsorsList(search?)` became `useSponsorsList(filters: SponsorFilters)`
-(`search`/`statusId`/`industryId`, each optional and combinable).
-
-Verified: typecheck + 112 unit + 83 backend all green
-(`tests/backend/security/sponsors.test.ts` covers the CRUD surface, the format-check
-rejection/acceptance cases, and status/industry filtering alone + combined with search;
-`validation.test.ts` covers the required/optional/malformed matrix for all three field
-builders). **Not exercised on a device** — 4 Maestro flows added
-(`.maestro/admin/sponsor-{create,edit,delete,filters}.yaml`, following the high-school flows'
-conventions) but not run against an emulator/build. See DECISIONS.md 2026-07-21 and 2026-07-22.
+**Merged:** `feat/sponsors-and-allies-crud` (PR #22) — admin directory tab for
+`sponsors_and_allies` (`packages/api/src/sponsors.ts`, `SponsorsList`/`SponsorDetail` screens,
+status + industry + name filters), plus a `links`/`email` format-validation fix carried both
+client-side (`webUrlField()`) and as a DB CHECK constraint, and the `emailField()`/
+`webUrlField()`/`imageUrlField()` builders unified onto one `required?` toggle (docs/VALIDATION.md).
+Verified green; 4 Maestro flows added but not run. See DECISIONS.md 2026-07-21 / 2026-07-22.
 
 **Merged:** `feat/country-quick-select` — every country dropdown in the app now pins a
 "quick selection" group (Mexico, US) above the alphabetical list, including the `PhoneField`

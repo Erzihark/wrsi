@@ -28,7 +28,7 @@ function initials(name?: string | null): string {
 }
 
 /**
- * Circular profile image with an initials fallback (on a soft brand tint) and an
+ * Circular profile image with an initials fallback (navy on a soft navy tint) and an
  * optional corner badge slot. Used for the student photo and counselor photo.
  */
 export function Avatar({ photoUrl, name, size = 48, badge, style }: AvatarProps) {
@@ -40,7 +40,7 @@ export function Avatar({ photoUrl, name, size = 48, badge, style }: AvatarProps)
       {photoUrl ? (
         <Image
           source={{ uri: photoUrl }}
-          style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: t.color.primarySoft }}
+          style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: t.color.brandSoft }}
         />
       ) : (
         <View
@@ -48,14 +48,14 @@ export function Avatar({ photoUrl, name, size = 48, badge, style }: AvatarProps)
             width: size,
             height: size,
             borderRadius: size / 2,
-            backgroundColor: t.color.primarySoft,
+            backgroundColor: t.color.brandSoft,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <Text
             style={{
-              color: t.color.primaryDark,
+              color: t.color.brand,
               fontSize: size * 0.4,
               fontWeight: t.fontWeight.semibold,
             }}

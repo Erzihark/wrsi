@@ -87,7 +87,7 @@ export function StudentDetailScreen() {
         {status.data?.status ? (
           <Badge
             label={status.data.status.name}
-            color={status.data.status.color ?? theme.color.primary}
+            color={status.data.status.color ?? undefined}
           />
         ) : null}
       </View>

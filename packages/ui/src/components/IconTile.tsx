@@ -8,7 +8,7 @@ export interface IconTileProps {
   icon: (color: string) => ReactNode;
   label: string;
   onPress?: () => void;
-  /** Icon + tint color; defaults to the brand primary. */
+  /** Icon color; defaults to the brand navy ("iconos" in the brand brief). */
   color?: string;
   testID?: string;
   style?: StyleProp<ViewStyle>;
@@ -20,7 +20,7 @@ export interface IconTileProps {
  */
 export function IconTile({ icon, label, onPress, color, testID, style }: IconTileProps) {
   const t = useTheme();
-  const tint = color ?? t.color.primary;
+  const tint = color ?? t.color.brand;
 
   return (
     <Pressable
@@ -34,7 +34,7 @@ export function IconTile({ icon, label, onPress, color, testID, style }: IconTil
           width: 56,
           height: 56,
           borderRadius: t.radius.lg,
-          backgroundColor: t.color.primarySoft,
+          backgroundColor: t.color.brandSoft,
           alignItems: 'center',
           justifyContent: 'center',
         }}

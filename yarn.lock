@@ -2446,6 +2446,7 @@ __metadata:
     react-native: "npm:0.85.3"
     react-native-safe-area-context: "npm:~5.7.0"
     typescript: "npm:~6.0.3"
+    vitest: "npm:^2.1.9"
   peerDependencies:
     react: "*"
     react-native: "*"
