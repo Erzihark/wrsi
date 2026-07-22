@@ -1,4 +1,4 @@
-export { tokens } from './theme/tokens';
+export { tokens, brandPalette } from './theme/tokens';
 export type { Tokens } from './theme/tokens';
 export { ThemeProvider, useTheme } from './theme/ThemeProvider';
 
@@ -10,7 +10,7 @@ export { Input } from './components/Input';
 export type { InputProps } from './components/Input';
 export { Card } from './components/Card';
 export { Badge } from './components/Badge';
-export type { BadgeProps } from './components/Badge';
+export type { BadgeProps, BadgeTone } from './components/Badge';
 export { ProgressBar } from './components/ProgressBar';
 export type { ProgressBarProps } from './components/ProgressBar';
 export { ProgressRing } from './components/ProgressRing';

@@ -45,10 +45,11 @@ export function SectionHeader({
             opacity: pressed ? 0.6 : 1,
           })}
         >
-          <Text style={{ color: t.color.primaryDark, fontWeight: t.fontWeight.semibold }}>
+          {/* Navigation affordance → brand navy, not the CTA orange. */}
+          <Text style={{ color: t.color.brand, fontWeight: t.fontWeight.semibold }}>
             {actionLabel}
           </Text>
-          <ChevronRightIcon size={16} color={t.color.primaryDark} />
+          <ChevronRightIcon size={16} color={t.color.brand} />
         </Pressable>
       ) : null}
     </View>

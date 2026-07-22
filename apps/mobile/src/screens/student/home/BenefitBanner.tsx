@@ -28,7 +28,7 @@ export function BenefitBanner() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: theme.spacing.md,
-          backgroundColor: theme.color.text,
+          backgroundColor: theme.color.brand,
           borderRadius: theme.radius.lg,
           padding: theme.spacing.lg,
         }}
@@ -45,14 +45,14 @@ export function BenefitBanner() {
           </Text>
           <Text
             style={{
-              color: theme.color.primaryText,
+              color: theme.color.textOnDark,
               fontSize: theme.fontSize.lg,
               fontWeight: theme.fontWeight.bold,
             }}
           >
             {t('home.benefit.placeholderTitle')}
           </Text>
-          <Text style={{ color: theme.color.border, fontSize: theme.fontSize.xs }}>
+          <Text style={{ color: theme.color.brandSoft, fontSize: theme.fontSize.xs }}>
             {t('home.benefit.placeholderDetail')}
           </Text>
         </View>

@@ -85,7 +85,7 @@ export function Carousel({ children, showDots = true, style }: CarouselProps) {
                 width: i === index ? 18 : 6,
                 height: 6,
                 borderRadius: t.radius.pill,
-                backgroundColor: i === index ? t.color.primary : t.color.border,
+                backgroundColor: i === index ? t.color.brand : t.color.border,
               }}
             />
           ))}

@@ -144,13 +144,13 @@ export function NextEventCard() {
                 <Text
                   variant="label"
                   style={{
-                    color: theme.color.primaryDark,
+                    color: theme.color.brand,
                     fontWeight: theme.fontWeight.semibold,
                   }}
                 >
                   {t("home.nextEvent.details")}
                 </Text>
-                <ChevronRightIcon size={16} color={theme.color.primaryDark} />
+                <ChevronRightIcon size={16} color={theme.color.brand} />
               </Pressable>
             </View>
           </View>
@@ -205,7 +205,7 @@ function EventImage({
             position: "absolute",
             left: 6,
             bottom: 6,
-            backgroundColor: theme.color.background,
+            backgroundColor: theme.color.surface,
             borderRadius: theme.radius.sm,
             paddingHorizontal: 8,
             paddingVertical: 4,
@@ -260,7 +260,10 @@ function MetaRow({ icon, children }: { icon: ReactNode; children: string }) {
 function RegistrationPill({ registered }: { registered: boolean }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const color = registered ? theme.color.success : theme.color.warning;
+  // Amber is a fill color, not a text color (1.7:1 on white) — pending text
+  // takes the readable amber shade over the amber tint.
+  const color = registered ? theme.color.success : theme.color.accentDark;
+  const background = registered ? theme.color.successSoft : theme.color.warningSoft;
 
   return (
     <View
@@ -272,7 +275,7 @@ function RegistrationPill({ registered }: { registered: boolean }) {
         alignItems: "center",
         gap: theme.spacing.xs,
         alignSelf: "flex-start",
-        backgroundColor: `${color}22`,
+        backgroundColor: background,
         borderRadius: theme.radius.pill,
         paddingHorizontal: theme.spacing.md,
         paddingVertical: theme.spacing.xs,

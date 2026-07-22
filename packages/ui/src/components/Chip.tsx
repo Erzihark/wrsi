@@ -22,13 +22,14 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
         borderRadius: t.radius.pill,
         borderWidth: 1,
         borderColor: selected ? t.color.primary : t.color.border,
-        backgroundColor: selected ? `${t.color.primary}22` : t.color.background,
+        backgroundColor: selected ? t.color.primarySoft : t.color.surface,
         opacity: pressed ? 0.8 : 1,
       })}
     >
       <Text
         style={{
-          color: selected ? t.color.primary : t.color.text,
+          // The full-strength orange is too light for label-sized text.
+          color: selected ? t.color.primaryDark : t.color.text,
           fontSize: t.fontSize.sm,
           fontWeight: selected ? t.fontWeight.semibold : t.fontWeight.regular,
         }}

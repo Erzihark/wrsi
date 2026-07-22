@@ -185,7 +185,7 @@ export function ProfileScreen() {
                   width: 26,
                   height: 26,
                   borderRadius: theme.radius.pill,
-                  backgroundColor: theme.color.text,
+                  backgroundColor: theme.color.brand,
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 2,
@@ -193,12 +193,9 @@ export function ProfileScreen() {
                 }}
               >
                 {uploadAvatar.isPending ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={theme.color.primaryText}
-                  />
+                  <ActivityIndicator size="small" color={theme.color.brandText} />
                 ) : (
-                  <CameraIcon size={13} color={theme.color.primaryText} />
+                  <CameraIcon size={13} color={theme.color.brandText} />
                 )}
               </View>
             }
@@ -208,7 +205,7 @@ export function ProfileScreen() {
         <View style={{ flex: 1, gap: theme.spacing.xs }}>
           <Text variant="title">{name}</Text>
           <Text variant="muted">{t("profile.role")}</Text>
-          <Badge label={t("profile.active")} color={theme.color.success} />
+          <Badge label={t("profile.active")} tone="success" />
         </View>
 
         <View style={{ alignItems: "center", gap: 2 }}>

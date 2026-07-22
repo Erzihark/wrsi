@@ -89,14 +89,14 @@ function ProfileCompletionCard({
                   width: 22,
                   height: 22,
                   borderRadius: theme.radius.pill,
-                  backgroundColor: theme.color.text,
+                  backgroundColor: theme.color.brand,
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 2,
                   borderColor: theme.color.surface,
                 }}
               >
-                <CameraIcon size={11} color={theme.color.primaryText} />
+                <CameraIcon size={11} color={theme.color.brandText} />
               </View>
             }
           />
@@ -184,7 +184,7 @@ function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
                   borderColor: theme.color.surface,
                 }}
               >
-                <WhatsAppIcon size={12} color={theme.color.primaryText} />
+                <WhatsAppIcon size={12} color={theme.color.brandText} />
               </View>
             }
           />

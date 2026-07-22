@@ -94,7 +94,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           <Pressable
             onPress={() => {}}
             style={{
-              backgroundColor: t.color.background,
+              backgroundColor: t.color.surface,
               borderRadius: t.radius.lg,
               padding: t.spacing.xl,
               gap: t.spacing.md,

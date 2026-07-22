@@ -972,6 +972,65 @@ matches neither row. **Not exercised on a device** — a fourth Maestro flow
 Inactive/Education) via the detail form's chip `Select`, then drives the list's filter panel
 to isolate each and asserts the other is hidden — but wasn't run against an emulator/build.
 
+## 2026-07-22 — The designer's brand palette becomes the app's color system (branch `feat/brand-color-system`)
+
+The designer supplied five colors: `#08385B` navy (headers, navegación, botones principales,
+iconos), `#FF924D` orange (CTA, estados destacados), `#FFBD59` amber (badges, progreso, logros,
+avisos, atención), `#545454` gray (texto principal y secundario), `#FFFFFF` (fondos y tarjetas).
+Until now the app ran on the **placeholder** orange/slate scale from 2026-07-16 — the two
+designed screens (student dashboard, "Mi información") had the right *layout* but the wrong
+*colors*, most visibly navy chrome rendered as near-black slate.
+
+**No screen hardcoded a hex** (the 2026-07-16 tokens work paid off), so this is a `tokens.ts`
+rewrite plus a pass fixing places that reached for a *semantically wrong* token — chiefly
+`color.text` used as a dark **surface** (the camera badge, the benefit banner, the toast), which
+under the new palette had to become `color.brand` navy rather than "whatever the text color is".
+
+**Structure.** `brandPalette` holds the five designer values verbatim and is the only place raw
+hexes live; everything components read is a semantic token. Each brand color has a small family:
+
+- `*Soft` tints (~8% over white) for badge/banner backgrounds and progress tracks.
+- `*Dark` shades for **text and icons**, because the brand colors themselves fail WCAG AA
+  badly as small text: `#FF924D` is 2.4:1 on white and `#FFBD59` is 1.7:1. `primaryDark`
+  `#B04C09` and `accentDark` `#8A5300` are those hues darkened until they clear 4.5:1 —
+  including against their own tints, which is stricter than against white and is what caught
+  the first two candidate shades. `success` and `textMuted` were darkened for the same reason.
+
+`packages/ui/src/theme/tokens.test.ts` (new; `@wrsi/ui` gained a `test` script + vitest) pins
+every foreground/background pairing at 4.5:1 and asserts the five brand values are unchanged, so
+a future palette tweak fails the unit suite instead of quietly shipping unreadable text. The one
+knowing exception — white on the `#FF924D` CTA fill, ~2.2:1 — is the designer's specified button
+and is pinned by an explicit test that documents it as sub-AA so nobody reuses that pairing for
+small text.
+
+**Surface inversion.** `background` and `surface` swapped roles: the page is now a faint
+navy-tinted off-white (`#F6F8FA`) and cards are pure white, matching the mockups (the designer's
+"#FFFFFF → fondos y tarjetas" read literally would make cards invisible against the page). Every
+component that used `background` as a *fill* (inputs, pickers, the confirm dialog, the event date
+badge) moved to `surface`; `surfaceAlt` was added for subtly-filled areas inside a white card.
+
+**Semantic corrections** (the "wrong color per the design" pass): `Text`'s `title`/`heading`/
+`label` variants now carry navy (`textStrong`) while body copy stays the designer's gray; the
+student tab bar's active tint, the profile "Editar" action, `SectionHeader`'s "Ver todos ›", the
+"Ver detalles del evento" link, the WRSI wordmark/bell/profile chip, `IconTile` icons and
+`ProfileRow`'s row icons all moved from orange or slate to navy, per "navegación e iconos" in the
+brief. Orange is now reserved for CTAs, progress fills, and highlight states, as specified.
+
+**New:** `apps/mobile/src/navigation/navigationTheme.ts`, fed to `NavigationContainer`. Without
+it React Navigation drew its *own* palette for header background/title and — visibly wrong — the
+iOS back chevron in the system blue `#007AFF`. Nav chrome now derives from the same tokens.
+
+**`Button` gained a `brand` variant** (navy fill) for the design's navy action buttons, and
+`Badge` gained a `tone` prop (`accent` default, plus `primary`/`brand`/`success`/`danger`/
+`neutral`), each an AA-safe fg/bg pair. `Badge`'s `color` prop survives as the escape hatch for
+DB-configured status colors; the call sites that passed `theme.color.primary` as a *fallback*
+now pass `undefined` so they land on the safe default tone instead of unreadable orange text.
+
+**Verified:** `yarn typecheck` + `yarn test` green (20 new unit tests in `@wrsi/ui`, 132 total).
+No DB/API surface touched, so no backend run. **Not exercised on a device** — this is a
+pure-visual change across every screen and needs an iOS **and** Android pass before it's called
+done; the contrast test covers legibility, not layout.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

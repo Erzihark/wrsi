@@ -45,7 +45,7 @@ export function ApplicationsScreen() {
                   {intake ? <Text variant="muted">{intake}</Text> : null}
                 </View>
                 {item.status ? (
-                  <Badge label={item.status.name} color={item.status.color ?? theme.color.primary} />
+                  <Badge label={item.status.name} color={item.status.color ?? undefined} />
                 ) : null}
               </Card>
             );

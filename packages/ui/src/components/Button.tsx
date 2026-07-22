@@ -11,12 +11,17 @@ import { Text } from './Text';
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   title: string;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  /**
+   * `primary` is the orange CTA, `brand` the navy action button (the brand's
+   * "botones principales"), `secondary` an outlined button on a white fill,
+   * `ghost` text-only, `danger` destructive.
+   */
+  variant?: 'primary' | 'brand' | 'secondary' | 'ghost' | 'danger';
   loading?: boolean;
   /**
    * Optional leading icon (receives the same foreground color the title uses:
-   * `primaryText` on primary/danger, `text` otherwise). Prefer an SVG icon over
-   * a glyph inside `title` — glyphs with emoji variants break on Android.
+   * white on the filled variants, navy otherwise). Prefer an SVG icon over a
+   * glyph inside `title` — glyphs with emoji variants break on Android.
    */
   icon?: (color: string) => ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -33,16 +38,15 @@ export function Button({
 }: ButtonProps) {
   const t = useTheme();
   const isDisabled = disabled || loading;
+  const filled: Partial<Record<NonNullable<ButtonProps['variant']>, string>> = {
+    primary: t.color.primary,
+    brand: t.color.brand,
+    danger: t.color.danger,
+  };
   const bg =
-    variant === 'primary'
-      ? t.color.primary
-      : variant === 'danger'
-        ? t.color.danger
-        : variant === 'secondary'
-          ? t.color.surface
-          : 'transparent';
-  const fg =
-    variant === 'primary' || variant === 'danger' ? t.color.primaryText : t.color.text;
+    filled[variant] ?? (variant === 'secondary' ? t.color.surface : 'transparent');
+  // Outlined/ghost buttons read as navy actions; filled ones carry white.
+  const fg = filled[variant] ? t.color.brandText : t.color.textStrong;
 
   return (
     <Pressable
@@ -59,12 +63,7 @@ export function Button({
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: variant === 'ghost' ? 0 : 1,
-          borderColor:
-            variant === 'primary'
-              ? t.color.primary
-              : variant === 'danger'
-                ? t.color.danger
-                : t.color.border,
+          borderColor: filled[variant] ?? t.color.border,
           opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
         },
         style,

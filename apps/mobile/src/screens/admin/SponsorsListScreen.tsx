@@ -128,7 +128,7 @@ export function SponsorsListScreen() {
                   {item.name}
                 </Text>
                 {item.statuses ? (
-                  <Badge label={item.statuses.name} color={item.statuses.color ?? theme.color.primary} />
+                  <Badge label={item.statuses.name} color={item.statuses.color ?? undefined} />
                 ) : null}
               </View>
               <Text variant="muted">{item.industries?.name ?? item.email ?? null}</Text>

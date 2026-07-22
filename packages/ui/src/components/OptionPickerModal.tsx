@@ -185,7 +185,7 @@ export function OptionPickerModal<T extends string | number>({
                   <Text
                     style={{
                       flexShrink: 1,
-                      color: isSelected ? t.color.primary : t.color.text,
+                      color: isSelected ? t.color.primaryDark : t.color.text,
                       fontWeight: isSelected ? t.fontWeight.semibold : t.fontWeight.regular,
                     }}
                   >

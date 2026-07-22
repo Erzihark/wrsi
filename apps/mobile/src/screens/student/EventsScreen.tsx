@@ -52,7 +52,7 @@ export function EventsScreen() {
                     .filter(Boolean)
                     .join(' · ')}
                 </Text>
-                {isPast ? <Badge label={t('events.past')} color={theme.color.textMuted} /> : null}
+                {isPast ? <Badge label={t('events.past')} tone="neutral" /> : null}
                 <Button
                   variant={registered ? 'primary' : 'secondary'}
                   title={registered ? t('events.registered') : t('events.register')}

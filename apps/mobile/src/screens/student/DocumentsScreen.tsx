@@ -122,7 +122,7 @@ export function DocumentsScreen() {
                   {item.original_filename ?? item.storage_path}
                 </Text>
                 {item.document_types?.name ? (
-                  <Badge label={item.document_types.name} color={theme.color.primary} />
+                  <Badge label={item.document_types.name} tone="brand" />
                 ) : null}
               </View>
               <Text variant="muted">{humanSize(item.size_bytes)}</Text>

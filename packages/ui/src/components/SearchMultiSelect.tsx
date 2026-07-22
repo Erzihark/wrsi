@@ -67,7 +67,7 @@ export function SearchMultiSelect<T extends string | number>({
           borderRadius: t.radius.md,
           paddingHorizontal: t.spacing.md,
           paddingVertical: t.spacing.md,
-          backgroundColor: t.color.background,
+          backgroundColor: t.color.surface,
           opacity: pressed ? 0.8 : 1,
           gap: t.spacing.sm,
         })}

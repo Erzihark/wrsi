@@ -22,7 +22,9 @@ export interface ProfileRowProps {
 export function ProfileRow({ icon, label, value, complete, onPress, testID }: ProfileRowProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const statusColor = complete ? theme.color.success : theme.color.primary;
+  // Pending is the CTA orange ("estados importantes"), at the AA-readable shade —
+  // the full-strength `primary` is only 2.4:1 and this text is 12px.
+  const statusColor = complete ? theme.color.success : theme.color.primaryDark;
 
   return (
     <Pressable
@@ -38,7 +40,8 @@ export function ProfileRow({ icon, label, value, complete, onPress, testID }: Pr
         opacity: pressed ? 0.6 : 1,
       })}
     >
-      {icon(theme.color.textMuted)}
+      {/* "Iconos" are navy in the brand brief. */}
+      {icon(theme.color.brand)}
 
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="label">{label}</Text>

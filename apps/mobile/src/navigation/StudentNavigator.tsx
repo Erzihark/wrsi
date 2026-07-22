@@ -154,10 +154,10 @@ function ProfileStackScreen() {
                 gap: 8,
               }}
             >
-              <EditIcon size={22} color={theme.color.primary} />
+              <EditIcon size={22} color={theme.color.brand} />
               <Text
                 style={{
-                  color: theme.color.primaryDark,
+                  color: theme.color.brand,
                   fontWeight: theme.fontWeight.semibold,
                 }}
               >
@@ -194,8 +194,10 @@ export function StudentNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: theme.color.primary,
+        // Navigation is navy in the brand brief; the orange is reserved for CTAs.
+        tabBarActiveTintColor: theme.color.brand,
         tabBarInactiveTintColor: theme.color.textMuted,
+        tabBarStyle: { backgroundColor: theme.color.surface },
       }}
     >
       <Tab.Screen

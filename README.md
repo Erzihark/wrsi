@@ -257,6 +257,17 @@ come from the `user_roles` join table (a signup trigger mirrors `auth.users` int
   catalog keyed by `entity_type`.
 - **UI:** screens use the wrapped primitives from `@wrsi/ui` (never raw React Native
   components). Restyle the whole app from `packages/ui/src/theme/tokens.ts`.
+- **Color:** never write a hex in a screen or component — always a semantic token from
+  `tokens.color`. The brand palette (navy `#08385B`, orange `#FF924D`, amber `#FFBD59`,
+  gray `#545454`, white) lives once in `brandPalette`; everything else derives from it.
+  Roles: **navy** = headers, navigation, icons, dark surfaces; **orange** = CTAs and
+  highlight states; **amber** = badges, progress, attention; **gray** = body copy;
+  **white** = cards. Small colored text and colored icons use the `*Dark` shade
+  (`primaryDark`, `accentDark`) — the full-strength orange and amber fail WCAG AA as text
+  and are fill-only. `tokens.test.ts` enforces 4.5:1 on every pairing, so changing a shade
+  fails `yarn test` rather than shipping unreadable text. React Navigation's own chrome
+  (headers, back chevron) is themed from the same tokens via
+  `apps/mobile/src/navigation/navigationTheme.ts`.
 - **Forms & validation:** react-hook-form + zod, real-time, submit disabled until valid.
   Build fields with the `apps/mobile/src/components/form` wrappers and compose schemas from
   the `@wrsi/shared-utils` builders. Full standard in [`docs/VALIDATION.md`](docs/VALIDATION.md).

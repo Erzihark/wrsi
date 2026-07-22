@@ -47,13 +47,13 @@ export function SocialLinksRow() {
               width: 36,
               height: 36,
               borderRadius: theme.radius.md,
-              backgroundColor: theme.color.surface,
+              backgroundColor: theme.color.surfaceAlt,
               alignItems: 'center',
               justifyContent: 'center',
               opacity: pressed ? 0.6 : 1,
             })}
           >
-            <Icon size={20} color={theme.color.text} />
+            <Icon size={20} color={theme.color.brand} />
           </Pressable>
         ))}
       </View>
