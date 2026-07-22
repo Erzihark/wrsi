@@ -26,11 +26,19 @@ Compose schemas from these instead of re-writing regexes:
 | Builder / helper | Use for |
 | --- | --- |
 | `requiredString()` | required, trimmed text |
-| `emailField()` | email addresses |
+| `emailField(required?)` | email addresses (`required` defaults to `true` — every other builder below defaults to `false`, since an email field is required more often than not) |
 | `webUrlField(required?)` | web links (`https://…`) |
 | `imageUrlField(required?)` | image URLs — must end in `.png/.jpg/.webp/…` |
 | `phoneField()` / `phoneFieldOptional()` | phone numbers (see below) |
 | `isEmail` / `isWebUrl` / `isImageUrl` | raw predicates (unit-tested) |
+
+All three `required?`-toggle builders (`emailField`/`webUrlField`/`imageUrlField`) share one
+shape: empty-and-required reports `validation.required`, non-empty-and-malformed reports the
+field's own `validation.*Invalid` message, and empty-and-optional passes — this is what keeps
+the required-vs-format distinction correct under real-time (`onTouched`) validation as the
+user types. **Don't add a second one-off builder for an "optional" variant of one of these**
+(e.g. a bespoke `optionalEmailField()`) — extend the existing builder's `required` parameter
+instead, the way `webUrlField`/`imageUrlField` already work.
 
 ## Phone numbers
 

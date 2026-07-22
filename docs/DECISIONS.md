@@ -920,6 +920,33 @@ including 3 new cases in `sponsors.test.ts` asserting the DB rejects a malformed
 on both insert and update (even as admin) while still accepting a well-formed link and
 null/absent values.
 
+## 2026-07-22 — Unify email/URL field builders onto one required-toggle shape (branch `feat/sponsors-and-allies-crud`)
+
+Follow-up to the sponsors `links`-validation fix above: it had introduced a one-off
+`optionalEmailField()` alongside the existing `emailField()`, duplicating what
+`webUrlField(required?)`/`imageUrlField(required?)` already do with a single toggle
+parameter — `docs/VALIDATION.md`'s builder table didn't document that shape as the
+required pattern, so nothing caught the drift at review time. Folded `optionalEmailField()`
+into `emailField(required = true)` (defaults `true` since every existing call site —
+Login, SignUp, `EntityDetailScreen`'s account-creation email — wants it required; the other
+two builders default `false` since website/logo-url fields are usually optional).
+
+While unifying, also fixed a latent message bug shared by all three builders: the old
+`refine((v) => v.length === 0 ? !required : predicate(v), FORMAT_MESSAGE)` shape reported the
+*format* message (e.g. "Enter a valid email address") for an empty *required* field too,
+instead of "This field is required" — never visibly hit before because `emailField()` was the
+only one of the three ever called with `required = true`. Now `.min(required ? 1 : 0,
+VALIDATION_MSG.required).refine((v) => v.length === 0 || predicate(v), FORMAT_MESSAGE)` reports
+the correct message for each case, which matters under real-time (`onTouched`) validation —
+the per-field error must be right as the user is still typing, not just at submit.
+
+`docs/VALIDATION.md` now documents this shape explicitly and tells future work not to add a
+second one-off "optional" builder for a field that already has a `required?` toggle.
+
+**Verified:** `yarn typecheck` green; new `packages/shared-utils/src/validation.test.ts`
+cases cover the required/optional/malformed matrix for all three builders (buildable
+message assertions, not just pass/fail) — 112 unit tests total, all green.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

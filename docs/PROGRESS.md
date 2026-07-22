@@ -11,15 +11,20 @@
 `sponsors_and_allies` (schema + admin-only RLS already existed, unused). Modeled off **events**
 (not high-schools/universities) since it's not login-backed — create/update/delete are direct
 table writes, no Edge Function, no credentials alert. New: `packages/api/src/sponsors.ts`
-(list w/ search, get, create, update, delete), `useIndustries()` lookup, `optionalEmailField()`/
+(list w/ search, get, create, update, delete), `useIndustries()` lookup, `emailField()`/
 `webUrlField()` validation, `SponsorsListScreen`/`SponsorDetailScreen`, a `Sponsors` admin tab.
 Seeded `entity_type = 'sponsor'` statuses (Prospect/Active/Inactive).
 ⚠️ **Fixed during review:** the `links` field had zero format validation (bare `z.string()`) —
 any value saved. Now `webUrlField()` client-side, **plus a DB-layer CHECK constraint**
 (migration `20260722000001_sponsors_format_checks.sql`) on both `email` and `links` so a
-malformed value is rejected even on a direct write, not just blocked by the form. Verified:
-typecheck + 79 unit + 82 backend (`tests/backend/security/sponsors.test.ts` covers the CRUD
-surface + the format-check rejection/acceptance cases) all green. **Not exercised on a
+malformed value is rejected even on a direct write, not just blocked by the form.
+`emailField()`/`webUrlField()`/`imageUrlField()` also got unified onto one `required?`-toggle
+shape (an ad-hoc `optionalEmailField()` this feature briefly introduced was folded into
+`emailField(required?)` instead — see docs/VALIDATION.md, now documents this as the standard
+so a new one-off builder isn't added next time). Verified: typecheck + 112 unit + 82 backend
+(`tests/backend/security/sponsors.test.ts` covers the CRUD surface + the format-check
+rejection/acceptance cases; `validation.test.ts` covers the required/optional/malformed
+matrix for all three builders) all green. **Not exercised on a
 device** — 3 Maestro flows added (`.maestro/admin/sponsor-{create,edit,delete}.yaml`,
 following the high-school flows' conventions) but not run against an emulator/build. See
 DECISIONS.md 2026-07-21 and 2026-07-22.

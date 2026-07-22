@@ -5,7 +5,7 @@ import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { optionalEmailField, requiredString, webUrlField } from '@wrsi/shared-utils';
+import { emailField, requiredString, webUrlField } from '@wrsi/shared-utils';
 import {
   useCreateSponsor,
   useDeleteSponsor,
@@ -21,7 +21,7 @@ import { FormInput, FormSelect } from '../../components/form';
 
 const schema = z.object({
   name: requiredString(),
-  email: optionalEmailField(),
+  email: emailField(false),
   industry_id: z.string().nullable(),
   status_id: z.string().nullable(),
   login_username: z.string(),
