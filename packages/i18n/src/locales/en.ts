@@ -133,7 +133,7 @@ export const en = {
     endDate: "End date",
     registrationDeadline: "Registration deadline",
     industry: "Industry",
-    links: "Links",
+    links: "Link",
     loginUsername: "Portal username (reference)",
     loginPassword: "Portal password (reference)",
   },

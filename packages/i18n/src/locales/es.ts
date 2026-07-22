@@ -136,7 +136,7 @@ export const es: TranslationResource = {
     endDate: 'Fecha de fin',
     registrationDeadline: 'Fecha límite de registro',
     industry: 'Industria',
-    links: 'Enlaces',
+    links: 'Enlace',
     loginUsername: 'Usuario del portal (referencia)',
     loginPassword: 'Contraseña del portal (referencia)',
   },

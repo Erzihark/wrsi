@@ -250,6 +250,11 @@ external portal, not the WRSI auth mechanism. Table is admin-only via RLS
 Also uses `useIndustries()` (`packages/api/src/lookups.ts`) and `useStatuses('sponsor')`
 for the industry/status dropdowns. Other exports: `SponsorRow/Insert/Update` types.
 
+`email`/`links` format is validated both client-side (zod `optionalEmailField()`/
+`webUrlField()`) and at the DB layer via CHECK constraints (migration
+`20260722000001_sponsors_format_checks.sql`) — a direct/malformed write is rejected, not
+just a form submission.
+
 ## Onboarding — `packages/api/src/onboarding.ts`
 
 | Hook | Operation | Query key / invalidates | Auth & RLS |

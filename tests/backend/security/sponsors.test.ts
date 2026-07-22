@@ -86,3 +86,86 @@ describe('sponsors_and_allies: admin-only CRUD (useSponsorsList/useCreateSponsor
     createdSponsorId = undefined;
   });
 });
+
+// The admin app validates email/links format client-side (zod), but that's not
+// a security boundary a direct write can't bypass — these CHECK constraints
+// (migration 20260722000001) are the backend half of that guard. Even the
+// admin's own service-role-bypassing path must go through the app's RLS-bound
+// client, so this exercises the constraint the way a real write would hit it.
+describe('sponsors_and_allies: email/links format is enforced at the DB layer', () => {
+  let sponsorId: string | undefined;
+
+  afterAll(async () => {
+    if (sponsorId) {
+      await serviceClient().from('sponsors_and_allies').delete().eq('id', sponsorId);
+    }
+  });
+
+  it('rejects a malformed email on insert and update', async () => {
+    const admin = await signInAs(EMAILS.admin);
+
+    const badInsert = await admin
+      .from('sponsors_and_allies')
+      .insert({ name: `Bad Email Sponsor ${Date.now()}`, email: 'not-an-email' })
+      .select();
+    expect(badInsert.error).not.toBeNull();
+    expect(badInsert.error?.message ?? '').toMatch(/sponsors_and_allies_email_format_check/);
+
+    const created = await admin
+      .from('sponsors_and_allies')
+      .insert({ name: `Good Sponsor ${Date.now()}` })
+      .select('id')
+      .single();
+    expect(created.error).toBeNull();
+    sponsorId = created.data?.id;
+
+    const badUpdate = await admin
+      .from('sponsors_and_allies')
+      .update({ email: 'still not an email' })
+      .eq('id', sponsorId as string)
+      .select();
+    expect(badUpdate.error).not.toBeNull();
+    expect(badUpdate.error?.message ?? '').toMatch(/sponsors_and_allies_email_format_check/);
+  });
+
+  it('rejects a malformed link on insert and update, and accepts a well-formed one', async () => {
+    const admin = await signInAs(EMAILS.admin);
+
+    const badInsert = await admin
+      .from('sponsors_and_allies')
+      .insert({ name: `Bad Link Sponsor ${Date.now()}`, links: 'not a url' })
+      .select();
+    expect(badInsert.error).not.toBeNull();
+    expect(badInsert.error?.message ?? '').toMatch(/sponsors_and_allies_links_format_check/);
+
+    const goodUpdate = await admin
+      .from('sponsors_and_allies')
+      .update({ links: 'https://example.com/partner' })
+      .eq('id', sponsorId as string)
+      .select('links')
+      .single();
+    expect(goodUpdate.error).toBeNull();
+    expect(goodUpdate.data?.links).toBe('https://example.com/partner');
+
+    const badUpdate = await admin
+      .from('sponsors_and_allies')
+      .update({ links: 'ftp://example.com' })
+      .eq('id', sponsorId as string)
+      .select();
+    expect(badUpdate.error).not.toBeNull();
+    expect(badUpdate.error?.message ?? '').toMatch(/sponsors_and_allies_links_format_check/);
+  });
+
+  it('allows null/absent email and links', async () => {
+    const admin = await signInAs(EMAILS.admin);
+    const created = await admin
+      .from('sponsors_and_allies')
+      .insert({ name: `No Contact Sponsor ${Date.now()}` })
+      .select('id, email, links')
+      .single();
+    expect(created.error).toBeNull();
+    expect(created.data?.email).toBeNull();
+    expect(created.data?.links).toBeNull();
+    await serviceClient().from('sponsors_and_allies').delete().eq('id', created.data?.id as string);
+  });
+});

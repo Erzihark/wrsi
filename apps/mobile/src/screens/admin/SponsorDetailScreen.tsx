@@ -5,7 +5,7 @@ import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { optionalEmailField, requiredString } from '@wrsi/shared-utils';
+import { optionalEmailField, requiredString, webUrlField } from '@wrsi/shared-utils';
 import {
   useCreateSponsor,
   useDeleteSponsor,
@@ -26,7 +26,7 @@ const schema = z.object({
   status_id: z.string().nullable(),
   login_username: z.string(),
   login_password: z.string(),
-  links: z.string(),
+  links: webUrlField(),
 });
 type FormState = z.infer<typeof schema>;
 
@@ -180,7 +180,14 @@ export function SponsorDetailScreen() {
         autoCapitalize="none"
         secureTextEntry
       />
-      <FormInput control={control} name="links" label={t('admin.links')} multiline />
+      <FormInput
+        control={control}
+        name="links"
+        label={t('admin.links')}
+        keyboardType="url"
+        autoCapitalize="none"
+        testID="sponsor-links-input"
+      />
 
       <Button
         title={submitting ? t('onboarding.submitting') : mode === 'create' ? t('admin.create') : t('admin.saveChanges')}

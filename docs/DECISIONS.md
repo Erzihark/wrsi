@@ -899,6 +899,27 @@ exercised on a device** — three self-contained Maestro flows were added
 device-verified conventions: scroll-then-tap for the below-the-fold submit/delete buttons,
 blur-before-submit for `onTouched` validation) but not run against an emulator/build.
 
+## 2026-07-22 — Sponsors CRUD: email/link format validation fix (branch `feat/sponsors-and-allies-crud`)
+
+Follow-up to the sponsors/allies CRUD above: the `links` field's zod schema was a bare
+`z.string()` with no format check at all — any value saved. Fixed to `webUrlField()`
+(optional, single URL, same convention as `website`/`logo_url` elsewhere) and relabeled the
+field "Link" (singular) since the validation now only accepts one well-formed URL.
+
+Also added **DB-layer enforcement** so validation isn't solely a client-side gate: migration
+`20260722000001_sponsors_format_checks.sql` adds CHECK constraints on
+`sponsors_and_allies.email`/`.links` mirroring the app's `isEmail`/`isWebUrl` regexes (null/
+empty still allowed). No other table in the schema has a format CHECK constraint — the rest
+of the app relies on zod alone — but this table's rows are hand-entered admin reference data
+with no other guard, and it was requested explicitly after the client-only gap was found, so
+belt-and-suspenders here is intentional, not a new house style to replicate elsewhere.
+
+**Verified:** `yarn supabase db reset` applied the migration cleanly (no existing rows to
+violate it); `yarn typecheck` + 79 unit green; `yarn test:backend` — 82 backend tests green,
+including 3 new cases in `sponsors.test.ts` asserting the DB rejects a malformed email/link
+on both insert and update (even as admin) while still accepting a well-formed link and
+null/absent values.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

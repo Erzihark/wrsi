@@ -5,19 +5,24 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-21
+**Last updated:** 2026-07-22
 
 **In review:** `feat/sponsors-and-allies-crud` — new admin directory tab for
 `sponsors_and_allies` (schema + admin-only RLS already existed, unused). Modeled off **events**
 (not high-schools/universities) since it's not login-backed — create/update/delete are direct
 table writes, no Edge Function, no credentials alert. New: `packages/api/src/sponsors.ts`
-(list w/ search, get, create, update, delete), `useIndustries()` lookup, `optionalEmailField()`
-validation helper, `SponsorsListScreen`/`SponsorDetailScreen`, a `Sponsors` admin tab. Seeded
-`entity_type = 'sponsor'` statuses (Prospect/Active/Inactive). Verified: typecheck + 79 unit +
-79 backend (new `tests/backend/security/sponsors.test.ts`) all green. **Not exercised on a
+(list w/ search, get, create, update, delete), `useIndustries()` lookup, `optionalEmailField()`/
+`webUrlField()` validation, `SponsorsListScreen`/`SponsorDetailScreen`, a `Sponsors` admin tab.
+Seeded `entity_type = 'sponsor'` statuses (Prospect/Active/Inactive).
+⚠️ **Fixed during review:** the `links` field had zero format validation (bare `z.string()`) —
+any value saved. Now `webUrlField()` client-side, **plus a DB-layer CHECK constraint**
+(migration `20260722000001_sponsors_format_checks.sql`) on both `email` and `links` so a
+malformed value is rejected even on a direct write, not just blocked by the form. Verified:
+typecheck + 79 unit + 82 backend (`tests/backend/security/sponsors.test.ts` covers the CRUD
+surface + the format-check rejection/acceptance cases) all green. **Not exercised on a
 device** — 3 Maestro flows added (`.maestro/admin/sponsor-{create,edit,delete}.yaml`,
 following the high-school flows' conventions) but not run against an emulator/build. See
-DECISIONS.md 2026-07-21.
+DECISIONS.md 2026-07-21 and 2026-07-22.
 
 **Merged:** `feat/country-quick-select` — every country dropdown in the app now pins a
 "quick selection" group (Mexico, US) above the alphabetical list, including the `PhoneField`
