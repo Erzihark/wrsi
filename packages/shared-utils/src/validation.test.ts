@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  emailField,
   formatPhoneAsYouType,
+  imageUrlField,
   isEmail,
   isImageUrl,
   isPhoneEmpty,
   isWebUrl,
   makePhoneValue,
   parsePhone,
+  webUrlField,
+  VALIDATION_MSG,
 } from './validation';
 
 describe('isEmail', () => {
@@ -47,6 +51,51 @@ describe('isImageUrl', () => {
     expect(isImageUrl('https://example.com/page.html')).toBe(false);
     expect(isImageUrl('logo.png')).toBe(false);
     expect(isImageUrl('')).toBe(false);
+  });
+});
+
+// emailField/webUrlField/imageUrlField share one required-toggle shape: empty+required
+// reports the "required" message (not the format message) so real-time (onTouched)
+// validation shows the right error as the user types; empty+optional passes; a
+// non-empty malformed value always reports the field's own format message regardless
+// of `required`. See docs/VALIDATION.md.
+describe('required-toggle field builders (emailField/webUrlField/imageUrlField)', () => {
+  it('emailField: required by default — empty reports "required", not "invalid email"', () => {
+    const required = emailField();
+    expect(required.safeParse('').error?.issues[0]?.message).toBe(VALIDATION_MSG.required);
+    expect(required.safeParse('not-an-email').error?.issues[0]?.message).toBe(
+      VALIDATION_MSG.email,
+    );
+    expect(required.safeParse('a@b.com').success).toBe(true);
+  });
+
+  it('emailField(false): empty is valid, malformed is still rejected', () => {
+    const optional = emailField(false);
+    expect(optional.safeParse('').success).toBe(true);
+    expect(optional.safeParse('not-an-email').error?.issues[0]?.message).toBe(
+      VALIDATION_MSG.email,
+    );
+    expect(optional.safeParse('a@b.com').success).toBe(true);
+  });
+
+  it('webUrlField: optional by default; required(true) distinguishes empty from malformed', () => {
+    expect(webUrlField().safeParse('').success).toBe(true);
+    expect(webUrlField().safeParse('not a url').error?.issues[0]?.message).toBe(
+      VALIDATION_MSG.url,
+    );
+    const required = webUrlField(true);
+    expect(required.safeParse('').error?.issues[0]?.message).toBe(VALIDATION_MSG.required);
+    expect(required.safeParse('https://example.com').success).toBe(true);
+  });
+
+  it('imageUrlField: optional by default; required(true) distinguishes empty from malformed', () => {
+    expect(imageUrlField().safeParse('').success).toBe(true);
+    expect(imageUrlField().safeParse('https://example.com/page').error?.issues[0]?.message).toBe(
+      VALIDATION_MSG.imageUrl,
+    );
+    const required = imageUrlField(true);
+    expect(required.safeParse('').error?.issues[0]?.message).toBe(VALIDATION_MSG.required);
+    expect(required.safeParse('https://example.com/logo.png').success).toBe(true);
   });
 });
 

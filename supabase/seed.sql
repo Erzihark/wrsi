@@ -330,6 +330,13 @@ insert into public.statuses (entity_type, name, color, sort_order, is_terminal) 
   ('high_school', 'Inactive', '#ef4444', 30, true)
 on conflict (entity_type, name) do nothing;
 
+-- Sponsor / ally partnership statuses.
+insert into public.statuses (entity_type, name, color, sort_order, is_terminal) values
+  ('sponsor', 'Prospect', '#94a3b8', 10, false),
+  ('sponsor', 'Active', '#22c55e', 20, false),
+  ('sponsor', 'Inactive', '#ef4444', 30, true)
+on conflict (entity_type, name) do nothing;
+
 -- ---------------------------------------------------------------------------
 -- States / provinces: a standard ISO-3166-2-style subdivision catalog for the
 -- countries WX actually operates in or sends students to. Mapped to countries

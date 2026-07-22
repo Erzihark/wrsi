@@ -1,0 +1,63 @@
+# Admin creates a sponsor/ally and it appears in the list immediately (no app
+# reload). Same stale-list regression guard as the high-school flows: the List
+# screen stays mounted under the create Detail screen, so returning to it must
+# refetch on focus.
+#
+# Unlike high schools/universities/counselors, sponsors_and_allies is NOT
+# login-backed (no auth user provisioned) — create is a direct table write, so
+# there's no email/temp-password step and no blocking credentials alert to
+# dismiss; the save reports via a toast instead.
+#
+# Prereqs: standalone build (JS bundled) on a running emulator/device + local
+# Supabase freshly `db reset` (seeded admin account admin@wrsi.dev / password123).
+# See docs/TESTING.md. NOTE: on a *dev-client* build, clearState drops to the Expo
+# launcher; run these against a preview/standalone build, or drive the dev client
+# via a deep link (see docs/TESTING.md "Running on a dev build").
+#
+# Device-verified conventions (from the high-school flows, DECISIONS.md
+# 2026-07-12) still apply: scrollUntilVisible before submit (form is below the
+# fold), and blur a field (tap elsewhere) so react-hook-form's onTouched mode
+# enables the submit button — adb text entry + hideKeyboard don't fire blur.
+appId: com.wxstudy.wrsi
+tags:
+  - admin
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"
+
+# Unique per run so re-runs don't collide/clutter the list.
+- evalScript: ${output.stamp = Date.now()}
+
+- tapOn:
+    id: "admin-tab-sponsors"
+- tapOn:
+    id: "admin-add-sponsor"
+
+- tapOn:
+    id: "sponsor-name-input"
+- inputText: "E2E Sponsor ${output.stamp}"
+- hideKeyboard
+# Blur the name field (tap another field) so react-hook-form validates and the
+# submit button enables — without this the tap below is a no-op on a disabled button.
+- tapOn:
+    id: "sponsor-email-input"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+
+# Back on the list: the newly created sponsor must be visible without any
+# manual reload. This is the assertion that fails if the list doesn't refresh.
+- assertVisible: "E2E Sponsor ${output.stamp}"

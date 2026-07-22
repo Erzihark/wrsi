@@ -864,6 +864,114 @@ in the app renders these components yet (PR 3 mounts them), and this box can't r
 Expo build (repo path has a space; EAS dev build needed). On-device visual check happens when
 PR 3 wires the components into the dashboard.
 
+## 2026-07-21 — Admin sponsors/allies CRUD (branch `feat/sponsors-and-allies-crud`)
+
+New admin directory tab for `sponsors_and_allies` — the schema (id, `industry_id` →
+`industries`, `status_id` → `statuses`, name, email, `login_username`/`login_password`,
+links) had existed since the foundation migration + an admin-only RLS policy, but had no
+CRUD surface. Modeled off the **events** pattern, not high-schools/universities: the table
+has no `user_id` and isn't login-backed (the migration's own comment says `login_username`/
+`login_password` are internal admin-only reference notes about the partner's *own* external
+portal, not the WRSI auth mechanism), so create/update/delete are direct RLS-guarded table
+writes — no Edge Function, no credentials-alert step in the UI or Maestro flows.
+
+**Backend:** added seed statuses for a new `entity_type = 'sponsor'` (Prospect/Active/
+Inactive, mirroring `high_school`'s partnership statuses) — no new migration needed since
+`statuses` is already polymorphic; just new rows in `seed.sql`.
+
+**API:** `packages/api/src/sponsors.ts` (`useSponsorsList(search?)`/`useSponsor(id)`/
+`useCreateSponsor()`/`useUpdateSponsor(id)`/`useDeleteSponsor()`), `useIndustries()` added to
+`lookups.ts` for the industry dropdown, `optionalEmailField()` added to
+`shared-utils/validation.ts` (mirrors the existing `webUrlField`/`imageUrlField`
+required-toggle shape) since the sponsor's email is optional unlike auth-login emails.
+
+**Mobile:** `SponsorsListScreen`/`SponsorDetailScreen` (own scaffold, not `EntityDetailScreen`
+— that component hardcodes the login-backed create-with-credentials flow), new `Sponsors` tab
+in `AdminNavigator` (`admin-tab-sponsors`).
+
+**Verified:** `yarn typecheck` + 79 unit tests green (incl. `docs-coverage.test.ts` and the
+i18n key-parity test against the new `en`/`es` keys); `yarn supabase db reset` applied the
+seed change cleanly; `yarn test:backend` — 79 backend tests green including the new
+`tests/backend/security/sponsors.test.ts` (admin-only create/search/update/delete; the
+existing `rls.test.ts` already covered read-visibility denial for this table). **Not
+exercised on a device** — three self-contained Maestro flows were added
+(`.maestro/admin/sponsor-{create,edit,delete}.yaml`, following the high-school flows'
+device-verified conventions: scroll-then-tap for the below-the-fold submit/delete buttons,
+blur-before-submit for `onTouched` validation) but not run against an emulator/build.
+
+## 2026-07-22 — Sponsors CRUD: email/link format validation fix (branch `feat/sponsors-and-allies-crud`)
+
+Follow-up to the sponsors/allies CRUD above: the `links` field's zod schema was a bare
+`z.string()` with no format check at all — any value saved. Fixed to `webUrlField()`
+(optional, single URL, same convention as `website`/`logo_url` elsewhere) and relabeled the
+field "Link" (singular) since the validation now only accepts one well-formed URL.
+
+Also added **DB-layer enforcement** so validation isn't solely a client-side gate: migration
+`20260722000001_sponsors_format_checks.sql` adds CHECK constraints on
+`sponsors_and_allies.email`/`.links` mirroring the app's `isEmail`/`isWebUrl` regexes (null/
+empty still allowed). No other table in the schema has a format CHECK constraint — the rest
+of the app relies on zod alone — but this table's rows are hand-entered admin reference data
+with no other guard, and it was requested explicitly after the client-only gap was found, so
+belt-and-suspenders here is intentional, not a new house style to replicate elsewhere.
+
+**Verified:** `yarn supabase db reset` applied the migration cleanly (no existing rows to
+violate it); `yarn typecheck` + 79 unit green; `yarn test:backend` — 82 backend tests green,
+including 3 new cases in `sponsors.test.ts` asserting the DB rejects a malformed email/link
+on both insert and update (even as admin) while still accepting a well-formed link and
+null/absent values.
+
+## 2026-07-22 — Unify email/URL field builders onto one required-toggle shape (branch `feat/sponsors-and-allies-crud`)
+
+Follow-up to the sponsors `links`-validation fix above: it had introduced a one-off
+`optionalEmailField()` alongside the existing `emailField()`, duplicating what
+`webUrlField(required?)`/`imageUrlField(required?)` already do with a single toggle
+parameter — `docs/VALIDATION.md`'s builder table didn't document that shape as the
+required pattern, so nothing caught the drift at review time. Folded `optionalEmailField()`
+into `emailField(required = true)` (defaults `true` since every existing call site —
+Login, SignUp, `EntityDetailScreen`'s account-creation email — wants it required; the other
+two builders default `false` since website/logo-url fields are usually optional).
+
+While unifying, also fixed a latent message bug shared by all three builders: the old
+`refine((v) => v.length === 0 ? !required : predicate(v), FORMAT_MESSAGE)` shape reported the
+*format* message (e.g. "Enter a valid email address") for an empty *required* field too,
+instead of "This field is required" — never visibly hit before because `emailField()` was the
+only one of the three ever called with `required = true`. Now `.min(required ? 1 : 0,
+VALIDATION_MSG.required).refine((v) => v.length === 0 || predicate(v), FORMAT_MESSAGE)` reports
+the correct message for each case, which matters under real-time (`onTouched`) validation —
+the per-field error must be right as the user is still typing, not just at submit.
+
+`docs/VALIDATION.md` now documents this shape explicitly and tells future work not to add a
+second one-off "optional" builder for a field that already has a `required?` toggle.
+
+**Verified:** `yarn typecheck` green; new `packages/shared-utils/src/validation.test.ts`
+cases cover the required/optional/malformed matrix for all three builders (buildable
+message assertions, not just pass/fail) — 112 unit tests total, all green.
+
+## 2026-07-22 — Sponsors: status/industry search filters (branch `feat/sponsors-and-allies-crud`)
+
+Second follow-up to the sponsors/allies CRUD: added filtering by status and industry
+alongside the existing name search. `SponsorsListScreen` stopped using the generic
+`EntityListScreen` (name-search-only) and became bespoke, mirroring `StudentsListScreen`'s
+collapsible filter panel (a "▸ Filters" toggle, `SearchSelect` dropdowns for status/industry,
+a "Clear filters" button, a results-count line) — same reasoning `EntityListScreen`'s own
+comment already gives for students: an entity with more than name search gets its own list
+screen rather than growing the shared component's prop surface.
+
+`useSponsorsList(search?: string)` → `useSponsorsList(filters: SponsorFilters)` where
+`SponsorFilters = { search?, statusId?, industryId? }`, each independently optional and
+combinable (`.eq()` per present filter, mirroring `useStudentsList`'s `StudentFilters` shape).
+No RLS change needed — filters are just additional `.eq()` predicates the existing admin-only
+policy already covers.
+
+**Verified:** `yarn typecheck` + 112 unit green; `yarn test:backend` — 83 backend tests green,
+including a new case in `sponsors.test.ts` that seeds two sponsors with distinct status/
+industry (fetched from the real seeded lookup rows, not hardcoded ids) and asserts filtering
+by status alone, by industry alone, combined with the name search, and a combination that
+matches neither row. **Not exercised on a device** — a fourth Maestro flow
+(`.maestro/admin/sponsor-filters.yaml`) creates two sponsors (Active/Technology,
+Inactive/Education) via the detail form's chip `Select`, then drives the list's filter panel
+to isolate each and asserts the other is hidden — but wasn't run against an emulator/build.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

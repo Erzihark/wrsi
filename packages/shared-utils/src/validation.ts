@@ -138,13 +138,19 @@ export function requiredString(message: string = VALIDATION_MSG.required) {
   return z.string().trim().min(1, message);
 }
 
-/** Required email. */
-export function emailField() {
+/**
+ * Email. `required = false` (the default for the other field builders below,
+ * but `true` here since every current call site wants a required email)
+ * treats an empty string as valid. Empty-but-required and non-empty-but-
+ * malformed report distinct messages so real-time validation (see
+ * docs/VALIDATION.md) shows the right error as the user types.
+ */
+export function emailField(required = true) {
   return z
     .string()
     .trim()
-    .min(1, VALIDATION_MSG.required)
-    .refine(isEmail, VALIDATION_MSG.email);
+    .min(required ? 1 : 0, VALIDATION_MSG.required)
+    .refine((v) => v.length === 0 || isEmail(v), VALIDATION_MSG.email);
 }
 
 /** Web URL. `required = false` treats an empty string as valid (optional field). */
@@ -152,7 +158,8 @@ export function webUrlField(required = false) {
   return z
     .string()
     .trim()
-    .refine((v) => (v.length === 0 ? !required : isWebUrl(v)), VALIDATION_MSG.url);
+    .min(required ? 1 : 0, VALIDATION_MSG.required)
+    .refine((v) => v.length === 0 || isWebUrl(v), VALIDATION_MSG.url);
 }
 
 /** Image URL (must end in an image extension). `required` as in {@link webUrlField}. */
@@ -160,7 +167,8 @@ export function imageUrlField(required = false) {
   return z
     .string()
     .trim()
-    .refine((v) => (v.length === 0 ? !required : isImageUrl(v)), VALIDATION_MSG.imageUrl);
+    .min(required ? 1 : 0, VALIDATION_MSG.required)
+    .refine((v) => v.length === 0 || isImageUrl(v), VALIDATION_MSG.imageUrl);
 }
 
 /**

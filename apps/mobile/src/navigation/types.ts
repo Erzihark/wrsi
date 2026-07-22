@@ -78,12 +78,18 @@ export type CounselorsStackParamList = {
   Detail: { id?: string };
 };
 
+export type SponsorsStackParamList = {
+  List: undefined;
+  Detail: { id?: string };
+};
+
 export type AdminTabParamList = {
   Students: undefined;
   HighSchools: undefined;
   Universities: undefined;
   Counselors: undefined;
   Events: undefined;
+  Sponsors: undefined;
 };
 
 export type CounselorTabParamList = {

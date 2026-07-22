@@ -5,9 +5,39 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-20
+**Last updated:** 2026-07-22
 
-**In review:** `feat/country-quick-select` — every country dropdown in the app now pins a
+**In review:** `feat/sponsors-and-allies-crud` — new admin directory tab for
+`sponsors_and_allies` (schema + admin-only RLS already existed, unused). Modeled off **events**
+(not high-schools/universities) since it's not login-backed — create/update/delete are direct
+table writes, no Edge Function, no credentials alert. New: `packages/api/src/sponsors.ts`
+(list w/ search, get, create, update, delete), `useIndustries()` lookup, `emailField()`/
+`webUrlField()` validation, `SponsorsListScreen`/`SponsorDetailScreen`, a `Sponsors` admin tab.
+Seeded `entity_type = 'sponsor'` statuses (Prospect/Active/Inactive).
+⚠️ **Fixed during review:** the `links` field had zero format validation (bare `z.string()`) —
+any value saved. Now `webUrlField()` client-side, **plus a DB-layer CHECK constraint**
+(migration `20260722000001_sponsors_format_checks.sql`) on both `email` and `links` so a
+malformed value is rejected even on a direct write, not just blocked by the form.
+`emailField()`/`webUrlField()`/`imageUrlField()` also got unified onto one `required?`-toggle
+shape (an ad-hoc `optionalEmailField()` this feature briefly introduced was folded into
+`emailField(required?)` instead — see docs/VALIDATION.md, now documents this as the standard
+so a new one-off builder isn't added next time).
+
+Also added **search filters**: the list gained a collapsible filter panel (status + industry,
+alongside the existing name search), same pattern as `StudentsListScreen`'s richer filter UI —
+`SponsorsListScreen` is now bespoke rather than the generic `EntityListScreen` (which only
+offers name search). `useSponsorsList(search?)` became `useSponsorsList(filters: SponsorFilters)`
+(`search`/`statusId`/`industryId`, each optional and combinable).
+
+Verified: typecheck + 112 unit + 83 backend all green
+(`tests/backend/security/sponsors.test.ts` covers the CRUD surface, the format-check
+rejection/acceptance cases, and status/industry filtering alone + combined with search;
+`validation.test.ts` covers the required/optional/malformed matrix for all three field
+builders). **Not exercised on a device** — 4 Maestro flows added
+(`.maestro/admin/sponsor-{create,edit,delete,filters}.yaml`, following the high-school flows'
+conventions) but not run against an emulator/build. See DECISIONS.md 2026-07-21 and 2026-07-22.
+
+**Merged:** `feat/country-quick-select` — every country dropdown in the app now pins a
 "quick selection" group (Mexico, US) above the alphabetical list, including the `PhoneField`
 dial-code picker. `OptionPickerModal` grew generic `pinnedValues`/`pinnedLabel`/`allLabel`
 props (headings appear only when both groups are non-empty, so a narrow search stays clean),
