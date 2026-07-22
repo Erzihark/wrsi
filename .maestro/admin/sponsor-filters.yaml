@@ -1,0 +1,112 @@
+# Admin filters the sponsors/allies list by status and by industry (the panel
+# added alongside name search). Self-contained: creates two sponsors with
+# distinct status/industry via the detail form's chip Select, then uses the
+# list's filter panel to isolate each one in turn.
+#
+# Prereqs & device-verified conventions: see sponsor-create.yaml. In short: run
+# against a standalone build; the form is long (scrollUntilVisible before
+# submit); react-hook-form needs a field blur before submit enables. Status/
+# industry options are seeded by supabase/seed.sql and stable across a
+# `db reset` (Prospect/Active/Inactive; Technology/Education/Finance/
+# Healthcare/Manufacturing) — referenced here by their fixed labels.
+appId: com.wxstudy.wrsi
+tags:
+  - admin
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: "admin@wrsi.dev"
+      PASSWORD: "password123"
+- assertVisible:
+    id: "admin-tab-students"
+
+# Unique per run so re-runs don't collide/clutter the list.
+- evalScript: ${output.stamp = Date.now()}
+
+- tapOn:
+    id: "admin-tab-sponsors"
+
+# --- Sponsor A: Active / Technology ---
+- tapOn:
+    id: "admin-add-sponsor"
+- tapOn:
+    id: "sponsor-name-input"
+- inputText: "E2E Filter A ${output.stamp}"
+- hideKeyboard
+- tapOn: "Technology"
+- tapOn: "Active"
+- tapOn:
+    id: "sponsor-email-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+- assertVisible: "E2E Filter A ${output.stamp}"
+
+# --- Sponsor B: Inactive / Education ---
+- tapOn:
+    id: "admin-add-sponsor"
+- tapOn:
+    id: "sponsor-name-input"
+- inputText: "E2E Filter B ${output.stamp}"
+- hideKeyboard
+- tapOn: "Education"
+- tapOn: "Inactive"
+- tapOn:
+    id: "sponsor-email-input"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "entity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "entity-submit"
+- assertVisible: "E2E Filter B ${output.stamp}"
+
+# Narrow the list to just this run's two rows before filtering, so the
+# assertions below can't pass by accident against unrelated seed/dev data.
+- tapOn:
+    id: "admin-sponsor-search"
+- inputText: "E2E Filter"
+- hideKeyboard
+- assertVisible: "E2E Filter A ${output.stamp}"
+- assertVisible: "E2E Filter B ${output.stamp}"
+
+# --- Filter by status: Active -> only A ---
+- tapOn:
+    id: "admin-sponsor-filters-toggle"
+- tapOn:
+    id: "admin-sponsor-status-filter"
+- tapOn: "Active"
+- assertVisible: "E2E Filter A ${output.stamp}"
+- assertNotVisible: "E2E Filter B ${output.stamp}"
+
+# --- Clear filters, then filter by industry: Education -> only B ---
+# The filters panel stays open after "Clear filters" (only the field values
+# reset), so there's no need to tap the toggle again here.
+- tapOn:
+    id: "admin-sponsor-clear-filters"
+- tapOn:
+    id: "admin-sponsor-search"
+- inputText: "E2E Filter"
+- hideKeyboard
+- tapOn:
+    id: "admin-sponsor-industry-filter"
+- tapOn: "Education"
+- assertVisible: "E2E Filter B ${output.stamp}"
+- assertNotVisible: "E2E Filter A ${output.stamp}"
+
+# --- Combine status + industry so neither row matches ---
+- tapOn:
+    id: "admin-sponsor-status-filter"
+- tapOn: "Active"
+- assertNotVisible: "E2E Filter A ${output.stamp}"
+- assertNotVisible: "E2E Filter B ${output.stamp}"

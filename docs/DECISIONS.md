@@ -947,6 +947,31 @@ second one-off "optional" builder for a field that already has a `required?` tog
 cases cover the required/optional/malformed matrix for all three builders (buildable
 message assertions, not just pass/fail) — 112 unit tests total, all green.
 
+## 2026-07-22 — Sponsors: status/industry search filters (branch `feat/sponsors-and-allies-crud`)
+
+Second follow-up to the sponsors/allies CRUD: added filtering by status and industry
+alongside the existing name search. `SponsorsListScreen` stopped using the generic
+`EntityListScreen` (name-search-only) and became bespoke, mirroring `StudentsListScreen`'s
+collapsible filter panel (a "▸ Filters" toggle, `SearchSelect` dropdowns for status/industry,
+a "Clear filters" button, a results-count line) — same reasoning `EntityListScreen`'s own
+comment already gives for students: an entity with more than name search gets its own list
+screen rather than growing the shared component's prop surface.
+
+`useSponsorsList(search?: string)` → `useSponsorsList(filters: SponsorFilters)` where
+`SponsorFilters = { search?, statusId?, industryId? }`, each independently optional and
+combinable (`.eq()` per present filter, mirroring `useStudentsList`'s `StudentFilters` shape).
+No RLS change needed — filters are just additional `.eq()` predicates the existing admin-only
+policy already covers.
+
+**Verified:** `yarn typecheck` + 112 unit green; `yarn test:backend` — 83 backend tests green,
+including a new case in `sponsors.test.ts` that seeds two sponsors with distinct status/
+industry (fetched from the real seeded lookup rows, not hardcoded ids) and asserts filtering
+by status alone, by industry alone, combined with the name search, and a combination that
+matches neither row. **Not exercised on a device** — a fourth Maestro flow
+(`.maestro/admin/sponsor-filters.yaml`) creates two sponsors (Active/Technology,
+Inactive/Education) via the detail form's chip `Select`, then drives the list's filter panel
+to isolate each and asserts the other is hidden — but wasn't run against an emulator/build.
+
 ## Key decisions (for context)
 
 Custom build on Supabase; app-first (students + counselors in one Expo app for Sept, web

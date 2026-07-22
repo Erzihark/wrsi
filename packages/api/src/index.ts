@@ -121,4 +121,4 @@ export {
   useUpdateSponsor,
   useDeleteSponsor,
 } from './sponsors';
-export type { SponsorRow, SponsorInsert, SponsorUpdate } from './sponsors';
+export type { SponsorRow, SponsorInsert, SponsorUpdate, SponsorFilters } from './sponsors';

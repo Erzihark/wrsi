@@ -169,3 +169,94 @@ describe('sponsors_and_allies: email/links format is enforced at the DB layer', 
     await serviceClient().from('sponsors_and_allies').delete().eq('id', created.data?.id as string);
   });
 });
+
+// Covers useSponsorsList's status_id/industry_id filters (SponsorsListScreen's
+// filter panel), on top of the name search already covered above.
+describe('sponsors_and_allies: status/industry filters (useSponsorsList)', () => {
+  const createdIds: string[] = [];
+
+  afterAll(async () => {
+    if (createdIds.length) {
+      await serviceClient().from('sponsors_and_allies').delete().in('id', createdIds);
+    }
+  });
+
+  it('filters by status_id and by industry_id independently, and combined with search', async () => {
+    const admin = await signInAs(EMAILS.admin);
+
+    // Real seeded lookup rows — ids aren't fixed constants like tests/backend/helpers/ids.ts,
+    // so fetch two distinct ones of each to build an unambiguous fixture.
+    const [statusesRes, industriesRes] = await Promise.all([
+      admin.from('statuses').select('id, name').eq('entity_type', 'sponsor').order('sort_order'),
+      admin.from('industries').select('id, name').order('name'),
+    ]);
+    expect(statusesRes.error).toBeNull();
+    expect(industriesRes.error).toBeNull();
+    const statusList = statusesRes.data ?? [];
+    const industryList = industriesRes.data ?? [];
+    expect(statusList.length).toBeGreaterThanOrEqual(2);
+    expect(industryList.length).toBeGreaterThanOrEqual(2);
+    const statusA = statusList[0] as (typeof statusList)[number];
+    const statusB = statusList[1] as (typeof statusList)[number];
+    const industryA = industryList[0] as (typeof industryList)[number];
+    const industryB = industryList[1] as (typeof industryList)[number];
+
+    const stamp = Date.now();
+    const nameA = `Filter Sponsor A ${stamp}`;
+    const nameB = `Filter Sponsor B ${stamp}`;
+
+    const [createdA, createdB] = await Promise.all([
+      admin
+        .from('sponsors_and_allies')
+        .insert({ name: nameA, status_id: statusA.id, industry_id: industryA.id })
+        .select('id')
+        .single(),
+      admin
+        .from('sponsors_and_allies')
+        .insert({ name: nameB, status_id: statusB.id, industry_id: industryB.id })
+        .select('id')
+        .single(),
+    ]);
+    expect(createdA.error).toBeNull();
+    expect(createdB.error).toBeNull();
+    createdIds.push(createdA.data?.id as string, createdB.data?.id as string);
+
+    // Filter by status_id: only the matching row comes back.
+    const byStatus = await admin
+      .from('sponsors_and_allies')
+      .select('id')
+      .eq('status_id', statusA.id)
+      .in('id', createdIds);
+    expect(byStatus.error).toBeNull();
+    expect((byStatus.data ?? []).map((r) => r.id)).toEqual([createdA.data?.id]);
+
+    // Filter by industry_id: only the matching row comes back.
+    const byIndustry = await admin
+      .from('sponsors_and_allies')
+      .select('id')
+      .eq('industry_id', industryB.id)
+      .in('id', createdIds);
+    expect(byIndustry.error).toBeNull();
+    expect((byIndustry.data ?? []).map((r) => r.id)).toEqual([createdB.data?.id]);
+
+    // Combined with the name search (ilike), mirroring useSponsorsList's query shape.
+    const combined = await admin
+      .from('sponsors_and_allies')
+      .select('id')
+      .ilike('name', `%Filter Sponsor%${stamp}%`)
+      .eq('status_id', statusA.id)
+      .eq('industry_id', industryA.id);
+    expect(combined.error).toBeNull();
+    expect((combined.data ?? []).map((r) => r.id)).toEqual([createdA.data?.id]);
+
+    // A status/industry combo that matches neither row returns nothing.
+    const noMatch = await admin
+      .from('sponsors_and_allies')
+      .select('id')
+      .eq('status_id', statusA.id)
+      .eq('industry_id', industryB.id)
+      .in('id', createdIds);
+    expect(noMatch.error).toBeNull();
+    expect(noMatch.data ?? []).toEqual([]);
+  });
+});

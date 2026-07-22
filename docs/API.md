@@ -241,14 +241,15 @@ external portal, not the WRSI auth mechanism. Table is admin-only via RLS
 
 | Hook | Operation | Query key / invalidates | Auth & RLS |
 |---|---|---|---|
-| `useSponsorsList(search?)` | SELECT `sponsors_and_allies` (name ilike) + `industries(name)`/`statuses(name, color)` | `[...sponsors, 'list', term]` | admin |
+| `useSponsorsList(filters?)` | SELECT `sponsors_and_allies` (name ilike + optional `status_id`/`industry_id` eq) + `industries(name)`/`statuses(name, color)` | `[...sponsors, 'list', term, statusId, industryId]` | admin |
 | `useSponsor(id)` | SELECT `sponsors_and_allies` single | `sponsor(id)` | admin |
 | `useCreateSponsor()` | INSERT `sponsors_and_allies` | invalidates `sponsors` | admin |
 | `useUpdateSponsor(id)` | UPDATE `sponsors_and_allies` | invalidates `sponsor(id)` + `sponsors` | admin |
 | `useDeleteSponsor()` | DELETE `sponsors_and_allies` | invalidates `sponsors` | admin |
 
 Also uses `useIndustries()` (`packages/api/src/lookups.ts`) and `useStatuses('sponsor')`
-for the industry/status dropdowns. Other exports: `SponsorRow/Insert/Update` types.
+for the industry/status dropdowns and filters. Other exports: `SponsorRow/Insert/Update`,
+`SponsorFilters` types.
 
 `email`/`links` format is validated both client-side (zod `optionalEmailField()`/
 `webUrlField()`) and at the DB layer via CHECK constraints (migration

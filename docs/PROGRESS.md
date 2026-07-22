@@ -21,13 +21,21 @@ malformed value is rejected even on a direct write, not just blocked by the form
 `emailField()`/`webUrlField()`/`imageUrlField()` also got unified onto one `required?`-toggle
 shape (an ad-hoc `optionalEmailField()` this feature briefly introduced was folded into
 `emailField(required?)` instead — see docs/VALIDATION.md, now documents this as the standard
-so a new one-off builder isn't added next time). Verified: typecheck + 112 unit + 82 backend
-(`tests/backend/security/sponsors.test.ts` covers the CRUD surface + the format-check
-rejection/acceptance cases; `validation.test.ts` covers the required/optional/malformed
-matrix for all three builders) all green. **Not exercised on a
-device** — 3 Maestro flows added (`.maestro/admin/sponsor-{create,edit,delete}.yaml`,
-following the high-school flows' conventions) but not run against an emulator/build. See
-DECISIONS.md 2026-07-21 and 2026-07-22.
+so a new one-off builder isn't added next time).
+
+Also added **search filters**: the list gained a collapsible filter panel (status + industry,
+alongside the existing name search), same pattern as `StudentsListScreen`'s richer filter UI —
+`SponsorsListScreen` is now bespoke rather than the generic `EntityListScreen` (which only
+offers name search). `useSponsorsList(search?)` became `useSponsorsList(filters: SponsorFilters)`
+(`search`/`statusId`/`industryId`, each optional and combinable).
+
+Verified: typecheck + 112 unit + 83 backend all green
+(`tests/backend/security/sponsors.test.ts` covers the CRUD surface, the format-check
+rejection/acceptance cases, and status/industry filtering alone + combined with search;
+`validation.test.ts` covers the required/optional/malformed matrix for all three field
+builders). **Not exercised on a device** — 4 Maestro flows added
+(`.maestro/admin/sponsor-{create,edit,delete,filters}.yaml`, following the high-school flows'
+conventions) but not run against an emulator/build. See DECISIONS.md 2026-07-21 and 2026-07-22.
 
 **Merged:** `feat/country-quick-select` — every country dropdown in the app now pins a
 "quick selection" group (Mexico, US) above the alphabetical list, including the `PhoneField`

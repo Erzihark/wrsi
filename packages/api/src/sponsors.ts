@@ -11,18 +11,32 @@ export type SponsorUpdate = Database['public']['Tables']['sponsors_and_allies'][
 // malform the request (RLS still bounds the result). Mirrors events.ts/directory.ts.
 const sanitize = (search?: string) => search?.trim().replace(/[(),*]/g, '');
 
-/** Sponsors/allies list for the admin directory (name search, ordered by name). */
-export function useSponsorsList(search?: string) {
+export interface SponsorFilters {
+  search?: string;
+  statusId?: string | null;
+  industryId?: string | null;
+}
+
+/** Sponsors/allies list for the admin directory (name search + status/industry filters). */
+export function useSponsorsList(filters: SponsorFilters = {}) {
   const supabase = useSupabase();
-  const term = sanitize(search);
+  const term = sanitize(filters.search);
   return useQuery({
-    queryKey: [...queryKeys.sponsors, 'list', term ?? ''],
+    queryKey: [
+      ...queryKeys.sponsors,
+      'list',
+      term ?? '',
+      filters.statusId ?? '',
+      filters.industryId ?? '',
+    ],
     queryFn: async () => {
       let query = supabase
         .from('sponsors_and_allies')
         .select('id, name, email, industries(name), statuses(name, color)')
         .order('name');
       if (term) query = query.ilike('name', `%${term}%`);
+      if (filters.statusId) query = query.eq('status_id', filters.statusId);
+      if (filters.industryId) query = query.eq('industry_id', filters.industryId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
