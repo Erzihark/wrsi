@@ -29,8 +29,21 @@ export type StudentTabParamList = {
   Profile: NavigatorScreenParams<StudentProfileStackParamList>;
 };
 
-/** Features that aren't built yet and route to the shared "coming soon" screen. */
-export type ComingSoonFeature = 'learning' | 'resources' | 'benefits';
+/**
+ * Features that aren't built yet and route to the shared "coming soon" screen.
+ *
+ * The three `event*` entries come from the event design: Actualizaciones,
+ * Documentos del evento and Próximos pasos each need a content source the
+ * schema doesn't have yet (announcements, uploaded materials, recommendation
+ * content). They route somewhere honest rather than nowhere.
+ */
+export type ComingSoonFeature =
+  | 'learning'
+  | 'resources'
+  | 'benefits'
+  | 'eventUpdates'
+  | 'eventDocuments'
+  | 'eventNextSteps';
 
 export type StudentHomeStackParamList = {
   HomeMain: undefined;
@@ -56,9 +69,25 @@ export type StudentUniversitiesStackParamList = {
   UniversityDetail: { universityId: string };
 };
 
+/**
+ * The student's event experience. `EventDetail` is the hub that swaps its
+ * content between the designed before / during / after views; everything below
+ * it is a destination that hub links to, so each screen only ever needs the
+ * event id (plus a university id where the screen is about one university).
+ */
 export type StudentEventsStackParamList = {
   EventsList: undefined;
   EventDetail: { eventId: string };
+  EventUniversities: { eventId: string };
+  EventUniversityDetail: { eventId: string; universityId: string };
+  EventMyUniversities: { eventId: string };
+  EventWorkshops: { eventId: string };
+  EventMeetings: { eventId: string };
+  EventAgenda: { eventId: string };
+  EventNotes: { eventId: string };
+  EventInfo: { eventId: string };
+  EventSummary: { eventId: string };
+  ComingSoon: { feature: ComingSoonFeature };
 };
 
 export type StudentsStackParamList = {

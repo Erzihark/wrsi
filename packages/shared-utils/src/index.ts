@@ -5,6 +5,7 @@ export * from './profileCompletion';
 export * from './journey';
 export * from './applicationTimeline';
 export * from './eventsDisplay';
+export * from './eventExperience';
 export * from './greeting';
 export * from './whatsapp';
 export * from './countries';

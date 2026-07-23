@@ -156,10 +156,10 @@ describe('trigger: workshop time-overlap prevention', () => {
     }
   });
 
-  it('blocks registering for a workshop overlapping one already booked', async () => {
+  it('lets a student request an overlapping workshop, but blocks approving it against an already-approved one', async () => {
     const svc = serviceClient();
-    // student1 is seeded into workshop w1; create a second workshop at the exact
-    // same time so a registration must collide.
+    // student1 is seeded with workshop w1 *approved*; create a second workshop
+    // at the exact same time so an approval must collide.
     const w1 = await svc
       .from('workshops')
       .select('start_time, end_time')
@@ -181,12 +181,31 @@ describe('trigger: workshop time-overlap prevention', () => {
     expect(created.error).toBeNull();
     overlapWorkshopId = created.data?.id;
 
+    // The pending request is allowed — pending rows don't collide (staff resolve
+    // conflicts by choosing which to approve).
     const student = await signInAs(EMAILS.student1);
     const reg = await student
       .from('workshop_registrations')
       .insert({ student_id: IDS.students.s1, workshop_id: overlapWorkshopId as string })
+      .select('status');
+    expect(reg.error).toBeNull();
+    expect(reg.data?.[0]?.status).toBe('pending');
+
+    // Approving it, while w1 is already approved at the same time, trips the guard.
+    const admin = await signInAs(EMAILS.admin);
+    const approve = await admin
+      .from('workshop_registrations')
+      .update({ status: 'approved' })
+      .eq('student_id', IDS.students.s1)
+      .eq('workshop_id', overlapWorkshopId as string)
       .select();
-    expect(reg.error).not.toBeNull();
-    expect(reg.error?.message ?? '').toMatch(/overlapping/i);
+    expect(approve.error).not.toBeNull();
+    expect(approve.error?.message ?? '').toMatch(/overlapping/i);
+
+    await svc
+      .from('workshop_registrations')
+      .delete()
+      .eq('student_id', IDS.students.s1)
+      .eq('workshop_id', overlapWorkshopId as string);
   });
 });

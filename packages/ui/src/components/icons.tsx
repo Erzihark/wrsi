@@ -526,6 +526,25 @@ export function StarIcon({ size = 16, color, filled = false }: IconProps & { fil
   );
 }
 
+/**
+ * Drag handle (⣿) for the reorderable ranking. A glyph would have been the
+ * obvious choice, but the braille/dot characters that look right have emoji
+ * variants on some Android font stacks — the same trap this whole module exists
+ * to avoid — so it is drawn instead.
+ */
+export function GripIcon({ size = 16, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 6h0M15 6h0M9 12h0M15 12h0M9 18h0M15 18h0"
+        stroke={color}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
 // --- Brand marks (solid fill; drawn to their own official silhouettes) -------
 // These use `fill` (not stroke) so they read as recognizable logos. WhatsApp
 // keeps its bubble+handset; the social marks are simplified glyphs.

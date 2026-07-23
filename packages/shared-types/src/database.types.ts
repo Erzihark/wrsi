@@ -870,35 +870,57 @@ export type Database = {
       one_to_ones: {
         Row: {
           created_at: string
-          end_time: string
+          decided_at: string | null
+          decided_by: string | null
+          end_time: string | null
           event_id: string
           id: string
-          start_time: string
+          room: string | null
+          start_time: string | null
+          status: string
           student_id: string | null
+          student_note: string | null
           university_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
-          end_time: string
+          decided_at?: string | null
+          decided_by?: string | null
+          end_time?: string | null
           event_id: string
           id?: string
-          start_time: string
+          room?: string | null
+          start_time?: string | null
+          status?: string
           student_id?: string | null
+          student_note?: string | null
           university_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
-          end_time?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          end_time?: string | null
           event_id?: string
           id?: string
-          start_time?: string
+          room?: string | null
+          start_time?: string | null
+          status?: string
           student_id?: string | null
+          student_note?: string | null
           university_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "one_to_ones_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "one_to_ones_event_id_fkey"
             columns: ["event_id"]
@@ -1513,18 +1535,24 @@ export type Database = {
       student_university_interest: {
         Row: {
           created_at: string
+          interest_level: string
+          rank: number | null
           rating: number | null
           student_id: string
           university_id: string
         }
         Insert: {
           created_at?: string
+          interest_level?: string
+          rank?: number | null
           rating?: number | null
           student_id: string
           university_id: string
         }
         Update: {
           created_at?: string
+          interest_level?: string
+          rank?: number | null
           rating?: number | null
           student_id?: string
           university_id?: string
@@ -1957,20 +1985,39 @@ export type Database = {
       workshop_registrations: {
         Row: {
           created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          room: string | null
+          status: string
           student_id: string
           workshop_id: string
         }
         Insert: {
           created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          room?: string | null
+          status?: string
           student_id: string
           workshop_id: string
         }
         Update: {
           created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          room?: string | null
+          status?: string
           student_id?: string
           workshop_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workshop_registrations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workshop_registrations_student_id_fkey"
             columns: ["student_id"]

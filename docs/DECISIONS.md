@@ -5,6 +5,74 @@
 > when you need the reasoning/verification behind a past change; read `PROGRESS.md` first for
 > current status.
 
+## 2026-07-23 — Student event experience + request/approval model (`feat/student-event-experience`)
+
+The designer's student event views (pre / during / post a single event), plus the backend
+change they forced.
+
+**The hub, not three screens.** The comp is three phone mockups — Antes / Durante / Después —
+that share a hero, a status "check" card, and a vertical list of destination rows; only the
+*content* differs. Built as one `EventDetailScreen` whose phase comes from `eventPhase(event,
+today)` (upcoming / live / past off `start_date`/`end_date`, string-compared so no timezone can
+shift the day; an event with no start date is `upcoming`, never "finished"). Each phase renders a
+different status card + nav-row set; the layout is identical. This is what keeps it maintainable
+as one file with one set of shared components (`events/components.tsx`).
+
+**Request-and-approve (migration `20260723000001`).** The comp shows workshops and 1:1s as
+requests with Solicitados / Aprobados / Rechazados tabs, Pendiente/Aprobado badges, and an
+assigned "Salón 7" — which the old instant-registration + first-come-slot models could not
+express. Decision (confirmed with the owner): build the **full** model, student + admin.
+- A student INSERTs a `pending` row; staff set `status`/`room` (+ `start_time`/`end_time` for
+  meetings) and approve or reject.
+- `enforce_request_decision_authority` (BEFORE INSERT/UPDATE, SECURITY DEFINER) is the column-
+  level guard RLS can't express: it forces non-staff inserts to pending and blanks every staff-
+  owned field (status, room, decided_*, **and a 1:1's time** — so a student can't self-schedule),
+  and on UPDATE rejects any non-staff write except to `student_note`. It compares
+  `to_jsonb(new) - 'student_note'` vs old rather than field-by-field, so a future column stays
+  guarded by default. Service/seed context (`auth.uid() is null`) counts as staff, else seeded
+  approved rows get downgraded to pending.
+- `notify_student_on_request_decision` writes the student a notification on a decision (event id
+  in `data` for a deep link).
+- `one_to_ones` flipped from admin-created open slots (student claims a free one) to student-
+  created requests: `start_time`/`end_time` nullable until scheduled; a **partial unique index**
+  (`event_id, university_id, student_id` where not rejected) allows one live request per
+  university. The pre-request `guard_one_to_one_booking` hardening trigger is **dropped** — its
+  "book a free slot" semantics is gone and the new trigger is a stricter successor.
+- `prevent_workshop_time_overlap` recut to count **approved** rows only and to run on approval as
+  well as insert: two *pending* requests may clash (staff resolve by choosing which to approve).
+
+**Global interest + ranking.** `student_university_interest` gained `interest_level`
+(interesada/favorita) and a global `rank` (not per-event) so a top built at the tour is the same
+top in the Universidades tab. `rank` is deliberately **not** uniquely constrained — a reorder
+rewrites the block in one upsert and the intermediate state has duplicates; readers sort
+`rank NULLS LAST, created_at, id` (total + stable). `renumberRanks` writes only the rows that
+actually moved. The old flat `useToggleUniversityInterest` → `useSetUniversityInterest` (cycles
+none→interesada→favorita→none; a new favorite appends to the end of the ranking) +
+`useReorderFavoriteUniversities`. `useMyUniversityInterests` now returns `{ rows, byId }`.
+
+**Comp adaptations (deliberate, per DESIGN.md).** During-phase 2×2 tiles and the 3-across
+"vistas" strip → full-width rows (Spanish sentences don't fit multi-across at ≥14px). **Removed
+the Representante en el evento section** at the client's request. Dropped the university sheet's
+type/funding/language chip row — no columns back it. Ranking reorder is **real drag-and-drop**
+(`react-native-reorderable-list` on reanimated 4 + gesture-handler + worklets; `GestureHandlerRootView`
+in `AppProviders`, `react-native-worklets/plugin` in babel config) — chosen over arrow controls
+to match the comp; **requires a fresh EAS dev build** and can't be exercised on web. Unbuildable
+comp rows (Actualizaciones / Documentos / Próximos pasos) → ComingSoon; Agenda / Resumen /
+Información are derived from existing data. `SegmentedTabs` (new `@wrsi/ui` primitive) is
+horizontally scrollable, not equal-width, so "Solicitados (4)" stays ≥14px.
+
+**Pure logic** lives in `@wrsi/shared-utils/eventExperience` (phase, prep checklist, agenda
+merge/next/group, interest filter/sort/renumber, summary) — 45 unit tests, no React/Supabase.
+
+*Verified:* `yarn typecheck` + 198 unit + 92 backend green (events/rls security suites rewritten
+for the request model; 5 new one_to_ones tests, workshop overlap now tested on approval). Web
+preview at 360×640 signed in as student1 on the live local stack: pre-event hub renders correctly
+(hero, "Registrado el 23 Jul, 2026", 4/5 prep ring + checklist, 5 nav rows), zero overflow at
+100%/130%, no horizontal scroll; the ☆/★ cycle persisted a mutation and updated filter counts
+live; workshop tabs showed status + Salón. ⚠️ **Not device-verified** — web can't do the drag
+gesture, native shadow/elevation, real safe-area, or the Android emoji-glyph trap (§4.4); native
+deps need an EAS build; no Maestro flow yet.
+
 ## Foundation (early milestones, verified)
 
 Two commits on `master`: `2276c44` (Supabase backend + monorepo foundation), `74c753e`

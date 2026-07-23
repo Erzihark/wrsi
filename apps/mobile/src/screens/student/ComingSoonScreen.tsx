@@ -2,24 +2,44 @@ import { View } from 'react-native';
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { BookIcon, GraduationCapIcon, HeartIcon, Screen, Text, useTheme } from '@wrsi/ui';
-import type { ComingSoonFeature, StudentHomeStackParamList } from '../../navigation/types';
+import {
+  BellIcon,
+  BookIcon,
+  CompassIcon,
+  FolderIcon,
+  GraduationCapIcon,
+  HeartIcon,
+  Screen,
+  Text,
+  useTheme,
+} from '@wrsi/ui';
+import type { ComingSoonFeature } from '../../navigation/types';
 
 const ICONS: Record<ComingSoonFeature, typeof BookIcon> = {
   learning: GraduationCapIcon,
   resources: BookIcon,
   benefits: HeartIcon,
+  eventUpdates: BellIcon,
+  eventDocuments: FolderIcon,
+  eventNextSteps: CompassIcon,
 };
 
 /**
  * Shared destination for designed-but-unbuilt features (WRSI Learning, the
- * resources library, student benefits). Keeps the dashboard's tiles honest —
- * they lead somewhere that says "not yet" instead of nowhere.
+ * resources library, student benefits, and three rows of the event design).
+ * Keeps the tiles honest — they lead somewhere that says "not yet" instead of
+ * nowhere.
+ *
+ * The route type is declared locally rather than borrowing one stack's param
+ * list: this screen is registered in both the Home and Events stacks, and both
+ * pass the same single param.
  */
+type ComingSoonRoute = RouteProp<{ ComingSoon: { feature: ComingSoonFeature } }, 'ComingSoon'>;
+
 export function ComingSoonScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const route = useRoute<RouteProp<StudentHomeStackParamList, 'ComingSoon'>>();
+  const route = useRoute<ComingSoonRoute>();
   const feature = route.params.feature;
   const Icon = ICONS[feature];
 

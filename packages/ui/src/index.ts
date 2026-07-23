@@ -29,6 +29,8 @@ export { keyboardOverlap } from './components/keyboardOverlap';
 export type { KeyboardOverlapArgs } from './components/keyboardOverlap';
 export { Chip } from './components/Chip';
 export type { ChipProps } from './components/Chip';
+export { SegmentedTabs } from './components/SegmentedTabs';
+export type { SegmentedTabsProps, SegmentedTabOption } from './components/SegmentedTabs';
 export { Select } from './components/Select';
 export type { SelectProps, Option } from './components/Select';
 export { MultiSelect } from './components/MultiSelect';
@@ -85,6 +87,7 @@ export {
   PersonPlusIcon,
   BuildingIcon,
   StarIcon,
+  GripIcon,
   WhatsAppIcon,
   InstagramIcon,
   TikTokIcon,

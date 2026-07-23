@@ -24,8 +24,17 @@ import { HomeScreen } from "../screens/student/home/HomeScreen";
 import { UniversitiesScreen } from "../screens/student/UniversitiesScreen";
 import { UniversityDetailScreen } from "../screens/student/UniversityDetailScreen";
 import { DocumentsScreen } from "../screens/student/DocumentsScreen";
-import { EventsScreen } from "../screens/student/EventsScreen";
-import { EventDetailScreen } from "../screens/student/EventDetailScreen";
+import { EventsScreen } from "../screens/student/events/EventsScreen";
+import { EventDetailScreen } from "../screens/student/events/EventDetailScreen";
+import { EventUniversitiesScreen } from "../screens/student/events/EventUniversitiesScreen";
+import { EventUniversityDetailScreen } from "../screens/student/events/EventUniversityDetailScreen";
+import { EventMyUniversitiesScreen } from "../screens/student/events/EventMyUniversitiesScreen";
+import { EventWorkshopsScreen } from "../screens/student/events/EventWorkshopsScreen";
+import { EventMeetingsScreen } from "../screens/student/events/EventMeetingsScreen";
+import { EventAgendaScreen } from "../screens/student/events/EventAgendaScreen";
+import { EventNotesScreen } from "../screens/student/events/EventNotesScreen";
+import { EventInfoScreen } from "../screens/student/events/EventInfoScreen";
+import { EventSummaryScreen } from "../screens/student/events/EventSummaryScreen";
 import { NotificationsScreen } from "../screens/student/NotificationsScreen";
 import { ApplicationsScreen } from "../screens/student/applications/ApplicationsScreen";
 import { ComingSoonScreen } from "../screens/student/ComingSoonScreen";
@@ -111,6 +120,12 @@ function UniversitiesStackScreen() {
 
 const EventsStack = createNativeStackNavigator<StudentEventsStackParamList>();
 
+/**
+ * Eventos. The list opens the event hub, which then branches into the designed
+ * in-event destinations. Every screen below the list keeps its navigator header
+ * — it supplies the back affordance *and* consumes the top safe-area inset,
+ * which nothing else in this stack does.
+ */
 function EventsStackScreen() {
   const { t } = useTranslation();
   return (
@@ -124,6 +139,56 @@ function EventsStackScreen() {
         name="EventDetail"
         component={EventDetailScreen}
         options={{ title: t("student.events") }}
+      />
+      <EventsStack.Screen
+        name="EventUniversities"
+        component={EventUniversitiesScreen}
+        options={{ title: t("eventDetail.universities.title") }}
+      />
+      <EventsStack.Screen
+        name="EventUniversityDetail"
+        component={EventUniversityDetailScreen}
+        options={{ title: t("student.universities") }}
+      />
+      <EventsStack.Screen
+        name="EventMyUniversities"
+        component={EventMyUniversitiesScreen}
+        options={{ title: t("eventDetail.myUniversities.title") }}
+      />
+      <EventsStack.Screen
+        name="EventWorkshops"
+        component={EventWorkshopsScreen}
+        options={{ title: t("eventDetail.workshops.title") }}
+      />
+      <EventsStack.Screen
+        name="EventMeetings"
+        component={EventMeetingsScreen}
+        options={{ title: t("eventDetail.meetings.title") }}
+      />
+      <EventsStack.Screen
+        name="EventAgenda"
+        component={EventAgendaScreen}
+        options={{ title: t("eventDetail.agenda.title") }}
+      />
+      <EventsStack.Screen
+        name="EventNotes"
+        component={EventNotesScreen}
+        options={{ title: t("eventDetail.notes.title") }}
+      />
+      <EventsStack.Screen
+        name="EventInfo"
+        component={EventInfoScreen}
+        options={{ title: t("eventDetail.info.title") }}
+      />
+      <EventsStack.Screen
+        name="EventSummary"
+        component={EventSummaryScreen}
+        options={{ title: t("eventDetail.summary.title") }}
+      />
+      <EventsStack.Screen
+        name="ComingSoon"
+        component={ComingSoonScreen}
+        options={{ title: "" }}
       />
     </EventsStack.Navigator>
   );

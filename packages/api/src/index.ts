@@ -6,7 +6,8 @@ export {
   useUniversities,
   useUniversityPrograms,
   useMyUniversityInterests,
-  useToggleUniversityInterest,
+  useSetUniversityInterest,
+  useReorderFavoriteUniversities,
   useMyStudentProfile,
   useNotifications,
   useUnreadNotificationsCount,
@@ -14,6 +15,7 @@ export {
   useMarkAllNotificationsRead,
   useMyCounselor,
 } from './hooks';
+export type { InterestLevel, UniversityInterestRow } from './hooks';
 export { useMyApplications } from './applications';
 export { useUploadMyAvatar, useUploadCounselorPhoto } from './avatars';
 export type { UploadAvatarFile } from './avatars';
@@ -85,13 +87,18 @@ export {
   useEvent,
   useEventUniversities,
   useEventWorkshops,
-  useOneToOnes,
   useMyEventRegistrations,
   useToggleEventRegistration,
-  useMyWorkshopRegistrations,
-  useToggleWorkshopRegistration,
-  useBookOneToOne,
-  useCancelOneToOne,
+  useMyWorkshopRequests,
+  useRequestWorkshop,
+  useCancelWorkshopRequest,
+  useMyMeetingRequests,
+  useRequestMeeting,
+  useCancelMeetingRequest,
+  useEventWorkshopRequests,
+  useEventMeetingRequests,
+  useDecideWorkshopRequest,
+  useDecideMeetingRequest,
   useEventNotes,
   useSaveEventNote,
   useEventsAdminList,
@@ -102,8 +109,6 @@ export {
   useRemoveEventUniversity,
   useCreateWorkshop,
   useDeleteWorkshop,
-  useCreateOneToOneSlot,
-  useDeleteOneToOneSlot,
 } from './events';
 export type {
   EventRow,
@@ -112,7 +117,10 @@ export type {
   EventNoteRow,
   WorkshopRow,
   WorkshopInsert,
-  OneToOneInsert,
+  RequestStatus,
+  EventUniversity,
+  MyWorkshopRequest,
+  MyMeetingRequest,
 } from './events';
 export {
   useSponsorsList,

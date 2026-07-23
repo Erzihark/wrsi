@@ -7,6 +7,51 @@
 
 **Last updated:** 2026-07-23
 
+**In review:** `feat/student-event-experience` — the designer's student event views
+(pre / during / post), built as an event **hub** (`screens/student/events/EventDetailScreen`)
+that swaps its content by phase (`eventPhase()`: upcoming/live/past off the event dates) over a
+shared hero + status-card + full-width-nav-rows layout, plus the destinations it links to:
+participating universities (search + Todas/Favoritas/Interesadas filter + a ☆/★ cycle),
+a university sheet, a drag-ordered "Mis universidades" ranking, workshop + 1:1 **request**
+screens, agenda, notes, info, and a post-event summary. New `EventsScreen` (phase-tagged cards)
+replaces the old flat list; both old student event screens were deleted.
+
+**Backend — request-and-approve model** (migration `20260723000001`): workshops and 1:1s are no
+longer instant/first-come. A student INSERTs a `pending` row; staff set status + room (+ time
+for meetings) and approve/reject. `enforce_request_decision_authority` (BEFORE INSERT/UPDATE)
+forces non-staff rows to pending and blanks every staff-owned field (incl. a 1:1's time), and
+rejects a non-staff write to anything but `student_note`; `notify_student_on_request_decision`
+pings the student. `one_to_ones` flipped from admin-created open slots → student-created
+requests (times nullable until scheduled; a partial unique index allows one live request per
+university). The old `guard_one_to_one_booking` hardening trigger is dropped (superseded).
+`prevent_workshop_time_overlap` now only counts **approved** rows and runs on approval too.
+University interest gained `interest_level` (interesada/favorita) + a global `rank`, so the
+ranking follows the student out of the event into the Universidades tab. Admin `EventDetailScreen`
+grew the two approval queues; the old slot-creation form is gone.
+
+**Adaptations / departures from the comp** (all deliberate): the "during" 2×2 tile grid and the
+3-across "Vistas dentro del evento" strip are **full-width rows** — the Spanish sentences don't
+fit two/three-across at ≥14px (DESIGN.md §1.4). The **Representante en el evento** section
+(named contact + mail/chat) is **removed per the client's instruction**. The university sheet's
+"Universidad · Pública · Inglés" chip row is **dropped** — no institution-type/funding/language
+columns exist; bring it back when they do. Ranking reorder is **real drag-and-drop** via
+`react-native-reorderable-list` (+ `react-native-reanimated` 4 / `react-native-gesture-handler`
+/ `react-native-worklets` — **native deps, needs a fresh EAS dev build**; `GestureHandlerRootView`
+added in `AppProviders`, worklets babel plugin in `apps/mobile/babel.config.js`). Comp rows with
+no data source — **Actualizaciones, Documentos del evento, Próximos pasos** — route to the shared
+ComingSoon screen; **Mi agenda / Resumen / Información** are derived from existing data. Purple
+finished-state badge reads neutral gray (not in the palette).
+
+Verified: `yarn typecheck` + 198 unit (45 new in `@wrsi/shared-utils/eventExperience`) + 92
+backend (events/rls suites rewritten for the request model) all green. Driven in the web preview
+at 360×640 signed in as student1 against the live local stack: the pre-event hub renders (hero,
+"Registrado el…", 4/5 prep ring + checklist, 5 nav rows), zero text overflow at 100% **and**
+130% font scale, no horizontal page scroll; the ☆/★ cycle persists a mutation and updates the
+filter counts live; workshop request tabs show status + assigned Salón. ⚠️ **Not device-verified**
+— the web preview can't exercise the drag gesture, native shadow/elevation, real safe-area
+insets, or the Android emoji-glyph trap (DESIGN.md §4.4), and the new native deps need an EAS
+build before the ranking renders on a device. No Maestro flow added yet.
+
 **In review:** `fix/onboarding-keyboard-and-safe-area` — reported on the onboarding wizard: the
 keyboard hid the input you were typing in, and the Next/Submit row sat under the phone's own
 navigation buttons. Both come from the app being **edge-to-edge on Android**

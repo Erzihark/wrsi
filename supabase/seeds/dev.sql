@@ -209,13 +209,28 @@ begin
     (w2, ev1, un2, 'Ipsum Scholarships', (current_date + 60)::timestamptz + interval '12 hours', (current_date + 60)::timestamptz + interval '13 hours')
   on conflict (id) do nothing;
   insert into public.event_registrations (student_id, event_id) values (s1, ev1) on conflict do nothing;
-  insert into public.workshop_registrations (student_id, workshop_id) values (s1, w1) on conflict do nothing;
+  -- One approved workshop and one still-pending request, so the student's
+  -- Solicitados / Aprobados tabs both have a row. `status` is passed explicitly
+  -- because the decision-authority trigger only auto-fills it for real callers.
+  insert into public.workshop_registrations (student_id, workshop_id, status, room, decided_at) values
+    (s1, w1, 'approved', 'Salón 7', now()),
+    (s1, w2, 'pending', null, null)
+  on conflict do nothing;
+  -- A meeting request per state: approved (with a scheduled time + room) and
+  -- pending (no time yet).
+  insert into public.one_to_ones (event_id, university_id, student_id, status, room, start_time, end_time, decided_at) values
+    (ev1, un1, s1, 'approved', 'Salón 3',
+     (current_date + 60)::timestamptz + interval '11 hours 30 minutes',
+     (current_date + 60)::timestamptz + interval '12 hours', now()),
+    (ev1, un2, s1, 'pending', null, null, null, null);
   insert into public.event_notes (student_id, event_id, university_id, note, ranking)
   values (s1, ev1, un1, 'Lorem ipsum: liked the campus tour talk.', 1);
 
   -- Fires the admin-notification trigger -> admin gets a notification too.
-  insert into public.student_university_interest (student_id, university_id, rating)
-  values (s1, un1, 5) on conflict do nothing;
+  -- s1 has a small ranking (un1 favorite/#1); un2 is only "interested".
+  insert into public.student_university_interest (student_id, university_id, interest_level, rank, rating)
+  values (s1, un1, 'favorite', 1, 5), (s1, un2, 'interested', null, null)
+  on conflict do nothing;
 
   -- Applications ---------------------------------------------------------------
   -- One per stage of the catalog so "Mis aplicaciones" renders every card state

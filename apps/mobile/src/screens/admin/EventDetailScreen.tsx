@@ -12,15 +12,16 @@ import {
   useAddEventUniversity,
   useCountries,
   useCreateEvent,
-  useCreateOneToOneSlot,
   useCreateWorkshop,
+  useDecideMeetingRequest,
+  useDecideWorkshopRequest,
   useDeleteEvent,
-  useDeleteOneToOneSlot,
   useDeleteWorkshop,
   useEvent,
+  useEventMeetingRequests,
   useEventUniversities,
+  useEventWorkshopRequests,
   useEventWorkshops,
-  useOneToOnes,
   useRemoveEventUniversity,
   useStatesProvinces,
   useUniversitiesList,
@@ -28,6 +29,7 @@ import {
   type EventInsert,
 } from '@wrsi/api';
 import {
+  Badge,
   Button,
   Card,
   DateField,
@@ -40,6 +42,7 @@ import {
   useConfirm,
   useTheme,
   useToast,
+  type BadgeTone,
 } from '@wrsi/ui';
 import type { AdminEventsStackParamList } from '../../navigation/types';
 import {
@@ -372,7 +375,123 @@ function EventWorkshopsSection({
   );
 }
 
-function EventOneToOnesSection({
+const STATUS_TONES: Record<string, BadgeTone> = {
+  pending: 'accent',
+  approved: 'success',
+  rejected: 'danger',
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+  return (
+    <Badge
+      label={t(`eventDetail.requestStatus.${status}` as 'eventDetail.requestStatus.pending')}
+      tone={STATUS_TONES[status] ?? 'neutral'}
+    />
+  );
+}
+
+const studentName = (s: { first_name: string | null; last_name: string | null } | null) =>
+  [s?.first_name, s?.last_name].filter(Boolean).join(' ') || '—';
+
+/**
+ * Approval queue for workshop requests.
+ *
+ * Approving may fail on `prevent_workshop_time_overlap` — the DB refuses to
+ * approve a workshop that clashes with another one the same student already has
+ * approved. That's surfaced as a toast rather than pre-filtered client-side, so
+ * the rule lives in exactly one place.
+ */
+function EventWorkshopRequestsSection({ eventId }: { eventId: string }) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const toast = useToast();
+  const requests = useEventWorkshopRequests(eventId);
+  const decide = useDecideWorkshopRequest();
+  const [rooms, setRooms] = useState<Record<string, string>>({});
+
+  async function onDecide(
+    studentId: string,
+    workshopId: string,
+    status: 'pending' | 'approved' | 'rejected',
+  ) {
+    try {
+      await decide.mutateAsync({
+        studentId,
+        workshopId,
+        eventId,
+        status,
+        room: rooms[`${studentId}:${workshopId}`],
+      });
+      toast.show({ type: 'success', message: t('events.decidedToast') });
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
+  }
+
+  return (
+    <View style={{ marginTop: theme.spacing.lg, gap: theme.spacing.sm }}>
+      <Text variant="label">{t('events.workshopRequests')}</Text>
+      {(requests.data ?? []).map((r) => {
+        const key = `${r.student_id}:${r.workshop_id}`;
+        return (
+          <Card key={key} style={{ gap: theme.spacing.sm }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
+              <Text variant="label" style={{ flex: 1 }}>
+                {studentName(r.students)}
+              </Text>
+              <StatusBadge status={r.status} />
+            </View>
+            <Text variant="muted">
+              {[r.workshops?.title, r.workshops ? formatTime(r.workshops.start_time) : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+            <Input
+              label={t('events.room')}
+              placeholder={t('events.roomPlaceholder')}
+              value={rooms[key] ?? r.room ?? ''}
+              onChangeText={(value) => setRooms((prev) => ({ ...prev, [key]: value }))}
+            />
+            <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+              {r.status !== 'approved' ? (
+                <View style={{ flex: 1 }}>
+                  <Button
+                    variant="brand"
+                    title={t('events.approve')}
+                    loading={decide.isPending}
+                    onPress={() => onDecide(r.student_id, r.workshop_id, 'approved')}
+                  />
+                </View>
+              ) : null}
+              {r.status !== 'rejected' ? (
+                <View style={{ flex: 1 }}>
+                  <Button
+                    variant="danger"
+                    title={t('events.reject')}
+                    loading={decide.isPending}
+                    onPress={() => onDecide(r.student_id, r.workshop_id, 'rejected')}
+                  />
+                </View>
+              ) : null}
+            </View>
+          </Card>
+        );
+      })}
+      {requests.data && requests.data.length === 0 ? (
+        <Text variant="muted">{t('events.noRequests')}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Approval queue for 1:1 meeting requests. Unlike workshops, a meeting has no
+ * time until staff give it one, so approving requires a date + start/end (the
+ * same `validateSlot` rules the workshop form uses, including "inside the
+ * event's own dates").
+ */
+function EventMeetingRequestsSection({
   eventId,
   eventStartDate,
   eventEndDate,
@@ -381,138 +500,162 @@ function EventOneToOnesSection({
   eventStartDate: string | null;
   eventEndDate: string | null;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
-  const toast = useToast();
-  const confirm = useConfirm();
-  const nowY = new Date().getFullYear();
-  const slots = useOneToOnes(eventId);
-  const universities = useUniversitiesList();
-  const create = useCreateOneToOneSlot();
-  const remove = useDeleteOneToOneSlot();
-
-  const [universityId, setUniversityId] = useState<string | null>(null);
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [errors, setErrors] = useState<SlotFormErrors>({});
-
-  const universityOptions = (universities.data ?? []).map((u) => ({ label: u.name, value: u.id }));
-
-  // Live validity → gate the Add button (errors are still shown on press).
-  const canAdd =
-    Object.keys(validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate)).length === 0;
-
-  async function add() {
-    const slotErrors = validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate);
-    setErrors(slotErrors);
-    if (Object.keys(slotErrors).length > 0) return;
-    try {
-      await create.mutateAsync({
-        event_id: eventId,
-        university_id: universityId,
-        start_time: `${date}T${startTime}:00`,
-        end_time: `${date}T${endTime}:00`,
-      });
-      setUniversityId(null);
-      setDate('');
-      setStartTime('');
-      setEndTime('');
-      setErrors({});
-      toast.show({ type: 'success', message: t('events.slotAddedToast') });
-    } catch (e) {
-      toast.show({ type: 'error', message: (e as Error).message });
-    }
-  }
-
-  async function onRemove(slotId: string) {
-    const ok = await confirm.confirm({
-      title: t('events.remove'),
-      message: t('events.removeSlotConfirmMessage'),
-      confirmText: t('events.remove'),
-      cancelText: t('common.cancel'),
-      destructive: true,
-    });
-    if (!ok) return;
-    try {
-      await remove.mutateAsync({ id: slotId, eventId });
-      toast.show({ type: 'success', message: t('events.slotRemovedToast') });
-    } catch (e) {
-      toast.show({ type: 'error', message: (e as Error).message });
-    }
-  }
+  const requests = useEventMeetingRequests(eventId);
 
   return (
     <View style={{ marginTop: theme.spacing.lg, gap: theme.spacing.sm }}>
-      <Text variant="label">{t('events.oneToOnes')}</Text>
-      {(slots.data ?? []).map((slot) => (
-        <Card key={slot.id} style={{ gap: theme.spacing.xs }}>
-          <Text variant="title">{slot.universities?.name ?? '—'}</Text>
-          <Text variant="muted">{`${formatTime(slot.start_time)} – ${formatTime(slot.end_time)}`}</Text>
-          {slot.student_id ? <Text variant="muted">{t('events.booked')}</Text> : null}
-          <Button
-            variant="danger"
-            title={t('events.remove')}
-            loading={remove.isPending}
-            onPress={() => onRemove(slot.id)}
-          />
-        </Card>
+      <Text variant="label">{t('events.meetingRequests')}</Text>
+      {(requests.data ?? []).map((r) => (
+        <MeetingRequestCard
+          key={r.id}
+          eventId={eventId}
+          eventStartDate={eventStartDate}
+          eventEndDate={eventEndDate}
+          request={r}
+        />
       ))}
-      {slots.data && slots.data.length === 0 ? <Text variant="muted">{t('events.noOneToOnes')}</Text> : null}
-
-      <Card style={{ gap: theme.spacing.sm }}>
-        <Select
-          label={t('admin.university')}
-          options={universityOptions}
-          value={universityId}
-          onChange={setUniversityId}
-        />
-        <DateField
-          label={t('events.date')}
-          value={date}
-          onChange={setDate}
-          error={errors.date}
-          minYear={nowY - 1}
-          maxYear={nowY + 6}
-          monthLabels={getMonthNames(i18n.language)}
-          dayPlaceholder={t('picker.day')}
-          monthPlaceholder={t('picker.month')}
-          yearPlaceholder={t('picker.year')}
-          searchPlaceholder={t('picker.search')}
-          noResultsText={t('picker.noResults')}
-        />
-        <TimeField
-          label={t('events.startTime')}
-          value={startTime}
-          onChange={setStartTime}
-          error={errors.startTime}
-          hourPlaceholder={t('picker.hour')}
-          minutePlaceholder={t('picker.minute')}
-          periodPlaceholder={t('picker.period')}
-          searchPlaceholder={t('picker.search')}
-          noResultsText={t('picker.noResults')}
-        />
-        <TimeField
-          label={t('events.endTime')}
-          value={endTime}
-          onChange={setEndTime}
-          error={errors.endTime}
-          hourPlaceholder={t('picker.hour')}
-          minutePlaceholder={t('picker.minute')}
-          periodPlaceholder={t('picker.period')}
-          searchPlaceholder={t('picker.search')}
-          noResultsText={t('picker.noResults')}
-        />
-        <Button
-          variant="secondary"
-          title={t('events.addSlot')}
-          loading={create.isPending}
-          disabled={!canAdd || create.isPending}
-          onPress={add}
-        />
-      </Card>
+      {requests.data && requests.data.length === 0 ? (
+        <Text variant="muted">{t('events.noRequests')}</Text>
+      ) : null}
     </View>
   );
+}
+
+function MeetingRequestCard({
+  eventId,
+  eventStartDate,
+  eventEndDate,
+  request,
+}: {
+  eventId: string;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
+  request: NonNullable<ReturnType<typeof useEventMeetingRequests>['data']>[number];
+}) {
+  const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const toast = useToast();
+  const decide = useDecideMeetingRequest();
+  const nowY = new Date().getFullYear();
+
+  // Seed from whatever is already scheduled so re-approving keeps the slot.
+  const [date, setDate] = useState(request.start_time?.slice(0, 10) ?? '');
+  const [startTime, setStartTime] = useState(toLocalHHMM(request.start_time));
+  const [endTime, setEndTime] = useState(toLocalHHMM(request.end_time));
+  const [room, setRoom] = useState(request.room ?? '');
+  const [errors, setErrors] = useState<SlotFormErrors>({});
+
+  async function onApprove() {
+    const slotErrors = validateSlot(t, date, startTime, endTime, eventStartDate, eventEndDate);
+    setErrors(slotErrors);
+    if (Object.keys(slotErrors).length > 0) {
+      toast.show({ type: 'error', message: t('events.scheduleRequired') });
+      return;
+    }
+    await submit('approved');
+  }
+
+  async function submit(status: 'pending' | 'approved' | 'rejected') {
+    try {
+      await decide.mutateAsync({
+        id: request.id,
+        eventId,
+        status,
+        startTime: status === 'approved' ? `${date}T${startTime}:00` : null,
+        endTime: status === 'approved' ? `${date}T${endTime}:00` : null,
+        room: status === 'approved' ? room : null,
+      });
+      toast.show({ type: 'success', message: t('events.decidedToast') });
+    } catch (e) {
+      toast.show({ type: 'error', message: (e as Error).message });
+    }
+  }
+
+  const dateProps = {
+    minYear: nowY - 1,
+    maxYear: nowY + 6,
+    monthLabels: getMonthNames(i18n.language),
+    dayPlaceholder: t('picker.day'),
+    monthPlaceholder: t('picker.month'),
+    yearPlaceholder: t('picker.year'),
+    searchPlaceholder: t('picker.search'),
+    noResultsText: t('picker.noResults'),
+  };
+  const timeProps = {
+    hourPlaceholder: t('picker.hour'),
+    minutePlaceholder: t('picker.minute'),
+    periodPlaceholder: t('picker.period'),
+    searchPlaceholder: t('picker.search'),
+    noResultsText: t('picker.noResults'),
+  };
+
+  return (
+    <Card style={{ gap: theme.spacing.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
+        <Text variant="label" style={{ flex: 1 }}>
+          {studentName(request.students)}
+        </Text>
+        <StatusBadge status={request.status} />
+      </View>
+      <Text variant="muted">{request.universities?.name ?? '—'}</Text>
+      {request.student_note ? <Text variant="muted">{request.student_note}</Text> : null}
+
+      <DateField label={t('events.date')} value={date} onChange={setDate} error={errors.date} {...dateProps} />
+      <TimeField
+        label={t('events.startTime')}
+        value={startTime}
+        onChange={setStartTime}
+        error={errors.startTime}
+        {...timeProps}
+      />
+      <TimeField
+        label={t('events.endTime')}
+        value={endTime}
+        onChange={setEndTime}
+        error={errors.endTime}
+        {...timeProps}
+      />
+      <Input
+        label={t('events.room')}
+        placeholder={t('events.roomPlaceholder')}
+        value={room}
+        onChangeText={setRoom}
+      />
+
+      <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+        {request.status !== 'approved' ? (
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="brand"
+              title={t('events.approve')}
+              loading={decide.isPending}
+              onPress={onApprove}
+            />
+          </View>
+        ) : null}
+        {request.status !== 'rejected' ? (
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="danger"
+              title={t('events.reject')}
+              loading={decide.isPending}
+              onPress={() => submit('rejected')}
+            />
+          </View>
+        ) : null}
+      </View>
+    </Card>
+  );
+}
+
+/** `timestamptz` → the `HH:MM` a `TimeField` holds, in the device's timezone. */
+function toLocalHHMM(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 export function EventDetailScreen() {
@@ -730,7 +873,12 @@ export function EventDetailScreen() {
           />
           <EventUniversitiesSection eventId={id} />
           <EventWorkshopsSection eventId={id} eventStartDate={startDate || null} eventEndDate={endDate || null} />
-          <EventOneToOnesSection eventId={id} eventStartDate={startDate || null} eventEndDate={endDate || null} />
+          <EventWorkshopRequestsSection eventId={id} />
+          <EventMeetingRequestsSection
+            eventId={id}
+            eventStartDate={startDate || null}
+            eventEndDate={endDate || null}
+          />
         </>
       ) : null}
     </Screen>

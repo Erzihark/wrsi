@@ -19,10 +19,16 @@ export const queryKeys = {
   event: (id: string) => ['events', id] as const,
   eventUniversities: (id: string) => ['events', id, 'universities'] as const,
   eventWorkshops: (id: string) => ['events', id, 'workshops'] as const,
-  oneToOnes: (id: string) => ['events', id, 'one_to_ones'] as const,
   eventNotes: (id: string) => ['events', id, 'notes'] as const,
+  // Staff-facing approval queues. Nested under the event so an event-level
+  // invalidation refreshes them, and separate from the student's own `me` keys
+  // below — the two read the same tables through different RLS scopes and must
+  // not share a cache entry.
+  eventWorkshopRequests: (id: string) => ['events', id, 'workshop_requests'] as const,
+  eventMeetingRequests: (id: string) => ['events', id, 'meeting_requests'] as const,
   myEventRegistrations: ['me', 'event_registrations'] as const,
-  myWorkshopRegistrations: (eventId: string) => ['me', 'workshop_registrations', eventId] as const,
+  myWorkshopRequests: (eventId: string) => ['me', 'workshop_requests', eventId] as const,
+  myMeetingRequests: (eventId: string) => ['me', 'meeting_requests', eventId] as const,
   notifications: ['notifications'] as const,
   // `head: true` count query — separate leaf under the notifications base so
   // invalidating `notifications` refreshes both list and badge.

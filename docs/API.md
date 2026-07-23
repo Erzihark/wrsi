@@ -46,8 +46,9 @@ universities of interest.
 |---|---|---|---|
 | `useUniversities(search?)` | SELECT `universities` (name ilike) | `universities({search})` | all authed |
 | `useUniversityPrograms(id)` | SELECT `university_programs` + level/field names | `universityPrograms(id)` | all authed |
-| `useMyUniversityInterests()` | SELECT `student_university_interest` → `Set<university_id>` | `universityInterests` | self (RLS-filtered) |
-| `useToggleUniversityInterest()` | INSERT/DELETE `student_university_interest` (insert fires admin-notification trigger) | invalidates `universityInterests` | self |
+| `useMyUniversityInterests()` | SELECT `student_university_interest` (level + rank) → `{ rows, byId: Map }` | `universityInterests` | self (RLS-filtered) |
+| `useSetUniversityInterest()` | UPSERT `student_university_interest` at `interest_level` `'interested'`/`'favorite'`, or DELETE when `level: null` (insert fires admin-notification trigger). A new favorite takes `nextRank` = caller's current max + 1 | invalidates `universityInterests` | self |
+| `useReorderFavoriteUniversities()` | Bulk UPSERT `student_university_interest.rank` for a reordered top list (pass only the changed rows — see `renumberRanks`) | invalidates `universityInterests` | self |
 | `useMyStudentProfile()` | SELECT `students` (maybeSingle) | `myStudent` | self |
 | `useNotifications()` | SELECT `notifications`, newest first | `notifications` | self |
 | `useUnreadNotificationsCount()` | COUNT `notifications` where unread (`head: true`, serves the header bell badge) | `notificationsUnread` | self |
@@ -218,24 +219,46 @@ admin-entered, and included in every event read (`'*'` selects).
 | `useRemoveEventUniversity()` | DELETE `event_universities` | invalidates `eventUniversities(eventId)` | admin |
 | `useCreateWorkshop()` | INSERT `workshops` | invalidates `eventWorkshops(event_id)` | admin |
 | `useDeleteWorkshop()` | DELETE `workshops` (cascades registrations) | invalidates `eventWorkshops(eventId)` | admin |
-| `useCreateOneToOneSlot()` | INSERT `one_to_ones` (unbooked slot) | invalidates `oneToOnes(event_id)` | admin |
-| `useDeleteOneToOneSlot()` | DELETE `one_to_ones` | invalidates `oneToOnes(eventId)` | admin |
+| `useEventWorkshopRequests(eventId)` | SELECT `workshop_registrations` + student/workshop for the approval queue | `eventWorkshopRequests(eventId)` | admin/counselor (RLS: `can_access_student`) |
+| `useEventMeetingRequests(eventId)` | SELECT `one_to_ones` + student/university for the approval queue | `eventMeetingRequests(eventId)` | admin/counselor |
+| `useDecideWorkshopRequest()` | UPDATE `workshop_registrations.status`/`room`; approval re-runs `prevent_workshop_time_overlap` and can raise a check violation | invalidates `eventWorkshopRequests` + `myWorkshopRequests` | admin (enforced by `enforce_request_decision_authority`) |
+| `useDecideMeetingRequest()` | UPDATE `one_to_ones` — `status`, `start_time`/`end_time`, `room` | invalidates `eventMeetingRequests` + `myMeetingRequests` | admin (same trigger) |
 | `useEvents()` | SELECT `events`, soonest first | `events` | all authed |
 | `useEvent(id)` | SELECT `events` single | `event(id)` | all authed |
-| `useEventUniversities(eventId)` | SELECT `event_universities` → university cards | `eventUniversities(eventId)` | all authed |
+| `useEventUniversities(eventId)` | SELECT `event_universities` → university cards (+ description, website, `states_provinces → countries`), name-sorted | `eventUniversities(eventId)` | all authed |
 | `useEventWorkshops(eventId)` | SELECT `workshops`, earliest first | `eventWorkshops(eventId)` | all authed |
-| `useOneToOnes(eventId)` | SELECT `one_to_ones` (booked + free) | `oneToOnes(eventId)` | all authed |
-| `useMyEventRegistrations()` | SELECT `event_registrations` → `Set<event_id>` | `myEventRegistrations` | self |
+| `useMyEventRegistrations()` | SELECT `event_registrations` → `Map<event_id, created_at>` (the date drives "Registrado el …"; `.has()` still works) | `myEventRegistrations` | self |
 | `useToggleEventRegistration()` | INSERT/DELETE `event_registrations` | invalidates `myEventRegistrations` | self |
-| `useMyWorkshopRegistrations(eventId)` | SELECT `workshop_registrations` (inner-join event) → `Set<workshop_id>` | `myWorkshopRegistrations(eventId)` | self |
-| `useToggleWorkshopRegistration()` | INSERT/DELETE `workshop_registrations`; DB rejects time overlaps (`prevent_workshop_time_overlap` trigger) | invalidates `myWorkshopRegistrations(eventId)` | self |
-| `useBookOneToOne()` | UPDATE `one_to_ones.student_id` = me | invalidates `oneToOnes(eventId)` | student (RLS: free slot) |
-| `useCancelOneToOne()` | UPDATE `one_to_ones.student_id` = null | invalidates `oneToOnes(eventId)` | student (own booking) |
+| `useMyWorkshopRequests(eventId)` | SELECT `workshop_registrations` (inner-join event) + status/room/workshop schedule | `myWorkshopRequests(eventId)` | self |
+| `useRequestWorkshop()` | INSERT `workshop_registrations`; always lands `pending` (trigger overwrites status/room for non-staff) | invalidates `myWorkshopRequests` + `eventWorkshopRequests` | self |
+| `useCancelWorkshopRequest()` | DELETE `workshop_registrations` | invalidates `myWorkshopRequests` + `eventWorkshopRequests` | self |
+| `useMyMeetingRequests(eventId)` | SELECT `one_to_ones` where `student_id` set → status/room/times (null until scheduled) | `myMeetingRequests(eventId)` | self |
+| `useRequestMeeting()` | INSERT `one_to_ones` (pending, optional `student_note`); `23505` = one live request per university already exists | invalidates `myMeetingRequests` + `eventMeetingRequests` | self |
+| `useCancelMeetingRequest()` | DELETE `one_to_ones` | invalidates `myMeetingRequests` + `eventMeetingRequests` | self |
 | `useEventNotes(eventId)` | SELECT `event_notes` (one per university) | `eventNotes(eventId)` | self |
 | `useSaveEventNote()` | INSERT or UPDATE `event_notes` (note + ranking) | invalidates `eventNotes(eventId)` | self |
 
 Other exports: `EventRow/Insert/Update`, `EventNoteRow`, `WorkshopRow/Insert`,
-`OneToOneInsert` types.
+`RequestStatus`, `EventUniversity`, `MyWorkshopRequest`, `MyMeetingRequest`.
+
+### Requests and approvals (migration `20260723000001`)
+
+Workshops and 1:1 meetings are **request-and-approve**, not instant
+registration:
+
+- A student INSERTs a row; `enforce_request_decision_authority` forces it to
+  `pending` and blanks any status/room they try to send. On UPDATE the same
+  trigger rejects a non-staff write to anything but `student_note`, which is why
+  RLS alone (`can_access_student`, row-level) is not the whole story.
+- Staff set `status` + `room` (+ `start_time`/`end_time` for meetings). The
+  trigger stamps `decided_at`/`decided_by` rather than trusting the client, and
+  `notify_student_on_request_decision` writes the student a notification.
+- `one_to_ones` flipped from admin-created open slots to student-created
+  requests: `start_time`/`end_time` are nullable until scheduled, and a partial
+  unique index allows one non-rejected request per (event, university, student).
+- `prevent_workshop_time_overlap` now only considers **approved** rows, and runs
+  on approval as well as insert — two pending requests may clash, and staff
+  resolve that by rejecting one.
 
 ## Sponsors & Allies — `packages/api/src/sponsors.ts`
 

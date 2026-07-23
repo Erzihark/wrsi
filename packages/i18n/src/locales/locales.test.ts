@@ -23,6 +23,22 @@ function resolvePath(node: unknown, path_: string): unknown {
   }, node);
 }
 
+/**
+ * Does `t(key)` render real text?
+ *
+ * A key can be either a plain leaf or an i18next plural, which is stored as
+ * `key_one` / `key_other` and never as `key` itself — so a literal lookup alone
+ * would report every plural as missing. Both suffixed forms are required: with
+ * only one of them, the other grammatical number falls back to the raw key.
+ */
+function resolves(node: unknown, key: string): boolean {
+  if (typeof resolvePath(node, key) === 'string') return true;
+  return (
+    typeof resolvePath(node, `${key}_one`) === 'string' &&
+    typeof resolvePath(node, `${key}_other`) === 'string'
+  );
+}
+
 const MOBILE_SRC = path.resolve(__dirname, '../../../../apps/mobile/src');
 
 /** Recursively lists every .ts/.tsx file under a directory. */
@@ -54,7 +70,7 @@ describe('locale resources', () => {
       walkSourceFiles(MOBILE_SRC).flatMap((file) => extractTranslationKeys(readFileSync(file, 'utf8'))),
     );
 
-    const missing = [...keysUsed].filter((key) => typeof resolvePath(en, key) !== 'string');
+    const missing = [...keysUsed].filter((key) => !resolves(en, key));
 
     // If this fails, `t(key)` renders the raw key string on-device instead of
     // localized text — this is exactly the bug this test guards against.
