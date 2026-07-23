@@ -7,6 +7,25 @@
 
 **Last updated:** 2026-07-23
 
+**In review:** `fix/onboarding-keyboard-and-safe-area` — reported on the onboarding wizard: the
+keyboard hid the input you were typing in, and the Next/Submit row sat under the phone's own
+navigation buttons. Both come from the app being **edge-to-edge on Android**
+(`edgeToEdgeEnabled=true`), which makes the window span the whole screen — so nothing consumes
+`insets.bottom`, and `windowSoftInputMode="adjustResize"` silently stops resizing for the
+keyboard. Fixed in `packages/ui/src/components/Screen.tsx` (so every screen benefits): on
+Android the scroll view is now **shrunk** by the measured keyboard overlap, which makes
+Android's own `ScrollView.onSizeChanged` scroll the focused field back into view; iOS keeps
+`automaticallyAdjustKeyboardInsets`. New opt-in `safeBottom` prop pads by `insets.bottom` —
+opt-in because tab screens sit above a tab bar that already consumes it, so `OnboardingScreen`
+is the only caller. RN's `KeyboardAvoidingView` can't do this (it reads `screenY`, which is
+always the screen bottom under edge-to-edge); `react-native-keyboard-controller` would be more
+robust but hard-requires `react-native-reanimated` + worklets + a fresh EAS build — deferred,
+and swappable at the `Screen` boundary. Verified: typecheck + unit green (5 new
+`keyboardOverlap` tests); wizard driven in the web preview at 360×640 — refactor is
+layout-neutral, no overflow at 100%/130%. ⚠️ **Not device-verified** — web has no software
+keyboard and reports zero insets, so this needs an Android **and** iOS pass. See DECISIONS.md
+2026-07-23.
+
 **In review:** `feat/welcome-login-screen` — the designer's phone welcome/landing comp, built as
 a new `WelcomeScreen` and set as the `AuthNavigator`'s initial route (ahead of the existing
 Login/SignUp screens, which are unchanged apart from Login's heading now pulling from

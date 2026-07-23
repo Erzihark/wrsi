@@ -179,7 +179,10 @@ export function OnboardingScreen() {
   }
 
   return (
-    <Screen scroll testID="onboarding-screen">
+    // `safeBottom`: the wizard owns the bottom of the window (no tab bar under
+    // it), so the Next/Submit row would otherwise sit under the Android
+    // navigation bar in this edge-to-edge app.
+    <Screen scroll safeBottom testID="onboarding-screen">
       <View
         style={{
           flexDirection: 'row',

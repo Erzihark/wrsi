@@ -114,6 +114,27 @@ paddingTop: insets.top + t.spacing.lg
 paddingBottom: Math.max(insets.bottom, t.spacing.md)   // falls back to normal padding on Android
 ```
 
+### 1.8 The app is edge-to-edge on Android — the bottom of the window is yours
+
+`edgeToEdgeEnabled=true` (`apps/mobile/android/gradle.properties`) plus transparent system bars
+means the window spans the **whole** screen. Two consequences that bit the onboarding wizard:
+
+- **Anything at the bottom of a screen renders under the navigation bar** unless something
+  consumes `insets.bottom`. If your screen sits inside the bottom-tab navigator, the tab bar
+  already does; if it doesn't (onboarding, or any full-window screen), pass `safeBottom` to
+  `<Screen>` — don't add the inset by hand, or tab screens end up double-padded.
+- **`windowSoftInputMode="adjustResize"` does nothing.** The window no longer resizes for the
+  keyboard, so fields at the bottom of a form sit behind it. RN's `KeyboardAvoidingView` does
+  **not** rescue this — it derives the overlap from the keyboard event's `screenY`, which under
+  edge-to-edge is always the bottom of the screen, so it computes an offset of zero.
+
+`<Screen scroll>` already handles the keyboard on both platforms (iOS via
+`automaticallyAdjustKeyboardInsets`, Android by shrinking the viewport by the measured overlap
+so the focused field is scrolled back into view). **Use it rather than hand-rolling** — and if a
+form ever needs something the `Screen` boundary can't give it, `react-native-keyboard-controller`
+is the standard escape hatch, at the cost of `react-native-reanimated` + a new dev build.
+See DECISIONS.md 2026-07-23.
+
 ---
 
 ## 2. Adapting a designer comp
