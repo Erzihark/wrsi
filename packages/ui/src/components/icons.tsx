@@ -407,6 +407,125 @@ export function SendIcon({ size, color }: IconProps) {
   );
 }
 
+export function GlobeIcon({ size, color }: IconProps) {
+  return (
+    <Line size={size} color={color}>
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={STROKE} />
+      <Path
+        d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+    </Line>
+  );
+}
+
+export function CompassIcon({ size, color }: IconProps) {
+  return (
+    <Line size={size} color={color}>
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={STROKE} />
+      <Path
+        d="m15 9-2 6-6 2 2-6 6-2Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+    </Line>
+  );
+}
+
+export function SearchIcon({ size, color }: IconProps) {
+  return (
+    <Line size={size} color={color}>
+      <Circle cx={10.5} cy={10.5} r={6.5} stroke={color} strokeWidth={STROKE} />
+      <Path d="m20 20-4.5-4.5" stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+    </Line>
+  );
+}
+
+export function ClipboardIcon({ size, color }: IconProps) {
+  return (
+    <Line size={size} color={color}>
+      <Path
+        d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M6.5 6h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+      <Path d="M9 12h6M9 16h6" stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+    </Line>
+  );
+}
+
+/** Airplane silhouette — trip prep / logistics. */
+export function PlaneIcon({ size = 24, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21 12.5 13.5 9 13 3.5a1 1 0 0 0-2 0L10.5 9 3 12.5v1.7l7.3-2.2.4 5.1-2.3 1.6v1.4l3.6-1 3.6 1v-1.4l-2.3-1.6.4-5.1 7.3 2.2v-1.7Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function PersonPlusIcon({ size, color }: IconProps) {
+  return (
+    <Line size={size} color={color}>
+      <Circle cx={10} cy={8} r={4} stroke={color} strokeWidth={STROKE} />
+      <Path
+        d="M2.5 20c0-3.3 3.4-5.5 7.5-5.5s7.5 2.2 7.5 5.5"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinecap="round"
+      />
+      <Path d="M19 5v6M16 8h6" stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+    </Line>
+  );
+}
+
+export function BuildingIcon({ size, color }: IconProps) {
+  return (
+    <Line size={size} color={color}>
+      <Path
+        d="M5 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M13 21v-9h5a1 1 0 0 1 1 1v8"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M8 8h0M11 8h0M8 12h0M11 12h0M8 16h0M11 16h0"
+        stroke={color}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+      />
+      <Path d="M3 21h18" stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+    </Line>
+  );
+}
+
+export function StarIcon({ size = 16, color, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'}>
+      <Path
+        d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6L12 3.5Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 // --- Brand marks (solid fill; drawn to their own official silhouettes) -------
 // These use `fill` (not stroke) so they read as recognizable logos. WhatsApp
 // keeps its bubble+handset; the social marks are simplified glyphs.

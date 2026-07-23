@@ -40,7 +40,7 @@ export function LoginScreen() {
 
   return (
     <Screen>
-      <Text variant="heading">WX Study</Text>
+      <Text variant="heading">{t('auth.login')}</Text>
       <FormInput
         control={form.control}
         name="email"

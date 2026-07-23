@@ -5,7 +5,24 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-22
+**Last updated:** 2026-07-23
+
+**In review:** `feat/welcome-login-screen` — the designer's phone welcome/landing comp, built as
+a new `WelcomeScreen` and set as the `AuthNavigator`'s initial route (ahead of the existing
+Login/SignUp screens, which are unchanged apart from Login's heading now pulling from
+`auth.login` instead of a hardcoded string). Adds 8 new outline icons to
+`packages/ui/src/components/icons.tsx` (Globe, Compass, Search, Clipboard, Plane, PersonPlus,
+Building, Star) plus a `welcome.*` i18n block in both locales. **Deliberate adaptation:** the
+comp's hero photo has no source asset in the repo (only the square app icon exists under
+`apps/mobile/assets`), so the hero is a text lockup (navy/orange "WRSI" wordmark + tagline)
+instead of a photo panel — flag this to the designer if a real hero image is wanted later. The
+"Crear cuenta" outline button uses the existing `secondary` (navy) `Button` variant rather than
+an orange outline, since that variant doesn't exist yet and one screen didn't seem to warrant a
+new one. The "Contáctanos" links in the institution/brand section are static (no known
+destination email/URL to wire up yet). Verified: typecheck + unit tests green across
+`@wrsi/ui`, `@wrsi/i18n`, `@wrsi/mobile`. ⚠️ **Not visually verified** — this box doesn't have
+`react-dom`/`react-native-web` installed for Expo web preview, and no iOS/Android
+emulator/device pass was run; the user should eyeball it on a phone build before merging.
 
 **In review:** `feat/student-applications-screen` — the designer's "Mis aplicaciones" comp
 built for phone. Each card carries a 4-milestone tracker (Iniciada → Documentos enviados →

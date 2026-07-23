@@ -2,6 +2,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { ProfileFieldKey } from '../features/profile/fields';
 
 export type AuthStackParamList = {
+  Welcome: undefined;
   Login: undefined;
   SignUp: undefined;
 };
