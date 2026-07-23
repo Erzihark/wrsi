@@ -25,6 +25,8 @@ export { SectionHeader } from './components/SectionHeader';
 export type { SectionHeaderProps } from './components/SectionHeader';
 export { Screen } from './components/Screen';
 export type { ScreenProps } from './components/Screen';
+export { keyboardOverlap } from './components/keyboardOverlap';
+export type { KeyboardOverlapArgs } from './components/keyboardOverlap';
 export { Chip } from './components/Chip';
 export type { ChipProps } from './components/Chip';
 export { Select } from './components/Select';

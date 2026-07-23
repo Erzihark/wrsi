@@ -1109,3 +1109,60 @@ scoping, and the composite-FK rejection. Seeded four applications for `student1@
 **Not run on a device.** `.maestro/student/applications.yaml` was written and
 `dashboard.yaml` updated for the new nav, but neither was executed, and there was no iOS or
 Android pass — this is a substantial new UI surface and needs both.
+
+## 2026-07-23 — Onboarding: keyboard covering fields, buttons under the nav bar (branch `fix/onboarding-keyboard-and-safe-area`)
+
+**The report.** On the onboarding wizard, tapping an input near the bottom of a step left it
+hidden behind the software keyboard, and the Next/Submit row sat underneath the phone's own
+navigation buttons.
+
+**Both are the same root cause: the app is edge-to-edge on Android.**
+`apps/mobile/android/gradle.properties` sets `edgeToEdgeEnabled=true`, and `AppTheme` makes the
+status and navigation bars transparent. That means the activity window spans the entire screen,
+so (a) content drawn at the bottom of a screen is *under* the navigation bar unless something
+consumes `insets.bottom`, and (b) the manifest's `android:windowSoftInputMode="adjustResize"`
+no longer does anything — with `decorFitsSystemWindows=false` the window stops resizing for the
+IME, which is what used to push fields up for free.
+
+**Why not `KeyboardAvoidingView`.** RN's own component computes the overlap from the keyboard
+event's `screenY`. Under edge-to-edge `ReactRootView` reports `screenY` as the bottom of the
+screen (`ReactRootView.checkForKeyboardEvents`), so `KeyboardAvoidingView` calculates an offset
+of zero and does nothing. This is the widely-reported "KAV is broken on Android 15" behavior.
+
+**Why not `react-native-keyboard-controller`.** It is the Expo-documented answer for exactly
+this case (large scrollable forms) and it would be more robust — it tracks the focused input
+frame by frame from the IME insets. It was rejected *for now* on cost: it hard-requires
+`react-native-reanimated >= 3` (peer dep), which pulls in `react-native-worklets` and a babel
+plugin, and all three are native — meaning a fresh EAS dev build before anyone can even see the
+fix. Revisit if the approach below proves not good enough on real devices; the two are
+interchangeable at the `Screen` boundary.
+
+**What was done instead**, both in `packages/ui/src/components/Screen.tsx` so every screen
+benefits rather than just onboarding:
+
+1. **Keyboard (Android only).** `endCoordinates.height` *is* trustworthy — `ReactRootView` reads
+   it straight from `WindowInsets.Type.ime()` — so the scroll view is measured with
+   `measureInWindow` on `keyboardDidShow` and then **shrunk** by however much the keyboard
+   covers it. Shrinking rather than padding is the point: `android.widget.ScrollView.onSizeChanged`
+   scrolls the focused child back into view when the viewport gets shorter, which is precisely
+   the mechanism `adjustResize` used to trigger. The arithmetic lives in `keyboardOverlap()`
+   (own file + unit test) because it can only be exercised for real on a device with an IME
+   open; it is clamped to the keyboard's own size so a device that reports window and screen
+   coordinates unexpectedly makes us under-correct instead of yanking the layout past the
+   keyboard. Because the overlap is measured rather than assumed, a screen sitting above a
+   bottom tab bar gets the smaller, correct shift automatically.
+   **iOS is untouched** — `automaticallyAdjustKeyboardInsets` (added 2026-07-10) hands the job
+   to UIKit, which insets the scroll view *and* scrolls the first responder into view.
+2. **Safe area.** New opt-in `safeBottom` prop pads the bottom by `insets.bottom`. Opt-in, not
+   automatic: the student screens live inside a bottom-tab navigator whose tab bar already
+   consumes that inset and would end up double-padded. `OnboardingScreen` is the one form
+   outside the tabs, so it is the only current caller.
+
+**Verification.** `yarn typecheck` + `yarn test` green (5 new `keyboardOverlap` tests). The
+wizard was driven in the web preview at 360×640 (logged in as `student4@wrsi.dev`, the seeded
+account with no `students` row): the extra wrapper view added no layout box (wrapper and scroll
+view are both y=49 h=591), the form still scrolls (921 of 591px), and there is zero text
+overflow or clamping at 100% **and** 130% font scale.
+**Neither fix is device-verified.** Web reports all safe-area insets as 0 and has no software
+keyboard, so the preview can only prove the refactor is layout-neutral — the actual behavior
+needs an Android pass (the platform this targets) and an iOS pass to confirm nothing regressed.
