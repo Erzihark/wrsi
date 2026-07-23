@@ -188,6 +188,7 @@ through your firewall.
 | `yarn gen:types`   | Regenerate DB types from the local schema             |
 | `yarn docs:api`    | Serve the API reference (Scalar) — open http://localhost:3000/api-reference.html; contract index in [`docs/API.md`](docs/API.md) |
 | `yarn workspace @wrsi/mobile start`       | Start the Expo dev server                             |
+| `yarn workspace @wrsi/mobile web --port 8083` | Render the app in a browser — no emulator or Docker needed. The fastest way to check a screen's layout; see [`docs/DESIGN.md`](docs/DESIGN.md) for the verification workflow and its limits |
 
 ## Environments & test data
 

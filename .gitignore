@@ -19,3 +19,7 @@ apps/*/ios
 !.env.example
 
 .expo
+
+# Per-machine Claude Code settings. `.claude/launch.json` IS committed — it's the
+# shared dev-server config the design-verification workflow in docs/DESIGN.md uses.
+.claude/settings.local.json
