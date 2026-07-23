@@ -5,7 +5,40 @@
 > short on purpose — full historical write-ups and dated reasoning live in
 > [`docs/DECISIONS.md`](DECISIONS.md), which is **not** meant to be read every session.
 
-**Last updated:** 2026-07-22
+**Last updated:** 2026-07-23
+
+**In review:** `feat/welcome-login-screen` — the designer's phone welcome/landing comp, built as
+a new `WelcomeScreen` and set as the `AuthNavigator`'s initial route (ahead of the existing
+Login/SignUp screens, which are unchanged apart from Login's heading now pulling from
+`auth.login` instead of a hardcoded string). Adds 8 new outline icons to
+`packages/ui/src/components/icons.tsx` (Globe, Compass, Search, Clipboard, Plane, PersonPlus,
+Building, Star) plus a `welcome.*` i18n block in both locales.
+
+**Two departures from the comp, both forced by phone ergonomics** (the first draft followed the
+comp literally and was rejected on device):
+
+- **CTAs are pinned, not inline.** The comp puts Iniciar sesión / Crear cuenta after the stats
+  and the process strip, which on a 640px-tall phone buried the primary action ~2.9 screens
+  down. They now live in a sticky bottom bar outside the ScrollView, so login is always one tap.
+  Bar costs 127px (157px at 130% OS font scale); scroll viewport is 513px on a 360×640.
+- **Icon strips are vertical lists, not columns.** The comp's 4-across stats row and 5-across
+  process strip left ~30% width per label, truncating the Spanish strings. Stats are a 2×2 grid;
+  process and partner sections are full-width rows. All `numberOfLines` clamps removed so OS
+  font scaling reflows instead of clipping.
+
+Other deliberate calls: no hero photo asset exists in the repo (only the square app icon under
+`apps/mobile/assets`), so the hero is a text lockup (navy/orange "WRSI" wordmark + tagline +
+plane accent) — swap in a real image if the designer supplies one. "Crear cuenta" uses the
+existing `secondary` (navy) `Button` variant rather than an orange outline, which doesn't exist
+in the system yet. The "Contáctanos" links are **static text** — there's no general WRSI support
+number or email in config (`apps/mobile/src/config/social.ts` has social URLs only), so there's
+nothing to wire them to; same for the WhatsApp help card. **Needs a destination before launch.**
+
+Verified: typecheck + unit tests green across `@wrsi/ui`, `@wrsi/i18n`, `@wrsi/mobile`. Layout
+verified against a pixel-faithful HTML mock of the same tokens at 360×640 / 375×667 / 390×844:
+CTA bar pinned and fully visible at all three with zero scrolls, and zero horizontal text
+overflow at both 100% and 130% font scale. ⚠️ **Still not run on a real device** — no
+`react-dom`/`react-native-web` on this box for Expo web, and no iOS/Android emulator pass.
 
 **In review:** `feat/student-applications-screen` — the designer's "Mis aplicaciones" comp
 built for phone. Each card carries a 4-milestone tracker (Iniciada → Documentos enviados →
