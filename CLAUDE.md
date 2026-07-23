@@ -100,6 +100,29 @@ non-negotiable, not a "nice to have":
 4. **Prefer dependency-light, cross-platform-reliable options** (see Session hygiene) — but
    correctness on both platforms wins over avoiding a dependency.
 
+## UI & design work (REQUIRED — read `docs/DESIGN.md` first)
+
+Any screen or component change follows [`docs/DESIGN.md`](docs/DESIGN.md) — the standing contract
+for turning a designer comp into a shipped screen, plus the verification workflow. **Read it
+before writing UI code.** The headlines, so you know when it applies:
+
+1. **Verify before handing off — you can actually see the screen now.** `yarn workspace
+   @wrsi/mobile web --port 8083` (or `preview_start` with `.claude/launch.json`'s `mobile-web`)
+   renders the real app in a browser, no Docker or emulator. Check at **360×640**. Screenshots in
+   the Browser pane downscale unpredictably — measure with `getBoundingClientRect()` /
+   `read_page`, don't eyeball. DESIGN.md §4 has the exact snippets.
+2. **The primary action must be reachable without scrolling** on a 360×640 screen. If content
+   scrolls past one screen, pin the CTA in a sticky bar outside the ScrollView.
+3. **Type floors: 16px body copy, 14px labels, 12px legal/metadata only.** If text only fits at
+   12px the layout is wrong — widen it, don't shrink the type.
+4. **Never `numberOfLines` meaningful text**, and survive 130% OS font scale with no overflow.
+5. **Design to the Spanish string** (it runs ~20–25% longer than English, and `es` is the
+   default). Full sentences need full width — a 5-across icon strip does not fit them.
+6. **Write down every departure from the comp** in the PR body and `PROGRESS.md`.
+
+Web preview is a structural check only — it can't see native shadows/`elevation`, real safe-area
+insets, keyboard behavior, or the Android emoji-glyph trap. Those still need a device pass.
+
 ## Session hygiene (token budget)
 
 The user is on a metered usage window and wants it stretched, not burned fast:
@@ -127,6 +150,8 @@ Keep the project self-documenting so any session can resume without re-explainin
 - **`docs/PROGRESS.md`** — the short handoff log. **Read it first** when starting work, and **update it at the end of every meaningful session**: current status, env gotchas, and the next milestone. Newest status at the top. Keep it short (see Session hygiene above).
 - **`docs/API.md`** + **`docs/openapi.yaml`** — the API contract index (hooks / Edge
   Functions + RPCs). Update in the same change that alters the API — see "API changes" above.
+- **`docs/DESIGN.md`** — the UI/design contract: comp-to-phone adaptation rules, type and layout
+  floors, and the browser-based verification workflow. Read before any screen work.
 - **`docs/DECISIONS.md`** — the full dated decision log with verification write-ups. Append a new dated entry here when you ship something; don't grow `PROGRESS.md` with historical detail. Read on demand (not every session) when you need the reasoning behind a past change.
 - Update `README.md` + `PROGRESS.md` as part of the same change that alters behavior/structure — don't defer docs to "later".
 
