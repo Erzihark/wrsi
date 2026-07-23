@@ -1,5 +1,7 @@
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { useMyApplications } from '@wrsi/api';
 import {
   computeApplicationTimeline,
@@ -8,7 +10,8 @@ import {
   intakeTermLabel,
   type DateWordsLocale,
 } from '@wrsi/shared-utils';
-import { Avatar, Badge, Card, Text, useTheme, type BadgeTone } from '@wrsi/ui';
+import { Avatar, Badge, Card, ChevronRightIcon, Text, useTheme, type BadgeTone } from '@wrsi/ui';
+import type { StudentTabParamList } from '../../../navigation/types';
 import { ApplicationTimeline } from './ApplicationTimeline';
 
 export type ApplicationRow = NonNullable<ReturnType<typeof useMyApplications>['data']>[number];
@@ -43,6 +46,12 @@ export function ApplicationCard({ application }: { application: ApplicationRow }
   const theme = useTheme();
   const spanish = i18n.language.startsWith('es');
   const locale: DateWordsLocale = spanish ? 'es' : 'en';
+  // Applications is its own tab (no stack), and the detail screen it links to
+  // lives in the Universities tab's stack — so this jumps tabs rather than
+  // pushing, the same pattern the dashboard's counselor card uses to reach the
+  // (now tab-less) Consejero screen.
+  const nav = useNavigation<BottomTabNavigationProp<StudentTabParamList>>();
+  const universityId = application.university?.id;
 
   const statusName = application.status?.name;
   const timeline = computeApplicationTimeline({
@@ -83,7 +92,24 @@ export function ApplicationCard({ application }: { application: ApplicationRow }
 
   return (
     <Card testID={`student-application-${application.id}`} style={{ gap: theme.spacing.md }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}>
+      <Pressable
+        testID={`student-application-${application.id}-university`}
+        accessibilityRole="button"
+        disabled={!universityId}
+        onPress={() =>
+          universityId &&
+          nav.navigate('Universities', {
+            screen: 'UniversityDetail',
+            params: { universityId },
+          })
+        }
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: theme.spacing.md,
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
         <Avatar
           photoUrl={application.university?.logo_url}
           name={application.university?.name}
@@ -99,7 +125,8 @@ export function ApplicationCard({ application }: { application: ApplicationRow }
             </Text>
           ) : null}
         </View>
-      </View>
+        {universityId ? <ChevronRightIcon size={20} color={theme.color.textMuted} /> : null}
+      </Pressable>
 
       <View
         style={{

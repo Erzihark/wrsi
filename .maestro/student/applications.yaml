@@ -38,6 +38,16 @@ tags:
 - tapOn:
     id: "student-applications-stat-draft"
 
+# --- Tapping a card's university row jumps to its detail page on the
+# --- Universities tab (a different stack from this tab) ---
+- tapOn:
+    id: "student-application-.*-university"
+- assertVisible:
+    id: "student-university-detail-screen"
+- back
+- assertVisible:
+    id: "student-applications-screen"
+
 # --- Sorting flips between newest and oldest first ---
 - tapOn:
     id: "student-applications-sort"
