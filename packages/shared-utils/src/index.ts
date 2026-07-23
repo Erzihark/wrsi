@@ -3,6 +3,7 @@ import type { Enums } from '@wrsi/shared-types';
 export * from './validation';
 export * from './profileCompletion';
 export * from './journey';
+export * from './applicationTimeline';
 export * from './eventsDisplay';
 export * from './greeting';
 export * from './whatsapp';

@@ -30,6 +30,16 @@ export const es: TranslationResource = {
     events: 'Eventos',
     counselor: 'Consejero',
     profile: 'Mi perfil',
+    // Bottom-bar labels, kept separate from the screen titles above: five tabs
+    // on a small phone leaves ~70px per label, so these stay short even where
+    // the screen itself says "Mis aplicaciones".
+    tabs: {
+      home: 'Inicio',
+      universities: 'Universidades',
+      events: 'Eventos',
+      applications: 'Aplicaciones',
+      profile: 'Mi perfil',
+    },
   },
   counselor: {
     students: 'Alumnos',
@@ -277,9 +287,68 @@ export const es: TranslationResource = {
     hint: 'Tu consejero responde por WhatsApp en horario de oficina.',
   },
   applications: {
-    title: 'My Apps',
+    title: 'Mis aplicaciones',
+    subtitle: 'Sigue el progreso de tus aplicaciones en un solo lugar.',
     empty: 'Aún no tienes aplicaciones.',
     emptyHint: 'Tu consejero las crea cuando eliges tus universidades.',
+    emptyFiltered: 'Ninguna aplicación en este estado.',
+    listTitle: 'Todas mis aplicaciones',
+    stats: {
+      total: 'Aplicaciones',
+      totalHint: 'en total',
+      review: 'En revisión',
+      reviewHint: 'por universidades',
+      accepted: 'Aceptadas',
+      acceptedHint: '¡Felicidades!',
+      draft: 'Borradores',
+      draftHint: 'aún no enviadas',
+    },
+    filter: {
+      all: 'Todas',
+      review: 'En revisión',
+      accepted: 'Aceptadas',
+      draft: 'Borradores',
+    },
+    sort: {
+      newest: 'Más recientes',
+      oldest: 'Más antiguas',
+    },
+    recommendation: {
+      title: 'Recomendación WRSI',
+      body: 'Te recomendamos aplicar a 2 a 4 universidades para enfocarnos en las mejores opciones para ti.',
+    },
+    progress: {
+      title: 'Tu progreso general',
+      hint: '¡Vas por buen camino!',
+      completed: '{{percent}}% completado',
+    },
+    milestone: {
+      started: 'Iniciada',
+      documents: 'Documentos enviados',
+      review: 'En revisión',
+      decision: 'Decisión final',
+      pending: 'Pendiente',
+      none: '—',
+    },
+    status: {
+      Draft: 'Borrador',
+      Submitted: 'Documentos enviados',
+      'Under Review': 'En revisión',
+      Accepted: 'Aceptada',
+      Rejected: 'No aceptada',
+      Enrolled: 'Inscrita',
+    },
+    meta: {
+      decision: 'Decisión: {{date}}',
+      review: 'En revisión desde {{date}}',
+      submitted: 'Enviado el {{date}}',
+      draft: 'Última edición: {{date}}',
+    },
+    help: {
+      title: '¿Necesitas ayuda con tus aplicaciones?',
+      body: 'Estamos aquí para apoyarte en cada paso del proceso.',
+      cta: 'Contactar por WhatsApp',
+    },
   },
   profile: {
     title: 'Mi información',

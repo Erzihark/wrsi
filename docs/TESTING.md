@@ -202,6 +202,13 @@ ids `confirm-dialog-confirm` / `confirm-dialog-cancel`. The `searchTestID` / `ed
 on the shared `EntityListScreen` are generic — wire them into the university/counselor/student
 list screens to extend edit/delete flows to those entities.
 
+Written but **not device-verified**: the student dashboard (`.maestro/student/dashboard.yaml`),
+profile (`profile.yaml`), and applications (`applications.yaml`) flows. The applications flow
+leans on the four applications seeded for `student1@wrsi.dev` in `supabase/seeds/dev.sql` (one
+per stage), and uses the ids `student-tab-applications`,
+`student-applications-{screen,sort,help,whatsapp}`, and
+`student-applications-stat-{all,review,accepted,draft}`.
+
 **Device-verified flow conventions** (learned running the CRUD cycle on a physical device; apply
 to every new admin-form flow):
 - The entity form is longer than the viewport → `scrollUntilVisible` the `entity-submit` /

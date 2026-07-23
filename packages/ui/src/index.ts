@@ -73,6 +73,7 @@ export {
   UsersIcon,
   BookIcon,
   TargetIcon,
+  SendIcon,
   ChatIcon,
   WhatsAppIcon,
   InstagramIcon,

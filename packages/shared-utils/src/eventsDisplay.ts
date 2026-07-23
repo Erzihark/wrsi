@@ -64,6 +64,48 @@ export function formatEventDateBadge(
   return { day: String(Number(d)), month: MONTHS[locale][monthIndex]!, weekday };
 }
 
+/** `'2026-09-15'` → `'15 Sep'`. Title-cased, for the application timeline steps. */
+export function formatDayMonth(
+  dateISO: string | null | undefined,
+  locale: DateWordsLocale = 'es',
+): string | null {
+  const parts = dateParts(dateISO, locale);
+  return parts && `${parts.day} ${parts.month}`;
+}
+
+/** `'2026-11-10'` → `'10 Nov, 2026'`. The dated status line on an application card. */
+export function formatDayMonthYear(
+  dateISO: string | null | undefined,
+  locale: DateWordsLocale = 'es',
+): string | null {
+  const parts = dateParts(dateISO, locale);
+  return parts && `${parts.day} ${parts.month}, ${parts.year}`;
+}
+
+/**
+ * Shared parsing for the two formatters above. Accepts both date-only strings
+ * and full timestamps (`application_status_history.changed_at`), reading the
+ * leading `YYYY-MM-DD` so the rendered day never shifts with the device
+ * timezone — the same reason the badge formatter parses as UTC.
+ */
+function dateParts(
+  dateISO: string | null | undefined,
+  locale: DateWordsLocale,
+): { day: string; month: string; year: string } | null {
+  if (!dateISO) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateISO);
+  if (!match) return null;
+  const [, year, m, d] = match;
+  const monthIndex = Number(m) - 1;
+  if (monthIndex < 0 || monthIndex > 11) return null;
+  const upper = MONTHS[locale][monthIndex]!;
+  return {
+    day: String(Number(d)),
+    month: upper.charAt(0) + upper.slice(1).toLowerCase(),
+    year: year!,
+  };
+}
+
 /** `'09:00:00'` → `'9:00 AM'`. Accepts `HH:MM` or `HH:MM:SS` (Postgres `time`). */
 export function formatTime12h(time: string | null | undefined): string | null {
   if (!time) return null;

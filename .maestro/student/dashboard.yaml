@@ -33,12 +33,14 @@ tags:
     id: "student-documents-screen"
 - back
 
-# --- Quick access: My Apps ---
+# --- Quick access: Mis aplicaciones is a tab now, so this jumps tabs rather
+# --- than pushing a screen — returning means tapping Inicio, not `back`.
 - tapOn:
     id: "student-quick-applications"
 - assertVisible:
     id: "student-applications-screen"
-- back
+- tapOn:
+    id: "student-tab-home"
 
 # --- Quick access: an unbuilt feature lands on the coming-soon screen ---
 - tapOn:
@@ -62,15 +64,17 @@ tags:
 - assertVisible:
     id: "student-tab-events"
 - assertVisible:
-    id: "student-tab-counselor"
+    id: "student-tab-applications"
 - assertVisible:
     id: "student-tab-profile"
 
-# --- Counselor tab: WhatsApp-only contact card ---
+# --- Consejero gave its tab to Mis aplicaciones; the dashboard highlight card
+# --- is how the student reaches the contact screen now.
 - tapOn:
-    id: "student-tab-counselor"
+    id: "student-counselor-card"
 - assertVisible:
     id: "student-counselor-screen"
+- back
 
 # --- Profile tab owns Log out now that students have no AppHeader ---
 - tapOn:

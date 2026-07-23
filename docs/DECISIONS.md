@@ -1037,3 +1037,75 @@ Custom build on Supabase; app-first (students + counselors in one Expo app for S
 later); React Navigation (not Expo Router); themeable wrapped-component UI; hybrid auth
 (import existing students + self-register new ones). Rationale in the plan file and in the
 memory notes `wrsi-architecture-decisions` / `prefers-react-navigation`.
+
+## 2026-07-22 — Student "Mis aplicaciones" screen (branch `feat/student-applications-screen`)
+
+The designer handed over a desktop-width comp for the student applications page. Built for
+phone, in the brand palette, with the counselor element the designer agreed to drop.
+
+**Schema.** `student_applications` pointed only at a university, but the comp names the degree
+applied to ("Licenciatura en Business Administration"). Added
+`20260722000002_application_program.sql`: a nullable `program_id`, referenced by a **composite**
+FK `(program_id, university_id) → university_programs (id, university_id)` rather than a plain
+FK to `university_programs(id)`. That's the whole reason for the extra unique constraint on
+`university_programs (id, university_id)`: it makes "this program belongs to this university"
+enforceable declaratively instead of via a trigger, and MATCH SIMPLE skips the check when
+`program_id` is null, which is exactly the "no program picked yet" case. `on delete restrict`
+matches how `university_id` already behaves on this table. No admin UI creates applications
+yet, so nothing else needed updating; when that form lands it gains a program picker.
+
+**The tracker has no table.** The comp's four milestones (Iniciada → Documentos enviados →
+En revisión → Decisión final) are a *presentation* grouping of the six-entry application status
+catalog, so they're derived rather than stored: `computeApplicationTimeline()` in
+`@wrsi/shared-utils` folds Accepted/Rejected/Enrolled into one "Decisión final" step and dates
+each step from the **earliest** matching `application_status_history.changed_at` (an
+application bounced back to review keeps its original review date). Draft maps to "no step
+reached", matching how the comp draws a draft card with every dot empty. Unknown statuses —
+the catalog is admin-editable — fall back to terminal→decision, otherwise→review, so a status
+added later degrades instead of blanking the card. 12 unit tests.
+
+**Desktop → phone.** Deliberate departures from the comp, all confirmed with the user:
+- The top-right counselor card is removed (designer approved) and the per-card "Contactar por
+  WhatsApp" row is gone too — on a phone that put the same button on screen four times. One
+  banner at the end of the list replaces them.
+- The four summary tiles became a 2×2 grid that **doubles as the list filter** (tapping
+  "En revisión" filters to it, tapping again clears). That subsumes the comp's separate
+  "Filtrar" control and is what its "Ver detalles" links were reaching for.
+- The milestone tracker stays horizontal — it reads as a progress rail, which a vertical list
+  loses. Labels run at 10px over two lines; dots and rail keep full size.
+- Overall progress spans *all* applications, not the filtered view: it answers "how far along
+  am I", which a filter shouldn't change.
+
+**Color.** The comp is purple throughout; everything reads from the navy/amber/green semantic
+tokens instead. `statuses.color` is deliberately **ignored** on these badges — those hexes
+(indigo `#6366f1`, slate `#94a3b8`) predate the brand palette and would reintroduce the exact
+colors this change removes; a name→`Badge` tone map is used instead, with unknown statuses
+falling back to neutral.
+
+**Navigation.** The comp's bottom bar has five items and no Consejero. Adding Applications to
+the existing five would have made six, which doesn't fit legibly in Spanish on a 375px phone
+("Universidades" alone ellipsizes below ~11 chars); the options were 6-with-shortened-labels,
+6-icons-only, or matching the comp. The user chose the comp: **Consejero gave up its tab** and
+moved into the Home stack, still reachable from the dashboard's counselor highlight card and
+from the WhatsApp CTAs. Icons 24→22px, labels 11px, and short bottom-bar labels now live under
+`student.tabs.*` separately from the screen titles (the tab says "Aplicaciones", the screen
+says "Mis aplicaciones"). The Applications tab hides its navigator header since the screen
+draws the designed heading — so that screen consumes the top safe-area inset itself, which the
+tab headers otherwise do for free.
+
+**Other bits.** `formatDayMonth`/`formatDayMonthYear` joined `eventsDisplay.ts` (which already
+owns the Hermes-safe month words — `Intl` locale data is incomplete in Hermes); both read the
+leading `YYYY-MM-DD` off a timestamp so the rendered day can't drift with the device timezone.
+A `SendIcon` (paper plane) was added to the bundled SVG set for the "documents sent" milestone
+rather than a Unicode glyph, per the Android emoji-fallback rule. `useRefetchOnFocus` is wired
+up because staff advance applications outside the app.
+
+**Verification.** `yarn typecheck` clean; `yarn test` 148 unit green (21 new: 12 timeline, 3
+filters, 6 date formatting); `yarn test:backend` 89 green including a new
+`tests/backend/security/applications.test.ts` that pins the exact hook select (the nested
+`states_provinces → countries` and history embeds are the fragile part), the history RLS
+scoping, and the composite-FK rejection. Seeded four applications for `student1@wrsi.dev` in
+`dev.sql`, one per stage, so the screen shows every card state at once.
+**Not run on a device.** `.maestro/student/applications.yaml` was written and
+`dashboard.yaml` updated for the new nav, but neither was executed, and there was no iOS or
+Android pass — this is a substantial new UI surface and needs both.

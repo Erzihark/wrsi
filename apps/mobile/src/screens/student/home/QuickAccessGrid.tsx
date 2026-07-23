@@ -49,7 +49,7 @@ export function QuickAccessGrid() {
           testID="student-quick-applications"
           icon={(c) => <FileTextIcon size={26} color={c} />}
           label={t("home.quickAccess.applications")}
-          onPress={() => nav.navigate("Applications")}
+          onPress={() => parent()?.navigate("Applications")}
           style={{ flex: 1 }}
         />
         <IconTile

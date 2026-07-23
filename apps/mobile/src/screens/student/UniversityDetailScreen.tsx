@@ -26,7 +26,7 @@ export function UniversityDetailScreen() {
   const u = university.data;
 
   return (
-    <Screen scroll>
+    <Screen scroll testID="student-university-detail-screen">
       <Text variant="heading">{u.name}</Text>
 
       <SaveUniversityButton universityId={u.id} />

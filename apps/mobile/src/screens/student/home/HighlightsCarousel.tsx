@@ -151,11 +151,8 @@ function CounselorCard({ counselor }: { counselor: CounselorSummary }) {
     <Pressable
       testID="student-counselor-card"
       accessibilityRole="button"
-      onPress={() =>
-        nav
-          .getParent<BottomTabNavigationProp<StudentTabParamList>>()
-          ?.navigate("Counselor")
-      }
+      // Consejero lives in this stack now that Mis aplicaciones took its tab.
+      onPress={() => nav.navigate("Counselor")}
       style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.85 : 1 })}
     >
       <Card style={{ flex: 1, gap: theme.spacing.sm }}>

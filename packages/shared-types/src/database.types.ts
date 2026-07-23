@@ -1187,6 +1187,7 @@ export type Database = {
           id: string
           intake_term: Database["public"]["Enums"]["intake_term"] | null
           intake_year: number | null
+          program_id: string | null
           status_id: string | null
           student_id: string
           university_id: string
@@ -1197,6 +1198,7 @@ export type Database = {
           id?: string
           intake_term?: Database["public"]["Enums"]["intake_term"] | null
           intake_year?: number | null
+          program_id?: string | null
           status_id?: string | null
           student_id: string
           university_id: string
@@ -1207,12 +1209,20 @@ export type Database = {
           id?: string
           intake_term?: Database["public"]["Enums"]["intake_term"] | null
           intake_year?: number | null
+          program_id?: string | null
           status_id?: string | null
           student_id?: string
           university_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "student_applications_program_fkey"
+            columns: ["program_id", "university_id"]
+            isOneToOne: false
+            referencedRelation: "university_programs"
+            referencedColumns: ["id", "university_id"]
+          },
           {
             foreignKeyName: "student_applications_status_id_fkey"
             columns: ["status_id"]

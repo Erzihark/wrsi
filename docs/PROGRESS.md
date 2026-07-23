@@ -7,6 +7,26 @@
 
 **Last updated:** 2026-07-22
 
+**In review:** `feat/student-applications-screen` — the designer's "Mis aplicaciones" comp
+built for phone. Each card carries a 4-milestone tracker (Iniciada → Documentos enviados →
+En revisión → Decisión final) derived client-side by `computeApplicationTimeline()`
+(`@wrsi/shared-utils`) from the current status + `application_status_history` — no milestone
+table. New migration `20260722000002_application_program.sql` adds a nullable
+`student_applications.program_id` with a **composite** FK on `(program_id, university_id)`, so
+a program can't belong to another university; the card falls back to the intake term when it's
+null. `useMyApplications()` grew embeds for program, `state_province → country`, and history
+(docs/API.md updated). Desktop→phone adaptations, all deliberate: the top-right counselor card
+is gone (designer approved) and the per-card WhatsApp rows collapsed into one banner at the end
+of the list; the four summary tiles became a 2×2 grid that **doubles as the list filter**,
+replacing the comp's separate "Filtrar" control. Purple is gone — everything reads from the
+navy/amber/green semantic tokens, and the DB's `statuses.color` hexes (indigo/slate, pre-brand)
+are deliberately ignored in favor of `Badge` tones. **Bottom bar is now the designer's five
+tabs**: Consejero gave its slot to Mis aplicaciones and moved into the Home stack (reached from
+the dashboard's counselor highlight card); icons 24→22px, labels 11px, short labels under
+`student.tabs.*`. Verified: typecheck + 148 unit + 89 backend green (21 new tests). ⚠️ **Not
+run on a device** — 2 Maestro flows written (`.maestro/student/applications.yaml`, updated
+`dashboard.yaml`) but not executed, and no iOS/Android pass. See DECISIONS.md 2026-07-22.
+
 **In review:** `feat/brand-color-system` — the designer's five brand colors are now **the**
 color system, replacing the placeholder orange/slate scale. Navy `#08385B` (headers, nav,
 icons), orange `#FF924D` (CTAs), amber `#FFBD59` (badges/progress/attention), gray `#545454`
